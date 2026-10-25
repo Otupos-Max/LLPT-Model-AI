@@ -1,0 +1,6 @@
+// JavaScript Example Dataset
+function greet(name) {
+    return `Hello, ${name}! Welcome to LLPT Code Nano.`;
+}
+
+console.log(greet("Developer"));

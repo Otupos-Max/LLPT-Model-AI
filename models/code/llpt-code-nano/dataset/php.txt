@@ -1,0 +1,7 @@
+<?php
+// PHP Example Dataset
+function format_status(string $status): string {
+    return strtoupper($status);
+}
+
+echo format_status("active");

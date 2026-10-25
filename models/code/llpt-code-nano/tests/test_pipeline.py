@@ -1,0 +1,159 @@
+#!/usr/bin/env python3
+"""
+Test Suite para LLPT Code Nano Pipeline com Datasets TXT
+
+Testa:
+1. Leitura de dataset .txt
+2. Tokenização e criação de sequências
+3. Passo real de treinamento com atualização de pesos
+4. Perda de treino e validação
+5. Salvamento e carregamento de checkpoint
+6. Inferência usando pesos carregados
+7. Tratamento de datasets vazios ou inexistentes
+8. Compatibilidade FIM
+"""
+
+import os
+import sys
+import tempfile
+import shutil
+import torch
+from transformers import LlamaConfig, LlamaForCausalLM
+
+sys.path.insert(0, os.path.abspath("models/code/llpt-code-nano/src"))
+from train import load_txt_datasets, CodeTXTDataset, collate_fn, get_or_create_tokenizer, train_epoch, evaluate
+from inference import generate_text, generate_fim
+from model import load_model_config
+
+
+def test_1_read_txt_dataset(temp_dir):
+    print("\n--- Test 1: Reading .txt dataset ---")
+    fpath = os.path.join(temp_dir, "sample.txt")
+    with open(fpath, "w", encoding="utf-8") as f:
+        f.write("def add(a, b):\n    return a + b\n")
+
+    std, fim = load_txt_datasets(temp_dir)
+    assert len(std) == 1, f"Expected 1 standard text, got {len(std)}"
+    assert len(fim) == 0, f"Expected 0 FIM samples, got {len(fim)}"
+    print("Test 1 Passed: .txt dataset successfully read!")
+
+
+def test_2_tokenization_and_sequences(tokenizer):
+    print("\n--- Test 2: Tokenization and sequence creation ---")
+    texts = ["def main():\n    print('Hello World')\n"]
+    fims = [{"prefix": "def foo():", "suffix": "return 42", "middle": "\n    pass\n"}]
+    dataset = CodeTXTDataset(texts, fims, tokenizer, max_length=128)
+    assert len(dataset) >= 2, f"Expected at least 2 sequence samples, got {len(dataset)}"
+    sample = dataset[0]
+    assert isinstance(sample, list), "Dataset sample should be a list of token IDs"
+    print("Test 2 Passed: Tokenization and sequence creation verified!")
+
+
+def test_3_and_4_training_step_and_loss(model, tokenizer):
+    print("\n--- Test 3 & 4: Real training step, weight update, and loss calculation ---")
+    texts = ["def multiply(x, y):\n    return x * y\n" * 5]
+    fims = [{"prefix": "def div(x, y):", "suffix": "return x / y", "middle": "\n    if y == 0: raise ValueError()\n"}]
+    dataset = CodeTXTDataset(texts, fims, tokenizer, max_length=64)
+
+    loader = torch.utils.data.DataLoader(dataset, batch_size=2, shuffle=False, collate_fn=lambda b: collate_fn(b, tokenizer.pad_token_id or 0))
+
+    # Check weight before step
+    initial_weight = list(model.parameters())[0].clone()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+
+    train_loss = train_epoch(model, loader, optimizer, "cpu")
+    val_loss = evaluate(model, loader, "cpu")
+
+    updated_weight = list(model.parameters())[0]
+
+    assert not torch.equal(initial_weight, updated_weight), "Weights were not updated after optimizer.step()"
+    assert train_loss > 0, "Train loss should be > 0"
+    assert val_loss > 0, "Val loss should be > 0"
+    print(f"Test 3 & 4 Passed: Weights updated! Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
+
+
+def test_5_and_6_checkpoint_and_inference(model, tokenizer, temp_dir):
+    print("\n--- Test 5 & 6: Saving/loading checkpoint and inference ---")
+    ckpt_dir = os.path.join(temp_dir, "checkpoint-test")
+    os.makedirs(ckpt_dir, exist_ok=True)
+
+    torch.save(model.state_dict(), os.path.join(ckpt_dir, "pytorch_model.bin"))
+    tokenizer.save_pretrained(ckpt_dir)
+
+    # Load into fresh model
+    loaded_model = LlamaForCausalLM(model.config)
+    loaded_model.load_state_dict(torch.load(os.path.join(ckpt_dir, "pytorch_model.bin")))
+
+    out_cont = generate_text(loaded_model, tokenizer, "def test_func():", max_new_tokens=10, device="cpu")
+    out_fim = generate_fim(loaded_model, tokenizer, "def test():", "return True", max_new_tokens=10, device="cpu")
+
+    assert isinstance(out_cont, str) and len(out_cont) > 0, "Inference output should be non-empty string"
+    assert isinstance(out_fim, str) and len(out_fim) > 0, "FIM output should be non-empty string"
+    print(f"Test 5 & 6 Passed: Checkpoint saved/loaded. Output: {out_cont[:40]}...")
+
+
+def test_7_empty_or_nonexistent_dataset(temp_dir):
+    print("\n--- Test 7: Handling empty or non-existent dataset ---")
+    empty_dir = os.path.join(temp_dir, "empty")
+    os.makedirs(empty_dir, exist_ok=True)
+    open(os.path.join(empty_dir, "empty.txt"), "w").close()
+
+    std, fim = load_txt_datasets(empty_dir)
+    assert len(std) == 0 and len(fim) == 0, "Empty dataset should return empty lists"
+
+    try:
+        load_txt_datasets(os.path.join(temp_dir, "non_existent"))
+        assert False, "Should have raised FileNotFoundError for non-existent path"
+    except FileNotFoundError:
+        pass
+
+    print("Test 7 Passed: Empty and non-existent dataset handled properly!")
+
+
+def test_8_fim_compatibility(tokenizer):
+    print("\n--- Test 8: FIM compatibility ---")
+    fim_text = "<PRE>def func():\n    <SUF>\n    return x<MID>x = 10\n<EOT>"
+    tokens = tokenizer.encode(fim_text)
+    decoded = tokenizer.decode(tokens)
+    assert "<PRE>" in decoded and "<SUF>" in decoded and "<MID>" in decoded and "<EOT>" in decoded
+    print("Test 8 Passed: FIM special tokens correctly preserved in tokenization!")
+
+
+def main():
+    print("Starting LLPT Code Nano Pipeline Test Suite...")
+    temp_dir = tempfile.mkdtemp()
+
+    try:
+        # Mini model configuration for fast testing
+        mini_config = LlamaConfig(
+            vocab_size=1000,
+            hidden_size=64,
+            intermediate_size=128,
+            num_hidden_layers=2,
+            num_attention_heads=2,
+            num_key_value_heads=1,
+            max_position_embeddings=512,
+            pad_token_id=0,
+            bos_token_id=1,
+            eos_token_id=2
+        )
+        model = LlamaForCausalLM(mini_config)
+        tokenizer = get_or_create_tokenizer("models/code/llpt-code-nano/config.json")
+        model.resize_token_embeddings(len(tokenizer))
+
+        test_1_read_txt_dataset(temp_dir)
+        test_2_tokenization_and_sequences(tokenizer)
+        test_3_and_4_training_step_and_loss(model, tokenizer)
+        test_5_and_6_checkpoint_and_inference(model, tokenizer, temp_dir)
+        test_7_empty_or_nonexistent_dataset(temp_dir)
+        test_8_fim_compatibility(tokenizer)
+
+        print("\n=======================================================")
+        print(" ALL 8 MANDATORY VERIFICATION TESTS PASSED SUCCESSFULLY!")
+        print("=======================================================")
+    finally:
+        shutil.rmtree(temp_dir)
+
+
+if __name__ == "__main__":
+    main()

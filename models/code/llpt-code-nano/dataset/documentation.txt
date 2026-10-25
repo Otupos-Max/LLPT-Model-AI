@@ -1,0 +1,9 @@
+# LLPT Code Nano Dataset Documentation
+
+LLPT Code Nano (1B) uses text files (.txt) as the primary dataset format.
+Each language has a dedicated file in the dataset/ directory.
+
+Supported features:
+- Recursive .txt file reading from directory or direct file path.
+- Standard code continuation training.
+- Fill-in-the-Middle (FIM) training via special tokens: <PRE>, <SUF>, <MID>, <EOT>.

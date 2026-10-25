@@ -1,0 +1,10 @@
+<PRE>def add(a, b):
+    return <SUF>
+
+def multiply(a, b):
+    return a * b<MID>a + b<EOT>
+
+<PRE>function calculateArea(radius) {
+    <SUF>
+    return area;
+}<MID>const area = Math.PI * radius * radius;<EOT>

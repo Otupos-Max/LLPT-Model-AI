@@ -1,0 +1,10 @@
+// TypeScript Example Dataset
+interface User {
+    id: number;
+    username: string;
+    role: string;
+}
+
+function getUserInfo(user: User): string {
+    return `User ${user.username} (ID: ${user.id}) has role ${user.role}`;
+}

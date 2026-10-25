@@ -12,55 +12,60 @@ O modelo LLPT Code Nano organiza seus pesos e checkpoints no seguinte fluxo:
   │   │   ├── model.safetensors (ou pytorch_model.bin)
   │   │   ├── config.json
   │   │   └── tokenizer.json
-  │   ├── checkpoints/   -> Checkpoints salvos durante o treinamento/fine-tuning
-  │   │   ├── checkpoint-1000/
-  │   │   └── checkpoint-2000/
+  │   ├── checkpoints/   -> Checkpoints salvos durante o treinamento (checkpoint-epoch-X/)
+  │   │   ├── checkpoint-epoch-1/
+  │   │   └── checkpoint-epoch-2/
   │   ├── final/         -> Modelo final consolidado pós-treinamento
+  │   │   ├── pytorch_model.bin
+  │   │   ├── config.json
+  │   │   └── tokenizer_config.json
   │   └── gguf/          -> Pesos quantizados para execução rápida (llama.cpp / Mobile)
   │       ├── llpt-code-nano-f16.gguf
   │       ├── llpt-code-nano-q8_0.gguf
   │       └── llpt-code-nano-q4_k_m.gguf
-  └── dataset/           -> Conjuntos de dados de código para treino/fine-tuning
-      ├── train.jsonl
-      └── valid.jsonl
+  └── dataset/           -> Conjuntos de dados de código em formato .txt
+      ├── python.txt
+      ├── javascript.txt
+      ├── ...
+      └── fim_examples.txt
 
 -------------------------------------------------------------------------------
-2. FORMATOS E PRECISÕES DE PESOS
+2. DIFERENÇA ENTRE PESOS INICIALIZADOS E PESOS TREINADOS
+-------------------------------------------------------------------------------
+  - Pesos Inicializados (Aleatórios):
+    Criados durante a inicialização da arquitetura neural `LlamaForCausalLM` com base nas
+    dimensões de `config.json`. Úteis para iniciar um novo pré-treino do zero ou rodar testes de pipeline.
+    Geram tokens aleatórios caso utilizados diretamente em inferência.
+
+  - Pesos Treinados:
+    Resultantes da execução do processo de otimização (`train.py`) com backpropagation e otimizador
+    AdamW sobre datasets .txt.
+    Salvos automaticamente em `weights/checkpoints/` e `weights/checkpoints/final/`.
+
+  - Armazenamento no Git:
+    Arquivos de pesos (.bin / .safetensors / .gguf > 50MB) não devem ser commitados no repositório Git.
+    Armazene-os separadamente em local de armazenamento externo ou Hugging Face Hub e carregue-os via `--model_dir`.
+
+-------------------------------------------------------------------------------
+3. FORMATOS E PRECISÕES DE PESOS
 -------------------------------------------------------------------------------
 
-A. FORMATO SAFETENSORS (.safetensors) [RECOMENDADO PARA DESKTOP & SERVIDORES]
-   - Descrição: Formato seguro e rápido de carregamento (zero-copy memory mapping).
-   - Localização: weights/raw/ ou weights/final/
-   - Precisões:
-     * BF16 (Bfloat16): Recomendado para treinamento e fine-tuning em GPUs modernas (NVIDIA Ampere/Ada/Hopper ou AMD RDNA3). Tamanho ~2.0 GB.
-     * FP16 (Float16): Recomendado para GPUs mais antigas (Turing/Pascal). Tamanho ~2.0 GB.
-     * FP32 (Float32): Usado apenas para depuração ou cálculo numérico estrito. Tamanho ~4.0 GB.
+A. FORMATO PYTORCH / SAFETENSORS (.bin / .safetensors)
+   - Descrição: Formato padrão PyTorch e Hugging Face.
+   - Localização: weights/checkpoints/ final/
+   - Tamanho estimado modelo 1B: ~2.0 GB em FP16 / BF16.
 
-B. FORMATO GGUF (.gguf) [RECOMENDADO PARA INFERÊNCIA DESKTOP CPU/GPU E MOBILE]
-   - Descrição: Formato unificado do llama.cpp para inferência ultraeficiente de CPU e GPU.
+B. FORMATO GGUF (.gguf)
+   - Descrição: Formato unificado do llama.cpp para inferência ultraeficiente CPU/GPU.
    - Localização: weights/gguf/
-   - Variantes e Precisões Recomendadas:
-     * Q4_K_M (Quantização 4-bits Medium): Otimizado para Mobile (Android/iOS) e uso ultraleve em Desktop.
-       - Tamanho estimado: ~0.7 GB VRAM/RAM.
-       - Desempenho: Excelente balanço entre velocidade sub-50ms e preservação da sintaxe de código.
-     * Q8_0 (Quantização 8-bits): Recomendado para Desktop com consumo reduzido e qualidade idêntica ao FP16.
-       - Tamanho estimado: ~1.1 GB VRAM/RAM.
-     * F16 (16-bits Unquantized GGUF): Usado como base para conversão para outros níveis de quantização.
-       - Tamanho estimado: ~2.0 GB.
-
-C. FORMATO ONNX (.onnx) [PARA EDGE E INTEGRAÇÃO WEB/MOBILE]
-   - Descrição: Open Neural Network Exchange para execução otimizada via ONNX Runtime (Android, iOS, Web, Windows).
-   - Localização: weights/onnx/
-   - Precisões: INT4, INT8, FP16.
+   - Variantes:
+     * Q4_K_M (Quantização 4-bits): ~0.7 GB VRAM/RAM (Ideal para Mobile e Termux).
+     * Q8_0 (Quantização 8-bits): ~1.1 GB VRAM/RAM (Ideal para Desktop).
 
 -------------------------------------------------------------------------------
-3. ESPECIFICAÇÕES DE HARDWARE E COMPATIBILIDADE
+4. REQUISITOS DE HARDWARE E LIMITAÇÕES
 -------------------------------------------------------------------------------
-
-[DESKTOP / SERVIDOR]
-  - Treinamento/Fine-Tuning: GPU com mínimo de 6GB a 12GB VRAM (NVidia RTX 3060/4060 ou superior).
-  - Inferência: Qualquer CPU x86_64/ARM64 com 4GB+ RAM, ou GPU com 2GB+ VRAM.
-
-[MOBILE (Android / iOS)]
-  - Treinamento/Fine-Tuning: Executável via LoRA/PEFT leve ou CPU via Termux (recomendado apenas para fine-tuning muito pequeno ou via servidor remoto).
-  - Inferência: Dispositivos Android/iOS com mínimo de 4GB RAM total (2GB RAM livre para o modelo em Q4_K_M).
+  - Treinamento completo (1B Parâmetros):
+    * VRAM/RAM mínima para batch_size=2: ~6GB RAM/VRAM.
+  - Treinamento em dispositivos Mobile / Termux:
+    * Recomendado batch_size=1, max_length=128-256 e poucas épocas em CPU.

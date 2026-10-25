@@ -2,42 +2,70 @@
 LLPT CODE NANO (1B) - GUIA COMPLETO DE COMANDOS (DESKTOP & MOBILE)
 ===============================================================================
 
-Este documento contém todos os comandos necessários para preparar, treinar,
-fine-tunear, converter e executar a inferência do modelo LLPT Code Nano (1B).
+Este documento contém todos os comandos necessários para preparar, treinar com datasets .txt,
+retomar, interromper, converter e executar a inferência do modelo LLPT Code Nano (1B).
 
 -------------------------------------------------------------------------------
 1. COMANDOS PARA AMBIENTE DESKTOP (Linux, macOS, Windows/WSL2)
 -------------------------------------------------------------------------------
 
 [1.1 INSTALAÇÃO DE DEPENDÊNCIAS]
-  # Instalar dependências Python (PyTorch, Transformers, Accelerate, PEFT)
-  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-  pip install transformers datasets accelerate peft bitsandbytes sentencepiece trl
+  # Instalar dependências de PyTorch e Hugging Face
+  pip install torch torchvision torchaudio
+  pip install transformers datasets accelerate peft safetensors
 
-  # Clonar e compilar llama.cpp (para conversão GGUF e inferência rápida)
+  # Clonar e compilar llama.cpp (para conversão GGUF e inferência ultra-rápida C++)
   git clone https://github.com/ggerganov/llama.cpp
   cd llama.cpp && make -j
 
-[1.2 TREINAMENTO E FINE-TUNING]
-  # Opção A: Executar script nativo de treino (Fine-tuning / Pre-training)
+[1.2 INICIAR TREINAMENTO COM DATASET .TXT]
+  # Treinar com todo o diretório de arquivos .txt (Python, JS, C++, Rust, FIM, etc.)
   python3 models/code/llpt-code-nano/src/train.py \
     --config models/code/llpt-code-nano/config.json \
-    --data_path models/code/llpt-code-nano/dataset/train.jsonl \
+    --data_path models/code/llpt-code-nano/dataset/ \
     --output_dir models/code/llpt-code-nano/weights/checkpoints/ \
     --epochs 3 \
-    --batch_size 4 \
-    --learning_rate 2e-5
+    --batch_size 2 \
+    --learning_rate 5e-5 \
+    --max_length 512
 
-  # Opção B: Fine-Tuning eficiente com LoRA (Economiza memória VRAM)
+  # Treinar apenas com uma linguagem ou arquivo .txt específico (ex: python.txt)
   python3 models/code/llpt-code-nano/src/train.py \
     --config models/code/llpt-code-nano/config.json \
-    --data_path models/code/llpt-code-nano/dataset/train.jsonl \
+    --data_path models/code/llpt-code-nano/dataset/python.txt \
     --output_dir models/code/llpt-code-nano/weights/checkpoints/ \
-    --use_lora
+    --epochs 3
 
-[1.3 CONVERSÃO E QUANTIZAÇÃO PARA GGUF]
-  # Converter modelo Safetensors/PyTorch para GGUF FP16
-  python3 llama.cpp/convert_hf_to_gguf.py models/code/llpt-code-nano/weights/final/ \
+[1.3 RETOMAR TREINAMENTO A PARTIR DE UM CHECKPOINT]
+  python3 models/code/llpt-code-nano/src/train.py \
+    --config models/code/llpt-code-nano/config.json \
+    --data_path models/code/llpt-code-nano/dataset/ \
+    --output_dir models/code/llpt-code-nano/weights/checkpoints/ \
+    --resume_from_checkpoint models/code/llpt-code-nano/weights/checkpoints/checkpoint-epoch-1 \
+    --epochs 3
+
+[1.4 INTERROMPER TREINAMENTO]
+  # O script salva checkpoints a cada época em weights/checkpoints/checkpoint-epoch-X/
+  # Você pode interromper o treinamento com Ctrl+C no terminal a qualquer momento
+  # e retomar posteriormente usando --resume_from_checkpoint.
+
+[1.5 INFERÊNCIA E TESTE NO DESKTOP]
+  # Inferência em modo de continuação de código
+  python3 models/code/llpt-code-nano/src/inference.py \
+    --model_dir models/code/llpt-code-nano/weights/checkpoints/final/ \
+    --prompt "def calculate_factorial(n):" \
+    --max_tokens 64
+
+  # Inferência em modo Fill-In-the-Middle (FIM)
+  python3 models/code/llpt-code-nano/src/inference.py \
+    --model_dir models/code/llpt-code-nano/weights/checkpoints/final/ \
+    --prefix "def add(a, b):\n    " \
+    --suffix "\n\ndef multiply(a, b):" \
+    --max_tokens 32
+
+[1.6 CONVERSÃO E QUANTIZAÇÃO PARA GGUF]
+  # Converter modelo para GGUF FP16
+  python3 llama.cpp/convert_hf_to_gguf.py models/code/llpt-code-nano/weights/checkpoints/final/ \
     --outtype f16 \
     --outfile models/code/llpt-code-nano/weights/gguf/llpt-code-nano-f16.gguf
 
@@ -45,18 +73,9 @@ fine-tunear, converter e executar a inferência do modelo LLPT Code Nano (1B).
   ./llama.cpp/llama-quantize models/code/llpt-code-nano/weights/gguf/llpt-code-nano-f16.gguf \
     models/code/llpt-code-nano/weights/gguf/llpt-code-nano-q4_k_m.gguf Q4_K_M
 
-  # Quantizar para Q8_0 (Ideal para alta precisão em Desktop)
-  ./llama.cpp/llama-quantize models/code/llpt-code-nano/weights/gguf/llpt-code-nano-f16.gguf \
-    models/code/llpt-code-nano/weights/gguf/llpt-code-nano-q8_0.gguf Q8_0
-
-[1.4 INFERÊNCIA E TESTE NO DESKTOP]
-  # Executar via llama.cpp no terminal (Modo Interativo / CLI)
+  # Executar via llama.cpp
   ./llama.cpp/llama-cli -m models/code/llpt-code-nano/weights/gguf/llpt-code-nano-q4_k_m.gguf \
-    -p "def calculate_fibonacci(n):" -n 256
-
-  # Subir servidor local compatível com API OpenAI para autocomplete em IDEs (VS Code)
-  ./llama.cpp/llama-server -m models/code/llpt-code-nano/weights/gguf/llpt-code-nano-q4_k_m.gguf \
-    --port 8080 --host 0.0.0.0
+    -p "def calculate_fibonacci(n):" -n 128
 
 
 -------------------------------------------------------------------------------
@@ -64,35 +83,22 @@ fine-tunear, converter e executar a inferência do modelo LLPT Code Nano (1B).
 -------------------------------------------------------------------------------
 
 [2.1 CONFIGURAÇÃO DO AMBIENTE MOBILE (Android / Termux)]
-  # Atualizar pacotes do Termux e instalar dependências essenciais
   pkg update && pkg upgrade -y
   pkg install git cmake clang python build-essential -y
+  pip install torch transformers peft
 
-  # Clonar e compilar llama.cpp nativamente no Android
-  git clone https://github.com/ggerganov/llama.cpp
-  cd llama.cpp
-  mkdir build && cd build
-  cmake ..
-  cmake --build . --config Release -j4
-
-[2.2 TREINAMENTO / FINE-TUNING LEVE NO MOBILE (Termux)]
-  # Instalar PyTorch e Hugging Face no Termux (se necessário ajustar via Python)
-  pip install transformers datasets peft
-
-  # Executar ajuste fino leve via LoRA em CPU Mobile
+[2.2 TREINAMENTO LEVE NO TERMUX]
   python3 models/code/llpt-code-nano/src/train.py \
     --config models/code/llpt-code-nano/config.json \
-    --data_path models/code/llpt-code-nano/dataset/train.jsonl \
+    --data_path models/code/llpt-code-nano/dataset/ \
     --output_dir models/code/llpt-code-nano/weights/checkpoints/ \
     --epochs 1 \
     --batch_size 1 \
-    --use_lora
+    --max_length 128 \
+    --device cpu
 
 [2.3 INFERÊNCIA NO MOBILE]
-  # Executar o modelo quantizado Q4_K_M no smartphone via CLI
-  ./llama-cli -m ~/models/code/llpt-code-nano/weights/gguf/llpt-code-nano-q4_k_m.gguf \
-    -p "function formatResponse(data) {" -n 128 -t 4
-
-  # Subir servidor HTTP leve no smartphone para servir de backend de código
-  ./llama-server -m ~/models/code/llpt-code-nano/weights/gguf/llpt-code-nano-q4_k_m.gguf \
-    --host 127.0.0.1 --port 8080 -t 4
+  python3 models/code/llpt-code-nano/src/inference.py \
+    --model_dir models/code/llpt-code-nano/weights/checkpoints/final/ \
+    --prompt "function formatResponse(data) {" \
+    --max_tokens 32 --device cpu
