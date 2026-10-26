@@ -4,12 +4,14 @@
 # 1. Algorithms & Data Structures
 # ==========================================
 
-from typing import List, Dict, Any, Optional, Generator, Callable, TypeVar
+from typing import List, Dict, Any, Optional, Generator, Callable, TypeVar, Union, Tuple
 import time
 import functools
 import asyncio
-from dataclasses import dataclass, field
 import heapq
+import collections
+import dataclasses
+from dataclasses import dataclass, field
 
 def fibonacci(n: int) -> int:
     """Calculates the n-th Fibonacci number using iterative dynamic programming."""
@@ -211,27 +213,12 @@ def chunk_generator(data: List[Any], chunk_size: int) -> Generator[List[Any], No
         yield data[i:i + chunk_size]
 
 
-if __name__ == "__main__":
-    print(f"Fibonacci(10) = {fibonacci(10)}")
-    arr = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]
-    sorted_arr = quicksort(arr)
-    print(f"Sorted array: {sorted_arr}")
-    print(f"Binary search for 4: {binary_search(sorted_arr, 4)}")
-
-    with DatabaseConnectionManager("sqlite:///app.db") as db:
-        user = UserProfile(id=1, username="alex", email="alex@example.com", roles=["admin"])
-        print(f"User is admin: {user.has_permission('admin')}")
-
-    asyncio.run(process_batch_tasks(["/api/v1/users", "/api/v1/posts"]))
-
-
 # ==========================================
 # 4. Advanced Data Analysis & Concurrency
 # ==========================================
 
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from typing import Dict, List, Any
 
 def process_data_chunk(chunk: List[int]) -> Dict[str, float]:
     """Processes a data chunk in parallel, returning statistical metrics."""
@@ -259,7 +246,7 @@ def parallel_pipeline(data: List[int], batch_size: int = 100) -> List[Dict[str, 
 
 class BoundedNumber:
     """Descriptor that validates numerical properties within bounds."""
-    def __init__(self, min_val: float = None, max_val: float = None):
+    def __init__(self, min_val: Optional[float] = None, max_val: Optional[float] = None):
         self.min_val = min_val
         self.max_val = max_val
 
@@ -291,61 +278,37 @@ class SensorReading:
 
 
 # ==========================================
-# 6. Bug Fix Example: Race Condition & Fix
+# 6. Thread-safe Threading and Concurrent Queues
 # ==========================================
 
 import threading
+import queue
 
-# Problem: Non-thread-safe counter
-class UnsafeCounter:
-    def __init__(self):
-        self.count = 0
+class ThreadSafeWorkQueue:
+    def __init__(self, max_workers: int = 4):
+        self.work_queue = queue.Queue()
+        self.max_workers = max_workers
+        self.threads = []
+        self._shutdown_event = threading.Event()
 
-    def increment(self):
-        # Bug: Race condition when accessed concurrently
-        self.count += 1
+    def _worker(self):
+        while not self._shutdown_event.is_set():
+            try:
+                task, args = self.work_queue.get(timeout=0.1)
+                task(*args)
+                self.work_queue.task_done()
+            except queue.Empty:
+                continue
 
-# Solution: Thread-safe counter using Mutex Lock
-class SafeCounter:
-    def __init__(self):
-        self.count = 0
-        self._lock = threading.Lock()
+    def start(self):
+        for _ in range(self.max_workers):
+            t = threading.Thread(target=self._worker, daemon=True)
+            t.start()
+            self.threads.append(t)
 
-    def increment(self):
-        with self._lock:
-            self.count += 1
+    def enqueue(self, func: Callable, *args):
+        self.work_queue.put((func, args))
 
-    def get_value(self) -> int:
-        with self._lock:
-            return self.count
-
-
-# ==========================================
-# 7. Instruction & Task Format Examples
-# ==========================================
-
-# Instruction: Implement a thread-safe Memory Cache class in Python with TTL expiration.
-# Response:
-import time
-import threading
-from typing import Any, Dict, Optional
-
-class MemoryCacheTTL:
-    def __init__(self):
-        self._store: Dict[str, tuple[Any, Optional[float]]] = {}
-        self._lock = threading.RLock()
-
-    def set(self, key: str, value: Any, ttl_seconds: Optional[float] = None) -> None:
-        with self._lock:
-            expire_at = time.time() + ttl_seconds if ttl_seconds else None
-            self._store[key] = (value, expire_at)
-
-    def get(self, key: str, default: Any = None) -> Any:
-        with self._lock:
-            if key not in self._store:
-                return default
-            val, expire_at = self._store[key]
-            if expire_at and time.time() > expire_at:
-                del self._store[key]
-                return default
-            return val
+    def stop(self):
+        self.work_queue.join()
+        self._shutdown_event.set()

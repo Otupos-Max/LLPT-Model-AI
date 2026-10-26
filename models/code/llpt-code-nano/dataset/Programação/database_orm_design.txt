@@ -1,0 +1,46 @@
+# Database Schema Design, ORM Mapping & Optimization Techniques
+
+# ==========================================
+# 1. SQLAlchemy 2.0 Async ORM Mapping (Python)
+# ==========================================
+```python
+from typing import List, Optional
+from datetime import datetime
+from sqlalchemy import String, Integer, ForeignKey, DateTime, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+class Base(DeclarativeBase):
+    pass
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    posts: Mapped[List["Post"]] = relationship("Post", back_populates="author", cascade="all, delete-orphan")
+
+class Post(Base):
+    __tablename__ = "posts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    content: Mapped[str] = mapped_column(String, nullable=False)
+    author_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    author: Mapped[User] = relationship("User", back_populates="posts")
+```
+
+# ==========================================
+# 2. Database Indexing & Query Tuning
+# ==========================================
+```sql
+-- Composite index for fast searching on active user orders ordered by date
+CREATE INDEX idx_orders_user_status_date ON orders (user_id, status, created_at DESC);
+
+-- Partial index for high-cardinality pending transactions
+CREATE INDEX idx_pending_transactions ON transactions (account_id, created_at)
+WHERE status = 'PENDING';
+```

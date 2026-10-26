@@ -1,240 +1,91 @@
-# Fill-In-The-Middle (FIM) Training Examples
-
-<PRE>def add_numbers(a: int, b: int) -> int:
-    """Returns the sum of two integers."""
-    return <SUF>
-
-if __name__ == "__main__":
-    result = add_numbers(5, 10)
-    print(f"Result: {result}")<MID>a + b<EOT>
+// Fill-In-The-Middle (FIM) Code Completion Examples
 
 <PRE>def calculate_factorial(n: int) -> int:
-    if n <= 1:
+    """Calculates the factorial of a non-negative integer."""
+    if n < 0:
+        raise ValueError("Factorial is not defined for negative numbers")
+    if n == 0 or n == 1:
         return 1
     <SUF>
-    return result<MID>result = 1
+    return result
+<MID>result = 1
     for i in range(2, n + 1):
         result *= i<EOT>
 
 <PRE>function debounce(func, wait) {
-    let timeoutId = null;
-    return function (...args) {
-        const context = this;
-        <SUF>
-        timeoutId = setTimeout(() => {
-            func.apply(context, args);
-        }, wait);
-    };
-}<MID>clearTimeout(timeoutId);<EOT>
-
-<PRE>export interface UserProfile {
-    id: string;
-    username: string;
-    email: string;
-    <SUF>
-    createdAt: Date;
-}<MID>role: 'admin' | 'user' | 'guest';
-    isActive: boolean;<EOT>
-
-<PRE>public class Singleton {
-    private static Singleton instance;
-
-    private Singleton() {}
-
-    public static Singleton getInstance() {
-        if (instance == null) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
             <SUF>
-        }
-        return instance;
-    }
-}<MID>instance = new Singleton();<EOT>
-
-<PRE>fun String.isValidEmail(): Boolean {
-    val regex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
-    <SUF>
-}<MID>return this.matches(regex.toRegex())<EOT>
-
-<PRE>#include <stdio.h>
-#include <stdlib.h>
-
-int main(void) {
-    int *arr = (int *)malloc(10 * sizeof(int));
-    if (!arr) return 1;
-    <SUF>
-    free(arr);
-    return 0;
-}<MID>for (int i = 0; i < 10; i++) {
-        arr[i] = i * 2;
-    }<EOT>
-
-<PRE>#include <iostream>
-#include <vector>
-#include <algorithm>
-
-int main() {
-    std::vector<int> numbers = {5, 2, 8, 1, 9};
-    <SUF>
-    for (int n : numbers) {
-        std::cout << n << " ";
-    }
-    return 0;
-}<MID>std::sort(numbers.begin(), numbers.end());<EOT>
-
-<PRE>pub fn find_max(numbers: &[i32]) -> Option<i32> {
-    if numbers.is_empty() {
-        return None;
-    }
-    <SUF>
-}<MID>let mut max_val = numbers[0];
-    for &num in numbers.iter().skip(1) {
-        if num > max_val {
-            max_val = num;
-        }
-    }
-    Some(max_val)<EOT>
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+<MID>func(...args);<EOT>
 
 <PRE>package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"net/http"
+)
 
-func main() {
-    ch := make(chan int, 2)
-    <SUF>
-    close(ch)
-
-    for val := range ch {
-        fmt.Println(val)
-    }
-}<MID>ch <- 10
-    ch <- 20<EOT>
-
-<PRE>SELECT
-    u.user_id,
-    u.username,
-    <SUF>
-FROM users u
-INNER JOIN roles r ON u.role_id = r.role_id
-WHERE u.is_active = TRUE<MID>r.role_name,
-    COUNT(l.log_id) AS log_count<EOT>
-
-<PRE><div class="card">
-    <h2 class="card-title">Model Status</h2>
-    <p class="card-description"><SUF></p>
-    <button class="btn btn-primary">Deploy</button>
-</div><MID>LLPT Code Nano 1B ready for high-speed inference.</MID><EOT>
-
-<PRE>.metric-card {
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
-    <SUF>
-    padding: var(--space-lg);
-}<MID>border-radius: var(--radius-md);<EOT>
-
-<PRE><?php
-function calculateDiscount(float $price, float $discountPercentage): float {
-    if ($discountPercentage < 0 || $discountPercentage > 100) {
-        throw new InvalidArgumentException("Invalid discount percentage");
-    }
-    <SUF>
-}<MID>return $price * (1 - ($discountPercentage / 100));<EOT>
-
-<PRE>class UserRepository
-  def initialize
-    @users = {}
-  end
-
-  def find_by_id(id)
-    <SUF>
-  end
-end<MID>@users[id] || raise("User not found")<EOT>
-
-<PRE>public struct User: Codable {
-    public let id: UUID
-    public var username: String
-    <SUF>
-
-    public init(id: UUID = UUID(), username: String, email: String) {
-        self.id = id
-        self.username = username
-        self.email = email
-    }
-}<MID>public var email: String<EOT>
-
-<PRE>#!/usr/bin/env bash
-set -euo pipefail
-
-backup_dir="/tmp/backups"
-if [ ! -d "$backup_dir" ]; then
-    <SUF>
-fi<MID>mkdir -p "$backup_dir"<EOT>
-
-<PRE>class UserRepository {
-  Future<User?> findById(String id) async {
-    <SUF>
-  }
-}<MID>await Future.delayed(Duration(milliseconds: 50));
-    return _db[id];<EOT>
-
-<PRE>public record UserDto(
-    Guid Id,
-    string Username,
-    <SUF>
-);<MID>string Email,
-    bool IsActive<EOT>
-
-
-<PRE>def calculate_discount(price: float, discount_percent: float) -> float:
-    if price < 0 or discount_percent < 0:<SUF>
-    return price * (1 - discount_percent / 100)<MID>
-        raise ValueError("Price and discount must be non-negative")
-    <EOT>
-
-<PRE>function debounce(fn, delay) {
-    let timer;<SUF>
-}<MID>
-    return function (...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-    };<EOT>
-
-
-<PRE>import torch
-import torch.nn as nn
-
-class MLP(nn.Module):
-    def __init__(self, in_dim: int, hidden_dim: int, out_dim: int):
-        super().__init__()
-        self.fc1 = nn.Linear(in_dim, hidden_dim)
-        <SUF>
-        self.fc2 = nn.Linear(hidden_dim, out_dim)
-
-    def forward(self, x):
-        return self.fc2(self.act(self.fc1(x)))<MID>self.act = nn.ReLU()<EOT>
-
-<PRE>struct Point {
-    x: f64,
-    y: f64,
+type Response struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
 }
 
-impl Point {
-    fn distance(&self, other: &Point) -> f64 {
-        <SUF>
-    }
-}<MID>let dx = self.x - other.x;
-        let dy = self.y - other.y;
-        (dx * dx + dy * dy).sqrt()<EOT>
+func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	resp := Response{Status: "ok", Message: "Service is healthy"}
+	<SUF>
+}
+<MID>json.NewEncoder(w).Encode(resp)<EOT>
 
-<PRE>func BinarySearch(arr []int, target int) int {
-    low, high := 0, len(arr)-1
-    for low <= high {
-        mid := (low + high) / 2
+<PRE>public class Vector3D {
+    private final double x;
+    private final double y;
+    private final double z;
+
+    public Vector3D(double x, double y, double z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    public double magnitude() {
         <SUF>
     }
-    return -1
-}<MID>if arr[mid] == target {
-            return mid
-        } else if arr[mid] < target {
-            low = mid + 1
-        } else {
-            high = mid - 1
-        }<EOT>
+}
+<MID>return Math.sqrt(x * x + y * y + z * z);<EOT>
+
+<PRE>use std::collections::HashMap;
+
+pub struct WordCounter {
+    counts: HashMap<String, usize>,
+}
+
+impl WordCounter {
+    pub fn new() -> Self {
+        WordCounter { counts: HashMap::new() }
+    }
+
+    pub fn add_word(&mut self, word: &str) {
+        <SUF>
+    }
+}
+<MID>*self.counts.entry(word.to_lowercase()).or_insert(0) += 1;<EOT>
+
+<PRE>#include <iostream>
+#include <vector>
+#include <numeric>
+
+double calculate_mean(const std::vector<double>& numbers) {
+    if (numbers.empty()) return 0.0;
+    <SUF>
+    return sum / numbers.size();
+}
+<MID>double sum = std::accumulate(numbers.begin(), numbers.end(), 0.0);<EOT>

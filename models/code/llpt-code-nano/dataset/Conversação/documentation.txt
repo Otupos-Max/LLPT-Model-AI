@@ -1,23 +1,37 @@
-# LLPT Code Nano - Technical Documentation & API Specifications
+# LLPT Code Nano - Technical Documentation, API Specifications & Coding Standards
 
-## Architecture Decision Record (ADR-001): Model Scale & FIM Support
+## Architecture Decision Records (ADRs)
 
-### Context
+### ADR-001: Model Scale & FIM Support
+#### Context
 Code auto-completion models in modern IDEs require sub-50ms latency to deliver inline suggestions without disrupting developer flow. Larger models (30B+) excel at repository-wide architecture but are too heavy for local real-time auto-completion on CPU/Mobile devices.
 
-### Decision
+#### Decision
 We standardize **LLPT Code Nano** at a **1 Billion (1B) parameter scale** utilizing a **Llama Causal LM** architecture configured with native Fill-In-The-Middle (FIM) tokens (`<PRE>`, `<SUF>`, `<MID>`, `<EOT>`).
 
-### Consequences
+#### Consequences
 - **Ultra-low latency**: Sub-50ms inference on modern desktop CPUs and quantized mobile execution.
 - **Low Memory Footprint**: Fits in 2GB-4GB VRAM or RAM (Q4_K_M quantization).
 - **FIM Capabilities**: Seamless middle-of-file completion for code completion extensions in VS Code, JetBrains, and Vim/Neovim.
 
 ---
 
-## Code Documentation Guidelines & Docstring Standards
+### ADR-002: Categorized Dataset & Ratio Control
+#### Context
+Training code LLMs solely on raw code files often diminishes their ability to follow user instructions, answer technical questions, or summarize codebases. Conversely, training heavily on natural language chat degrades syntax correctness and FIM completion quality.
 
-### Python Docstring Standard (Google Style)
+#### Decision
+Implement a structured dual-category dataset hierarchy (`Programação/` and `Conversação/`) with runtime ratio control (`--prog_ratio 0.8`).
+
+#### Consequences
+- Balanced multi-task capabilities: High-quality code completion while maintaining multi-turn technical discussion capabilities.
+- Flexible fine-tuning options for specialized code-completion or chat-assistant deployment targets.
+
+---
+
+## Technical Documentation Guidelines & Docstring Standards
+
+### 1. Python Docstring Standard (Google Style)
 
 ```python
 def process_code_chunk(chunk: str, max_length: int = 2048) -> dict:
@@ -40,11 +54,10 @@ def process_code_chunk(chunk: str, max_length: int = 2048) -> dict:
     """
     if not chunk or not chunk.strip():
         raise ValueError("Cannot process empty code chunk.")
-    # Implementation details...
     return {"input_ids": [1, 2, 3], "attention_mask": [1, 1, 1]}
 ```
 
-### JSDoc / TypeScript Documentation Standard
+### 2. JSDoc / TypeScript Documentation Standard
 
 ```typescript
 /**
@@ -66,7 +79,7 @@ async function executeWithRetry<T>(
 }
 ```
 
-### Rustdoc Documentation Standard
+### 3. Rustdoc Documentation Standard
 
 ```rust
 /// Calculates the dynamic programming edit distance (Levenshtein) between two strings.
@@ -88,7 +101,7 @@ pub fn levenshtein_distance(s1: &str, s2: &str) -> usize {
 }
 ```
 
-### Doxygen C++ Standard
+### 4. Doxygen C++ Standard
 
 ```cpp
 /**
@@ -106,3 +119,58 @@ public:
     explicit LRUCache(size_t capacity);
 };
 ```
+
+### 5. Go Doc Standard
+
+```go
+// Package cache provides thread-safe in-memory caching mechanisms.
+package cache
+
+import "sync"
+
+// MemoryStore defines an in-memory key-value cache protected by a read-write mutex.
+type MemoryStore struct {
+	mu    sync.RWMutex
+	items map[string]interface{}
+}
+
+// Get retrieves a value from the cache by key. Returns (value, true) if found.
+func (m *MemoryStore) Get(key string) (interface{}, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	val, ok := m.items[key]
+	return val, ok
+}
+```
+
+---
+
+## REST & GraphQL API Design Best Practices
+
+### RESTful Conventions
+- Use nouns for resources: `/api/v1/users`, `/api/v1/orders/{id}/items`.
+- HTTP Methods:
+  - `GET`: Retrieve resources (idempotent, read-only).
+  - `POST`: Create a new resource.
+  - `PUT`: Fully update an existing resource or create if absent.
+  - `PATCH`: Partially update a resource.
+  - `DELETE`: Remove a resource.
+- Proper HTTP Status Codes:
+  - `200 OK`: Successful fetch/update.
+  - `201 Created`: Resource successfully created.
+  - `204 No Content`: Successful deletion or action with no response body.
+  - `400 Bad Request`: Validation failure or invalid request payload.
+  - `401 Unauthorized`: Authentication missing or invalid token.
+  - `403 Forbidden`: Authenticated user lacks necessary permissions.
+  - `404 Not Found`: Resource does not exist.
+  - `429 Too Many Requests`: Rate limit exceeded.
+  - `500 Internal Server Error`: Server-side unhandled exception.
+
+---
+
+## Microservices Communication & Messaging Protocols
+
+### REST vs gRPC vs WebSocket comparison
+1. **REST over HTTP/2 or HTTP/1.1**: Best for external public APIs, CRUD operations, browser compatibility.
+2. **gRPC over HTTP/2**: Best for inter-service communication (East-West traffic), low overhead serialization (Protobuf), streaming RPCs, high performance microservices.
+3. **WebSockets**: Ideal for persistent bidirectional realtime event streams (chat applications, live order updates, stock tickers).

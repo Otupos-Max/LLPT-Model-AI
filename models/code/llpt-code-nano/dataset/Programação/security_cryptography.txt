@@ -1,0 +1,90 @@
+# Cryptography, Security Engineering & Authentication Patterns
+
+# ==========================================
+# 1. Password Hashing with Argon2id (Python)
+# ==========================================
+```python
+import os
+import base64
+from cryptography.hazmat.primitives.kdf.argon2 import Argon2id
+from cryptography.hazmat.primitives import hashes
+
+def hash_password(password: str) -> dict:
+    """Hashes a password using Argon2id with random salt."""
+    salt = os.urandom(16)
+    kdf = Argon2id(
+        salt=salt,
+        length=32,
+        iterations=3,
+        lanes=4,
+        memory_cost=65536
+    )
+    key = kdf.derive(password.encode('utf-8'))
+    return {
+        "hash": base64.b64encode(key).decode('utf-8'),
+        "salt": base64.b64encode(salt).decode('utf-8')
+    }
+
+def verify_password(password: str, stored_hash_b64: str, stored_salt_b64: str) -> bool:
+    """Verifies a password against an Argon2id hash in constant time."""
+    salt = base64.b64decode(stored_salt_b64)
+    expected_key = base64.b64decode(stored_hash_b64)
+    kdf = Argon2id(
+        salt=salt,
+        length=32,
+        iterations=3,
+        lanes=4,
+        memory_cost=65536
+    )
+    try:
+        kdf.verify(password.encode('utf-8'), expected_key)
+        return True
+    except Exception:
+        return False
+```
+
+# ==========================================
+# 2. AES-256-GCM Symmetric Encryption (TypeScript / Node.js)
+# ==========================================
+```typescript
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+
+const ALGORITHM = 'aes-256-gcm';
+
+export interface EncryptedData {
+  ciphertext: string;
+  iv: string;
+  tag: string;
+}
+
+export function encryptSymmetric(plaintext: string, keyBuffer: Buffer): EncryptedData {
+  if (keyBuffer.length !== 32) {
+    throw new Error('Key must be exactly 32 bytes for AES-256');
+  }
+  const iv = randomBytes(12); // 96-bit IV recommended for AES-GCM
+  const cipher = createCipheriv(ALGORITHM, keyBuffer, iv);
+
+  let encrypted = cipher.update(plaintext, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  const tag = cipher.getAuthTag();
+
+  return {
+    ciphertext: encrypted,
+    iv: iv.toString('hex'),
+    tag: tag.toString('hex')
+  };
+}
+
+export function decryptSymmetric(encrypted: EncryptedData, keyBuffer: Buffer): string {
+  const decipher = createDecipheriv(
+    ALGORITHM,
+    keyBuffer,
+    Buffer.from(encrypted.iv, 'hex')
+  );
+  decipher.setAuthTag(Buffer.from(encrypted.tag, 'hex'));
+
+  let decrypted = decipher.update(encrypted.ciphertext, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+}
+```
