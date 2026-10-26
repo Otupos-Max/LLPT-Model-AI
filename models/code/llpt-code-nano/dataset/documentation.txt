@@ -1,9 +1,108 @@
-# LLPT Code Nano Dataset Documentation
+# LLPT Code Nano - Technical Documentation & API Specifications
 
-LLPT Code Nano (1B) uses text files (.txt) as the primary dataset format.
-Each language has a dedicated file in the dataset/ directory.
+## Architecture Decision Record (ADR-001): Model Scale & FIM Support
 
-Supported features:
-- Recursive .txt file reading from directory or direct file path.
-- Standard code continuation training.
-- Fill-in-the-Middle (FIM) training via special tokens: <PRE>, <SUF>, <MID>, <EOT>.
+### Context
+Code auto-completion models in modern IDEs require sub-50ms latency to deliver inline suggestions without disrupting developer flow. Larger models (30B+) excel at repository-wide architecture but are too heavy for local real-time auto-completion on CPU/Mobile devices.
+
+### Decision
+We standardize **LLPT Code Nano** at a **1 Billion (1B) parameter scale** utilizing a **Llama Causal LM** architecture configured with native Fill-In-The-Middle (FIM) tokens (`<PRE>`, `<SUF>`, `<MID>`, `<EOT>`).
+
+### Consequences
+- **Ultra-low latency**: Sub-50ms inference on modern desktop CPUs and quantized mobile execution.
+- **Low Memory Footprint**: Fits in 2GB-4GB VRAM or RAM (Q4_K_M quantization).
+- **FIM Capabilities**: Seamless middle-of-file completion for code completion extensions in VS Code, JetBrains, and Vim/Neovim.
+
+---
+
+## Code Documentation Guidelines & Docstring Standards
+
+### Python Docstring Standard (Google Style)
+
+```python
+def process_code_chunk(chunk: str, max_length: int = 2048) -> dict:
+    """Processes a raw code chunk, tokenizes it, and constructs attention masks.
+
+    Args:
+        chunk (str): The raw text code sample to be processed.
+        max_length (int, optional): Maximum sequence context window length. Defaults to 2048.
+
+    Returns:
+        dict: A dictionary containing 'input_ids', 'attention_mask', and 'labels'.
+
+    Raises:
+        ValueError: If `chunk` is empty or exceeds valid sequence bounds.
+
+    Examples:
+        >>> res = process_code_chunk("def foo(): pass", max_length=512)
+        >>> print(len(res['input_ids']))
+        5
+    """
+    if not chunk or not chunk.strip():
+        raise ValueError("Cannot process empty code chunk.")
+    # Implementation details...
+    return {"input_ids": [1, 2, 3], "attention_mask": [1, 1, 1]}
+```
+
+### JSDoc / TypeScript Documentation Standard
+
+```typescript
+/**
+ * Executes a retryable asynchronous network task with exponential backoff.
+ *
+ * @template T - The expected return type of the asynchronous operation.
+ * @param {() => Promise<T>} task - The asynchronous function to execute.
+ * @param {number} [retries=3] - Maximum number of retry attempts.
+ * @param {number} [delayMs=500] - Initial delay in milliseconds before retrying.
+ * @returns {Promise<T>} Resolves with the task result if successful.
+ * @throws {Error} Throws the final error if all retry attempts fail.
+ */
+async function executeWithRetry<T>(
+  task: () => Promise<T>,
+  retries: number = 3,
+  delayMs: number = 500
+): Promise<T> {
+  // Implementation...
+}
+```
+
+### Rustdoc Documentation Standard
+
+```rust
+/// Calculates the dynamic programming edit distance (Levenshtein) between two strings.
+///
+/// # Arguments
+///
+/// * `s1` - The source string slice.
+/// * `s2` - The target string slice.
+///
+/// # Examples
+///
+/// ```
+/// let dist = levenshtein_distance("kitten", "sitting");
+/// assert_eq!(dist, 3);
+/// ```
+pub fn levenshtein_distance(s1: &str, s2: &str) -> usize {
+    // Implementation...
+    0
+}
+```
+
+### Doxygen C++ Standard
+
+```cpp
+/**
+ * @brief Thread-safe LRU Cache with O(1) time complexity for get and put operations.
+ * @tparam K Key type, must support std::hash and operator==.
+ * @tparam V Value type.
+ */
+template <typename K, typename V>
+class LRUCache {
+public:
+    /**
+     * @brief Construct a new LRU Cache object.
+     * @param capacity Maximum number of items the cache can hold.
+     */
+    explicit LRUCache(size_t capacity);
+};
+```

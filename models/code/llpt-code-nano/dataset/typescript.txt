@@ -1,10 +1,150 @@
-// TypeScript Example Dataset
-interface User {
-    id: number;
-    username: string;
-    role: string;
+// TypeScript Dataset - Advanced Types, Generics & Clean Design Patterns
+
+// ==========================================
+// 1. Interfaces, Types & Generics
+// ==========================================
+
+export type Role = 'admin' | 'user' | 'editor' | 'guest';
+
+export interface BaseEntity {
+  readonly id: string;
+  readonly createdAt: Date;
+  updatedAt: Date;
 }
 
-function getUserInfo(user: User): string {
-    return `User ${user.username} (ID: ${user.id}) has role ${user.role}`;
+export interface User extends BaseEntity {
+  name: string;
+  email: string;
+  role: Role;
+  metadata?: Record<string, unknown>;
 }
+
+export type CreateUserDto = Omit<User, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdateUserDto = Partial<CreateUserDto>;
+
+// Generic Result Type for Error Handling
+export type Result<T, E = Error> =
+  | { success: true; value: T }
+  | { success: false; error: E };
+
+export function ok<T>(value: T): Result<T, never> {
+  return { success: true, value };
+}
+
+export function fail<E>(error: E): Result<never, E> {
+  return { success: false, error };
+}
+
+// ==========================================
+// 2. Generic Repository Pattern
+// ==========================================
+
+export interface Repository<T extends BaseEntity> {
+  findById(id: string): Promise<Result<T>>;
+  findAll(filter?: Partial<T>): Promise<T[]>;
+  create(data: Omit<T, keyof BaseEntity>): Promise<Result<T>>;
+  update(id: string, data: Partial<T>): Promise<Result<T>>;
+  delete(id: string): Promise<Result<boolean>>;
+}
+
+export class InMemoryRepository<T extends BaseEntity> implements Repository<T> {
+  private items: Map<string, T> = new Map();
+
+  async findById(id: string): Promise<Result<T>> {
+    const item = this.items.get(id);
+    if (!item) {
+      return fail(new Error(`Entity with ID ${id} not found`));
+    }
+    return ok(item);
+  }
+
+  async findAll(filter?: Partial<T>): Promise<T[]> {
+    const all = Array.from(this.items.values());
+    if (!filter) return all;
+    return all.filter(item =>
+      Object.entries(filter).every(([key, value]) => item[key as keyof T] === value)
+    );
+  }
+
+  async create(data: Omit<T, keyof BaseEntity>): Promise<Result<T>> {
+    const id = Math.random().toString(36).substring(2, 11);
+    const now = new Date();
+    const entity = {
+      ...data,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    } as unknown as T;
+
+    this.items.set(id, entity);
+    return ok(entity);
+  }
+
+  async update(id: string, data: Partial<T>): Promise<Result<T>> {
+    const existing = this.items.get(id);
+    if (!existing) {
+      return fail(new Error(`Cannot update: Entity ${id} not found`));
+    }
+    const updated: T = {
+      ...existing,
+      ...data,
+      updatedAt: new Date(),
+    };
+    this.items.set(id, updated);
+    return ok(updated);
+  }
+
+  async delete(id: string): Promise<Result<boolean>> {
+    const existed = this.items.delete(id);
+    if (!existed) {
+      return fail(new Error(`Cannot delete: Entity ${id} not found`));
+    }
+    return ok(true);
+  }
+}
+
+// ==========================================
+// 3. Type Guards & Discriminated Unions
+// ==========================================
+
+export type NetworkState =
+  | { state: 'idle' }
+  | { state: 'loading' }
+  | { state: 'success'; data: unknown }
+  | { state: 'error'; message: string };
+
+export function isUser(obj: unknown): obj is User {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'id' in obj &&
+    'email' in obj &&
+    'role' in obj
+  );
+}
+
+export function handleState(state: NetworkState): string {
+  switch (state.state) {
+    case 'idle':
+      return 'Ready to fetch data';
+    case 'loading':
+      return 'Loading data, please wait...';
+    case 'success':
+      return `Data received successfully: ${JSON.stringify(state.data)}`;
+    case 'error':
+      return `An error occurred: ${state.message}`;
+    default: {
+      const _exhaustiveCheck: never = state;
+      return _exhaustiveCheck;
+    }
+  }
+}
+
+// ==========================================
+// 4. Utility Mapped Types
+// ==========================================
+
+export type Nullable<T> = { [P in keyof T]: T[P] | null };
+export type DeepReadonly<T> = {
+  readonly [P in keyof T]: T[P] extends object ? DeepReadonly<T[P]> : T[P];
+};

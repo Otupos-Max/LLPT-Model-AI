@@ -1,11 +1,140 @@
-<!-- HTML Example Dataset -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LLPT Code Nano</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LLPT Code Nano Modern Semantic HTML5 Web Template">
+    <title>LLPT Code Nano - Modern Dashboard Component</title>
 </head>
 <body>
-    <h1>LLPT Code Nano (1B)</h1>
+    <!-- Header Navigation -->
+    <header role="banner" class="site-header">
+        <div class="header-container">
+            <a href="/" class="brand-logo" aria-label="LLPT Code Home">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>LLPT Code</span>
+            </a>
+            <nav role="navigation" aria-label="Main Navigation">
+                <ul class="nav-list">
+                    <li><a href="#dashboard" class="nav-link active">Dashboard</a></li>
+                    <li><a href="#models" class="nav-link">Models</a></li>
+                    <li><a href="#docs" class="nav-link">Documentation</a></li>
+                    <li><a href="#settings" class="nav-link">Settings</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main role="main" class="main-content">
+        <section id="dashboard" class="dashboard-section" aria-labelledby="section-heading">
+            <header class="section-header">
+                <h1 id="section-heading">Model Performance Metrics</h1>
+                <p class="subtitle">Real-time statistics for LLPT Code Nano (1B Parameters)</p>
+            </header>
+
+            <!-- Key Metric Cards -->
+            <div class="metrics-grid">
+                <article class="metric-card">
+                    <h2>Target Latency</h2>
+                    <p class="metric-value"><time datetime="PT0.05S">&lt; 50ms</time></p>
+                    <span class="status-tag status-success">Optimized</span>
+                </article>
+
+                <article class="metric-card">
+                    <h2>Context Window</h2>
+                    <p class="metric-value">8,192 Tokens</p>
+                    <span class="status-tag status-info">Configurable</span>
+                </article>
+
+                <article class="metric-card">
+                    <h2>Parameters</h2>
+                    <p class="metric-value">1,000,000,000</p>
+                    <span class="status-tag status-warning">Ultralight</span>
+                </article>
+            </div>
+
+            <!-- Interactive Form with Accessibility & ARIA -->
+            <section class="form-container" aria-labelledby="form-heading">
+                <h2 id="form-heading">Configuration & Fine-Tuning Parameters</h2>
+                <form action="/api/v1/configure" method="POST" id="config-form" class="accessible-form">
+                    <div class="form-group">
+                        <label for="model-scale">Select Model Architecture:</label>
+                        <select id="model-scale" name="modelScale" required aria-required="true">
+                            <option value="nano" selected>LLPT Code Nano (1B)</option>
+                            <option value="small">LLPT Code Small (10B)</option>
+                            <option value="medium">LLPT Code Medium (30B)</option>
+                            <option value="large">LLPT Code Large (70B)</option>
+                            <option value="max">LLPT Code Max (120B)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="learning-rate">Learning Rate:</label>
+                        <input type="number" id="learning-rate" name="learningRate" step="0.00001" min="0.00001" max="0.01" value="0.00005" required>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="enable-fim" name="enableFim" checked>
+                        <label for="enable-fim">Enable Fill-In-The-Middle (FIM) Tokens (&lt;PRE&gt;, &lt;SUF&gt;, &lt;MID&gt;, &lt;EOT&gt;)</label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Configuration</button>
+                        <button type="reset" class="btn btn-secondary">Reset</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Data Table -->
+            <section class="table-container">
+                <h2>Supported Programming Languages</h2>
+                <table class="data-table">
+                    <caption>List of native language support and context benchmarks</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Language</th>
+                            <th scope="col">Extension</th>
+                            <th scope="col">FIM Support</th>
+                            <th scope="col">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Python</td>
+                            <td><code>.py</code> / <code>.txt</code></td>
+                            <td>Yes</td>
+                            <td><span class="badge badge-active">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>TypeScript</td>
+                            <td><code>.ts</code> / <code>.txt</code></td>
+                            <td>Yes</td>
+                            <td><span class="badge badge-active">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>Rust</td>
+                            <td><code>.rs</code> / <code>.txt</code></td>
+                            <td>Yes</td>
+                            <td><span class="badge badge-active">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>Go</td>
+                            <td><code>.go</code> / <code>.txt</code></td>
+                            <td>Yes</td>
+                            <td><span class="badge badge-active">Active</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer role="contentinfo" class="site-footer">
+        <p>&copy; 2026 LLPT Project. All rights reserved.</p>
+    </footer>
 </body>
 </html>

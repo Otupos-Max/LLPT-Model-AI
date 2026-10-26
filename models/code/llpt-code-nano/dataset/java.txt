@@ -1,6 +1,146 @@
-// Java Example Dataset
-public class Main {
+// Java Dataset - Modern Java 17+ OOP, Streams, Concurrency & Data Modeling
+
+package com.llpt.code;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.time.Instant;
+
+// ==========================================
+// 1. Immutable Records & Enums
+// ==========================================
+
+public class JavaDatasetExamples {
+
+    public enum Role {
+        ADMIN, DEVELOPER, DESIGNER, GUEST
+    }
+
+    public record User(
+        String id,
+        String name,
+        String email,
+        Role role,
+        boolean active,
+        Instant createdAt
+    ) {
+        public User {
+            Objects.requireNonNull(id, "ID cannot be null");
+            Objects.requireNonNull(email, "Email cannot be null");
+        }
+
+        public boolean isAdmin() {
+            return role == Role.ADMIN;
+        }
+    }
+
+    // Custom Exception
+    public static class UserNotFoundException extends RuntimeException {
+        public UserNotFoundException(String id) {
+            super("User not found with ID: " + id);
+        }
+    }
+
+    // ==========================================
+    // 2. Stream API & Data Processing
+    // ==========================================
+
+    public static class UserService {
+        private final Map<String, User> userDatabase = new ConcurrentHashMap<>();
+
+        public void saveUser(User user) {
+            userDatabase.put(user.id(), user);
+        }
+
+        public Optional<User> findById(String id) {
+            return Optional.ofNullable(userDatabase.get(id));
+        }
+
+        public List<User> filterActiveByRole(Role role) {
+            return userDatabase.values().stream()
+                .filter(User::active)
+                .filter(u -> u.role() == role)
+                .sorted(Comparator.comparing(User::name))
+                .collect(Collectors.toList());
+        }
+
+        public Map<Role, List<User>> groupUsersByRole() {
+            return userDatabase.values().stream()
+                .collect(Collectors.groupingBy(User::role));
+        }
+
+        public double calculateActiveUserRatio() {
+            if (userDatabase.isEmpty()) return 0.0;
+            long activeCount = userDatabase.values().stream()
+                .filter(User::active)
+                .count();
+            return (double) activeCount / userDatabase.size();
+        }
+    }
+
+    // ==========================================
+    // 3. Asynchronous Execution & CompletableFuture
+    // ==========================================
+
+    public static class AsyncDataFetcher {
+        private final ExecutorService executor = Executors.newFixedThreadPool(4);
+
+        public CompletableFuture<String> fetchDataAsync(String endpoint) {
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    Thread.sleep(200); // Simulate network latency
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("Thread interrupted", e);
+                }
+                return "Response from " + endpoint;
+            }, executor);
+        }
+
+        public CompletableFuture<List<String>> fetchAllEndpoints(List<String> endpoints) {
+            List<CompletableFuture<String>> futures = endpoints.stream()
+                .map(this::fetchDataAsync)
+                .toList();
+
+            CompletableFuture<Void> allOf = CompletableFuture.allOf(
+                futures.toArray(new CompletableFuture[0])
+            );
+
+            return allOf.thenApply(v ->
+                futures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList())
+            );
+        }
+
+        public void shutdown() {
+            executor.shutdown();
+        }
+    }
+
+    // ==========================================
+    // 4. Main Demonstration
+    // ==========================================
+
     public static void main(String[] args) {
-        System.out.println("LLPT Code Nano Java Dataset Example");
+        UserService service = new UserService();
+        User u1 = new User("1", "Alice", "alice@example.com", Role.ADMIN, true, Instant.now());
+        User u2 = new User("2", "Bob", "bob@example.com", Role.DEVELOPER, true, Instant.now());
+        User u3 = new User("3", "Charlie", "charlie@example.com", Role.DEVELOPER, false, Instant.now());
+
+        service.saveUser(u1);
+        service.saveUser(u2);
+        service.saveUser(u3);
+
+        List<User> developers = service.filterActiveByRole(Role.DEVELOPER);
+        System.out.println("Active developers count: " + developers.size());
+
+        AsyncDataFetcher fetcher = new AsyncDataFetcher();
+        fetcher.fetchAllEndpoints(List.of("/api/v1/users", "/api/v1/orders"))
+            .thenAccept(results -> results.forEach(System.out::println))
+            .join();
+
+        fetcher.shutdown();
     }
 }

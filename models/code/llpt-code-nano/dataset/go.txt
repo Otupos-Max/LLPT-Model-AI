@@ -1,8 +1,227 @@
-// Go Example Dataset
+// Go Dataset - Idiomatic Golang Concurrency, Microservices & Interfaces
+
 package main
 
-import "fmt"
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
+	"net/http"
+	"sync"
+	"time"
+)
+
+// ==========================================
+// 1. Data Structs & Interfaces
+// ==========================================
+
+type Role string
+
+const (
+	RoleAdmin     Role = "ADMIN"
+	RoleDeveloper Role = "DEVELOPER"
+	RoleGuest     Role = "GUEST"
+)
+
+type User struct {
+	ID        string    `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Role      Role      `json:"role"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type UserRepository interface {
+	FindByID(ctx context.Context, id string) (*User, error)
+	Save(ctx context.Context, user *User) error
+	ListActive(ctx context.Context) ([]*User, error)
+}
+
+// Custom Error
+var ErrUserNotFound = errors.New("user not found")
+
+// ==========================================
+// 2. In-Memory Repository Implementation
+// ==========================================
+
+type InMemoryUserRepo struct {
+	mu    sync.RWMutex
+	users map[string]*User
+}
+
+func NewInMemoryUserRepo() *InMemoryUserRepo {
+	return &InMemoryUserRepo{
+		users: make(map[string]*User),
+	}
+}
+
+func (r *InMemoryUserRepo) FindByID(ctx context.Context, id string) (*User, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
+	user, exists := r.users[id]
+	if !exists {
+		return nil, fmt.Errorf("lookup failed for ID %s: %w", id, ErrUserNotFound)
+	}
+	return user, nil
+}
+
+func (r *InMemoryUserRepo) Save(ctx context.Context, user *User) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
+	if user.ID == "" {
+		return errors.New("user ID cannot be empty")
+	}
+
+	r.users[user.ID] = user
+	return nil
+}
+
+func (r *InMemoryUserRepo) ListActive(ctx context.Context) ([]*User, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var activeUsers []*User
+	for _, u := range r.users {
+		if u.IsActive {
+			activeUsers = append(activeUsers, u)
+		}
+	}
+	return activeUsers, nil
+}
+
+// ==========================================
+// 3. Concurrent Worker Pool Pattern
+// ==========================================
+
+type Task struct {
+	ID    int
+	Payload string
+}
+
+type Result struct {
+	TaskID int
+	Output string
+	Err    error
+}
+
+func Worker(id int, tasks <-chan Task, results chan<- Result) {
+	for t := range tasks {
+		// Simulate computation or network I/O
+		time.Sleep(50 * time.Millisecond)
+		results <- Result{
+			TaskID: t.ID,
+			Output: fmt.Sprintf("Worker %d processed task '%s'", id, t.Payload),
+			Err:    nil,
+		}
+	}
+}
+
+func RunWorkerPool(numWorkers int, taskList []Task) []Result {
+	tasks := make(chan Task, len(taskList))
+	results := make(chan Result, len(taskList))
+
+	for w := 1; w <= numWorkers; w++ {
+		go Worker(w, tasks, results)
+	}
+
+	for _, t := range taskList {
+		tasks <- t
+	}
+	close(tasks)
+
+	var resList []Result
+	for i := 0; i < len(taskList); i++ {
+		resList = append(resList, <-results)
+	}
+	return resList
+}
+
+// ==========================================
+// 4. HTTP API Handlers
+// ==========================================
+
+type UserHandler struct {
+	repo UserRepository
+}
+
+func NewUserHandler(repo UserRepository) *UserHandler {
+	return &UserHandler{repo: repo}
+}
+
+func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "missing 'id' query parameter", http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.repo.FindByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			http.Error(w, "user not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(user)
+}
 
 func main() {
-    fmt.Println("LLPT Code Nano Go Example")
+	fmt.Println("=== Go Language Dataset Examples ===")
+
+	repo := NewInMemoryUserRepo()
+	ctx := context.Background()
+
+	u := &User{
+		ID:        "usr-101",
+		Username:  "gopher",
+		Email:     "gopher@golang.org",
+		Role:      RoleDeveloper,
+		IsActive:  true,
+		CreatedAt: time.Now(),
+	}
+
+	if err := repo.Save(ctx, u); err != nil {
+		log.Fatalf("Failed to save user: %v", err)
+	}
+
+	found, err := repo.FindByID(ctx, "usr-101")
+	if err != nil {
+		log.Fatalf("Failed to find user: %v", err)
+	}
+	fmt.Printf("Found User: %s (%s)\n", found.Username, found.Email)
+
+	// Test Worker Pool
+	taskList := []Task{
+		{ID: 1, Payload: "Sync DB"},
+		{ID: 2, Payload: "Send Emails"},
+		{ID: 3, Payload: "Compress Logs"},
+	}
+	res := RunWorkerPool(2, taskList)
+	for _, r := range res {
+		fmt.Printf("[Result] Task #%d -> %s\n", r.TaskID, r.Output)
+	}
 }

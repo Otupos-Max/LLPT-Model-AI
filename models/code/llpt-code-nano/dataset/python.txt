@@ -1,5 +1,18 @@
-# Python Example Dataset
+# Python Dataset - High Quality Real-World Code Examples
+
+# ==========================================
+# 1. Algorithms & Data Structures
+# ==========================================
+
+from typing import List, Dict, Any, Optional, Generator, Callable, TypeVar
+import time
+import functools
+import asyncio
+from dataclasses import dataclass, field
+import heapq
+
 def fibonacci(n: int) -> int:
+    """Calculates the n-th Fibonacci number using iterative dynamic programming."""
     if n <= 0:
         return 0
     elif n == 1:
@@ -9,5 +22,204 @@ def fibonacci(n: int) -> int:
         a, b = b, a + b
     return b
 
+
+def binary_search(arr: List[int], target: int) -> int:
+    """Performs binary search on a sorted list and returns index if found, else -1."""
+    left, right = 0, len(arr) - 1
+    while left <= right:
+        mid = (left + right) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    return -1
+
+
+def quicksort(arr: List[int]) -> List[int]:
+    """Sorts an array using the quicksort algorithm with divide and conquer."""
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + middle + quicksort(right)
+
+
+def dijkstra(graph: Dict[str, Dict[str, float]], start: str) -> Dict[str, float]:
+    """Calculates shortest paths from start node to all other nodes in a weighted graph."""
+    distances = {node: float('inf') for node in graph}
+    distances[start] = 0.0
+    pq = [(0.0, start)]
+
+    while pq:
+        current_dist, current_node = heapq.heappop(pq)
+        if current_dist > distances[current_node]:
+            continue
+
+        for neighbor, weight in graph[current_node].items():
+            distance = current_dist + weight
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                heapq.heappush(pq, (distance, neighbor))
+
+    return distances
+
+
+class LRUCache:
+    """Least Recently Used (LRU) Cache implementation with O(1) ops using hashmap and doubly linked list."""
+
+    class Node:
+        def __init__(self, key: int, val: int):
+            self.key = key
+            self.val = val
+            self.prev: Optional['LRUCache.Node'] = None
+            self.next: Optional['LRUCache.Node'] = None
+
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.cache: Dict[int, LRUCache.Node] = {}
+        self.head = self.Node(0, 0)
+        self.tail = self.Node(0, 0)
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    def _remove(self, node: Node) -> None:
+        p, n = node.prev, node.next
+        if p and n:
+            p.next = n
+            n.prev = p
+
+    def _add(self, node: Node) -> None:
+        p = self.tail.prev
+        if p:
+            p.next = node
+            node.prev = p
+            node.next = self.tail
+            self.tail.prev = node
+
+    def get(self, key: int) -> int:
+        if key in self.cache:
+            node = self.cache[key]
+            self._remove(node)
+            self._add(node)
+            return node.val
+        return -1
+
+    def put(self, key: int, value: int) -> None:
+        if key in self.cache:
+            self._remove(self.cache[key])
+        node = self.Node(key, value)
+        self._add(node)
+        self.cache[key] = node
+        if len(self.cache) > self.capacity:
+            lru = self.head.next
+            if lru and lru != self.tail:
+                self._remove(lru)
+                del self.cache[lru.key]
+
+
+# ==========================================
+# 2. Design Patterns & Decorators
+# ==========================================
+
+T = TypeVar('T')
+
+def retry(retries: int = 3, delay: float = 1.0):
+    """Decorator to retry a function if an exception occurs."""
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> T:
+            for attempt in range(1, retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    if attempt == retries:
+                        raise e
+                    time.sleep(delay)
+            raise RuntimeError("Unreachable")
+        return wrapper
+    return decorator
+
+
+def timing_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+    """Decorator to measure execution time of a function."""
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        elapsed = time.perf_counter() - start_time
+        print(f"[TIMER] {func.__name__} took {elapsed:.6f} seconds")
+        return result
+    return wrapper
+
+
+@dataclass
+class UserProfile:
+    id: int
+    username: str
+    email: str
+    is_active: bool = True
+    roles: List[str] = field(default_factory=lambda: ["user"])
+
+    def has_permission(self, role: str) -> bool:
+        return role in self.roles or "admin" in self.roles
+
+
+class DatabaseConnectionManager:
+    """Context Manager for Database Connections."""
+    def __init__(self, db_url: str):
+        self.db_url = db_url
+        self.connected = False
+
+    def __enter__(self):
+        print(f"Connecting to database at {self.db_url}...")
+        self.connected = True
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print("Closing database connection...")
+        self.connected = False
+        if exc_type:
+            print(f"Handled error during DB session: {exc_val}")
+        return False
+
+
+# ==========================================
+# 3. Async Task Execution & Generators
+# ==========================================
+
+async def fetch_api_data(endpoint: str, timeout: float = 5.0) -> Dict[str, Any]:
+    """Simulates an asynchronous HTTP request with timeout handling."""
+    print(f"Fetching data from {endpoint}...")
+    await asyncio.sleep(0.5)  # Simulate network IO latency
+    return {"status": "success", "endpoint": endpoint, "data": [1, 2, 3, 4, 5]}
+
+
+async def process_batch_tasks(endpoints: List[str]) -> List[Dict[str, Any]]:
+    """Executes multiple async requests concurrently using asyncio.gather."""
+    tasks = [fetch_api_data(ep) for ep in endpoints]
+    results = await asyncio.gather(*tasks)
+    return results
+
+
+def chunk_generator(data: List[Any], chunk_size: int) -> Generator[List[Any], None, None]:
+    """Yield successive n-sized chunks from a list."""
+    for i in range(0, len(data), chunk_size):
+        yield data[i:i + chunk_size]
+
+
 if __name__ == "__main__":
     print(f"Fibonacci(10) = {fibonacci(10)}")
+    arr = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]
+    sorted_arr = quicksort(arr)
+    print(f"Sorted array: {sorted_arr}")
+    print(f"Binary search for 4: {binary_search(sorted_arr, 4)}")
+
+    with DatabaseConnectionManager("sqlite:///app.db") as db:
+        user = UserProfile(id=1, username="alex", email="alex@example.com", roles=["admin"])
+        print(f"User is admin: {user.has_permission('admin')}")
+
+    asyncio.run(process_batch_tasks(["/api/v1/users", "/api/v1/posts"]))

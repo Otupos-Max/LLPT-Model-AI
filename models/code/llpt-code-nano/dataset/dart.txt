@@ -1,5 +1,160 @@
-// Dart Example Dataset
-void main() {
-  final greeting = 'LLPT Code Nano Dart Example';
-  print(greeting);
+// Dart Dataset - Modern Dart 3 Null Safety, Futures, Streams & Patterns
+
+import 'dart:async';
+import 'dart:convert';
+
+// ==========================================
+// 1. Enums, Records & Sealed Classes
+// ==========================================
+
+enum UserRole {
+  admin,
+  developer,
+  guest;
+
+  String get label => switch (this) {
+    UserRole.admin => 'System Administrator',
+    UserRole.developer => 'Software Engineer',
+    UserRole.guest => 'Guest User',
+  };
+}
+
+sealed class UIState<T> {
+  const UIState();
+}
+
+final class Idle<T> extends UIState<T> {
+  const Idle();
+}
+
+final class Loading<T> extends UIState<T> {
+  const Loading();
+}
+
+final class Success<T> extends UIState<T> {
+  final T data;
+  const Success(this.data);
+}
+
+final class Failure<T> extends UIState<T> {
+  final String message;
+  final Exception? exception;
+  const Failure(this.message, [this.exception]);
+}
+
+// ==========================================
+// 2. Data Models with Null Safety & JSON
+// ==========================================
+
+class User {
+  final String id;
+  final String username;
+  final String email;
+  final UserRole role;
+  final bool isActive;
+  final DateTime createdAt;
+
+  const User({
+    required this.id,
+    required this.username,
+    required this.email,
+    this.role = UserRole.guest,
+    this.isActive = true,
+    required this.createdAt,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'] as String,
+      username: json['username'] as String,
+      email: json['email'] as String,
+      role: UserRole.values.byName(json['role'] as String? ?? 'guest'),
+      isActive: json['is_active'] as bool? ?? true,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'username': username,
+    'email': email,
+    'role': role.name,
+    'is_active': isActive,
+    'created_at': createdAt.toIso8601String(),
+  };
+
+  User copyWith({
+    String? username,
+    String? email,
+    UserRole? role,
+    bool? isActive,
+  }) {
+    return User(
+      id: id,
+      username: username ?? this.username,
+      email: email ?? this.email,
+      role: role ?? this.role,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt,
+    );
+  }
+}
+
+// ==========================================
+// 3. Streams & Async Data Processing
+// ==========================================
+
+class UserRepository {
+  final Map<String, User> _userDb = {};
+  final _userController = StreamController<List<User>>.broadcast();
+
+  Stream<List<User>> get userStream => _userController.stream;
+
+  Future<User> getUserById(String id) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    final user = _userDb[id];
+    if (user == null) {
+      throw Exception('User $id not found');
+    }
+    return user;
+  }
+
+  Future<void> saveUser(User user) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+    _userDb[user.id] = user;
+    _userController.add(_userDb.values.toList());
+  }
+
+  void dispose() {
+    _userController.close();
+  }
+}
+
+// Pattern Matching Function Example
+String processState<T>(UIState<T> state) {
+  return switch (state) {
+    Idle() => 'System is idle',
+    Loading() => 'Fetching data from server...',
+    Success(:final data) => 'Success! Received payload: $data',
+    Failure(:final message) => 'Error occurred: $message',
+  };
+}
+
+Future<void> main() async {
+  print('=== Dart 3 Dataset Examples ===');
+
+  final repo = UserRepository();
+  final alice = User(
+    id: 'usr-1',
+    username: 'alice',
+    email: 'alice@dart.dev',
+    role: UserRole.admin,
+    createdAt: DateTime.now(),
+  );
+
+  await repo.saveUser(alice);
+  final fetched = await repo.getUserById('usr-1');
+  print('Fetched User: ${fetched.username} (${fetched.role.label})');
+
+  repo.dispose();
 }

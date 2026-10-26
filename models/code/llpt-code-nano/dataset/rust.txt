@@ -1,5 +1,157 @@
-// Rust Example Dataset
-fn main() {
-    let msg = "LLPT Code Nano Rust Example";
-    println!("{}", msg);
+// Rust Dataset - Safe Systems Programming, Ownership, Concurrency & Traits
+
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::fmt;
+
+// ==========================================
+// 1. Custom Error Types & Result/Option Handling
+// ==========================================
+
+#[derive(Debug, Clone)]
+pub enum AppError {
+    NotFound(String),
+    ValidationFailed(String),
+    DatabaseError(String),
+}
+
+impl fmt::Display for AppError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AppError::NotFound(msg) => write!(f, "Not Found: {}", msg),
+            AppError::ValidationFailed(msg) => write!(f, "Validation Error: {}", msg),
+            AppError::DatabaseError(msg) => write!(f, "Database Error: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for AppError {}
+
+pub type Result<T> = std::result::Result<T, AppError>;
+
+// ==========================================
+// 2. Structs, Enums & Traits
+// ==========================================
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Role {
+    Admin,
+    Developer,
+    User,
+}
+
+#[derive(Debug, Clone)]
+pub struct User {
+    pub id: u64,
+    pub username: String,
+    pub email: String,
+    pub role: Role,
+    pub active: bool,
+}
+
+pub trait Repository<T> {
+    fn find_by_id(&self, id: u64) -> Result<T>;
+    fn save(&mut self, entity: T) -> Result<T>;
+    fn list_active(&self) -> Vec<T>;
+}
+
+// ==========================================
+// 3. Thread-Safe In-Memory Repository
+// ==========================================
+
+pub struct UserRepository {
+    storage: HashMap<u64, User>,
+}
+
+impl UserRepository {
+    pub fn new() -> Self {
+        Self {
+            storage: HashMap::new(),
+        }
+    }
+}
+
+impl Repository<User> for UserRepository {
+    fn find_by_id(&self, id: u64) -> Result<User> {
+        self.storage
+            .get(&id)
+            .cloned()
+            .ok_or_else(|| AppError::NotFound(format!("User with id {} not found", id)))
+    }
+
+    fn save(&mut self, user: User) -> Result<User> {
+        if !user.email.contains('@') {
+            return Err(AppError::ValidationFailed("Invalid email format".into()));
+        }
+        self.storage.insert(user.id, user.clone());
+        Ok(user)
+    }
+
+    fn list_active(&self) -> Vec<User> {
+        self.storage
+            .values()
+            .filter(|u| u.active)
+            .cloned()
+            .collect()
+    }
+}
+
+// ==========================================
+// 4. Safe Concurrency with Arc and Mutex
+// ==========================================
+
+pub struct ConcurrentUserStore {
+    inner: Arc<Mutex<UserRepository>>,
+}
+
+impl ConcurrentUserStore {
+    pub fn new() -> Self {
+        Self {
+            inner: Arc::new(Mutex::new(UserRepository::new())),
+        }
+    }
+
+    pub fn insert_user(&self, user: User) -> Result<User> {
+        let mut guard = self
+            .inner
+            .lock()
+            .map_err(|_| AppError::DatabaseError("Mutex lock poisoned".into()))?;
+        guard.save(user)
+    }
+
+    pub fn fetch_user(&self, id: u64) -> Result<User> {
+        let guard = self
+            .inner
+            .lock()
+            .map_err(|_| AppError::DatabaseError("Mutex lock poisoned".into()))?;
+        guard.find_by_id(id)
+    }
+}
+
+// ==========================================
+// 5. Main Execution
+// ==========================================
+
+fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    println!("=== Rust Dataset Examples ===");
+
+    let store = ConcurrentUserStore::new();
+
+    let user1 = User {
+        id: 1,
+        username: String::from("alice"),
+        email: String::from("alice@rust-lang.org"),
+        role: Role::Admin,
+        active: true,
+    };
+
+    store.insert_user(user1)?;
+    println!("User inserted successfully!");
+
+    match store.fetch_user(1) {
+        Ok(u) => println!("Fetched user: {} ({:?})", u.username, u.role),
+        Err(e) => eprintln!("Error fetching user: {}", e),
+    }
+
+    Ok(())
 }

@@ -1,12 +1,152 @@
-// C++ Example Dataset
+// C++ Dataset - Modern C++17/20 OOP, Smart Pointers, Templates & Concurrency
+
 #include <iostream>
+#include <memory>
 #include <vector>
+#include <string>
+#include <algorithm>
+#include <mutex>
+#include <thread>
+#include <optional>
+#include <functional>
+#include <unordered_map>
+
+// ==========================================
+// 1. RAII & Smart Pointer Management
+// ==========================================
+
+class Resource {
+private:
+    std::string name;
+public:
+    explicit Resource(std::string name) : name(std::move(name)) {
+        std::cout << "[Resource] Acquired: " << this->name << "\n";
+    }
+
+    ~Resource() {
+        std::cout << "[Resource] Released: " << name << "\n";
+    }
+
+    void performAction() const {
+        std::cout << "[Resource] Executing action on " << name << "\n";
+    }
+};
+
+class ResourceManager {
+private:
+    std::vector<std::unique_ptr<Resource>> resources;
+public:
+    void addResource(std::string name) {
+        resources.push_back(std::make_unique<Resource>(std::move(name)));
+    }
+
+    void executeAll() const {
+        for (const auto& res : resources) {
+            res->performAction();
+        }
+    }
+};
+
+// ==========================================
+// 2. Thread-Safe Concurrent Queue
+// ==========================================
+
+template <typename T>
+class ThreadSafeQueue {
+private:
+    mutable std::mutex mtx;
+    std::vector<T> data;
+public:
+    ThreadSafeQueue() = default;
+
+    void push(T value) {
+        std::lock_guard<std::mutex> lock(mtx);
+        data.push_back(std::move(value));
+    }
+
+    std::optional<T> pop() {
+        std::lock_guard<std::mutex> lock(mtx);
+        if (data.empty()) return std::nullopt;
+        T val = std::move(data.back());
+        data.pop_back();
+        return val;
+    }
+
+    [[nodiscard]] size_t size() const {
+        std::lock_guard<std::mutex> lock(mtx);
+        return data.size();
+    }
+};
+
+// ==========================================
+// 3. Variadic Templates & Functional Utilities
+// ==========================================
+
+template <typename... Args>
+void logMessage(Args&&... args) {
+    (std::cout << ... << std::forward<Args>(args)) << std::endl;
+}
+
+template <typename Container, typename Predicate>
+auto filterContainer(const Container& container, Predicate pred) {
+    Container result;
+    std::copy_if(container.begin(), container.end(), std::back_inserter(result), pred);
+    return result;
+}
+
+// ==========================================
+// 4. Modern C++ Polymorphism & Visitor
+// ==========================================
+
+class Shape {
+public:
+    virtual ~Shape() = default;
+    [[nodiscard]] virtual double area() const = 0;
+    [[nodiscard]] virtual std::string name() const = 0;
+};
+
+class Circle : public Shape {
+private:
+    double radius;
+public:
+    explicit Circle(double r) : radius(r) {}
+    [[nodiscard]] double area() const override { return 3.141592653589793 * radius * radius; }
+    [[nodiscard]] std::string name() const override { return "Circle"; }
+};
+
+class Rectangle : public Shape {
+private:
+    double width, height;
+public:
+    Rectangle(double w, double h) : width(w), height(h) {}
+    [[nodiscard]] double area() const override { return width * height; }
+    [[nodiscard]] std::string name() const override { return "Rectangle"; }
+};
 
 int main() {
-    std::vector<int> nums = {1, 2, 3, 4, 5};
-    for (int n : nums) {
-        std::cout << n << " ";
+    logMessage("=== Modern C++17/20 Examples ===");
+
+    ResourceManager mgr;
+    mgr.addResource("DatabasePool");
+    mgr.addResource("SocketConnection");
+    mgr.executeAll();
+
+    std::vector<std::shared_ptr<Shape>> shapes = {
+        std::make_shared<Circle>(5.0),
+        std::make_shared<Rectangle>(4.0, 6.0)
+    };
+
+    for (const auto& shape : shapes) {
+        logMessage("Shape: ", shape->name(), " | Area: ", shape->area());
     }
-    std::cout << std::endl;
+
+    ThreadSafeQueue<int> queue;
+    queue.push(42);
+    queue.push(100);
+
+    if (auto val = queue.pop()) {
+        logMessage("Popped value: ", *val);
+    }
+
     return 0;
 }
