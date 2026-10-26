@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Shell Example Dataset
+echo "Starting LLPT Code Nano Training Setup..."
+mkdir -p weights/checkpoints
+echo "Setup complete."

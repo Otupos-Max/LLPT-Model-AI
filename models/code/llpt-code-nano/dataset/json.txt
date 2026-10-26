@@ -1,0 +1,6 @@
+{
+  "model_name": "LLPT Code Nano",
+  "parameters": "1B",
+  "dataset_format": "txt",
+  "fim_supported": true
+}

@@ -1,0 +1,8 @@
+-- SQL Example Dataset
+CREATE TABLE models (
+    id INT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    parameters_billion FLOAT NOT NULL
+);
+
+INSERT INTO models (id, name, parameters_billion) VALUES (1, 'LLPT Code Nano', 1.0);

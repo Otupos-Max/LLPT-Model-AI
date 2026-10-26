@@ -9,20 +9,56 @@
 ## 📊 Especificações Técnicas
 
 - **Família:** LLPT Code (Programação & Engenharia de Software)
-- **Escala de Parâmetros:** 1B (1 Bilhão)
-- **Arquitetura Base:** Llama Causal LM com suporte nativo a Fill-In-the-Middle (FIM)
-- **Janela de Contexto:** 8.192 tokens
-- **Linguagens Principais:** Python, JavaScript/TypeScript, C/C++, Rust, Go, Java, SQL, Shell, HTML/CSS
+- **Escala de Parâmetros:** 1B (1 Bilhão de Parâmetros)
+- **Arquitetura Base:** Llama Causal LM (`LlamaForCausalLM`) com suporte nativo a Fill-In-the-Middle (FIM)
+- **Janela de Contexto:** Configurável até 8.192 tokens
+- **Linguagens Suportadas:** Python, JavaScript, TypeScript, Java, Kotlin, C, C++, C#, Rust, Go, PHP, Ruby, Swift, Dart, HTML, CSS, SQL, Shell, JSON, Documentação e exemplos FIM.
 - **Hardware Recomendado:**
-  - **Desktop:** CPU / GPU (2GB+ VRAM para inferência, 6GB+ VRAM para treino/fine-tuning)
+  - **Desktop:** CPU / GPU (2GB+ VRAM para inferência, 6GB+ VRAM para treino/fine-tuning completo de 1B)
   - **Mobile:** Dispositivos Android (Termux / MLC-LLM) / iOS com 4GB+ RAM (modelo quantizado Q4_K_M)
 - **Latência Alvo:** Sub-50ms para autocompletar inline
 
 ---
 
-## 🛠️ Estrutura de Treinamento e Pesos
+## 📂 Estrutura do Dataset (.txt)
 
-O modelo já possui toda a estrutura pronta para ser treinado e utilizado. Os arquivos e pastas estão organizados como segue:
+O LLPT Code Nano utiliza arquivos de texto plano (`.txt`) organizados por linguagem e finalidade dentro do diretório `dataset/`:
+
+```text
+models/code/llpt-code-nano/dataset/
+├── python.txt           # Código Python
+├── javascript.txt       # Código JavaScript
+├── typescript.txt       # Código TypeScript
+├── java.txt             # Código Java
+├── kotlin.txt           # Código Kotlin
+├── c.txt                # Código C
+├── cpp.txt              # Código C++
+├── csharp.txt           # Código C#
+├── rust.txt             # Código Rust
+├── go.txt               # Código Go
+├── php.txt              # Código PHP
+├── ruby.txt             # Código Ruby
+├── swift.txt            # Código Swift
+├── dart.txt             # Código Dart
+├── html.txt             # Estruturas HTML
+├── css.txt              # Estilos CSS
+├── sql.txt              # Consultas e scripts SQL
+├── shell.txt            # Scripts Shell / Bash
+├── json.txt             # Estruturas JSON
+├── documentation.txt    # Documentação técnica e docstrings
+└── fim_examples.txt     # Exemplos de Fill-in-the-Middle com tokens <PRE>, <SUF>, <MID>, <EOT>
+```
+
+### Como Adicionar Novos Arquivos e Linguagens
+
+1. Basta criar ou adicionar arquivos `.txt` dentro de `models/code/llpt-code-nano/dataset/` ou em subdiretórios.
+2. O leitor do `train.py` varre o diretório recursivamente.
+3. Arquivos vazios ou compostos apenas por espaços são identificados e ignorados com aviso no log.
+4. Para exemplos FIM, utilize a estrutura documentada com as tags `<PRE>`, `<SUF>`, `<MID>` e `<EOT>`.
+
+---
+
+## 🛠️ Estrutura do Projeto e Pesos
 
 ```text
 models/code/llpt-code-nano/
@@ -32,36 +68,48 @@ models/code/llpt-code-nano/
 ├── config.json             # Configuração da arquitetura neural do modelo (1B, FIM)
 ├── tokenizer_config.json   # Configuração do tokenizer com tokens especiais de FIM
 ├── src/
-│   └── train.py            # Script de treinamento e fine-tuning
-├── dataset/                # Diretório para os dados de treino (train.jsonl, valid.jsonl)
+│   ├── model.py            # Definição e carregamento do modelo PyTorch
+│   ├── train.py            # Pipeline completo de treinamento, FIM, chunking e checkpoints
+│   └── inference.py        # Pipeline de geração de código e autocompletar FIM
+├── tests/
+│   └── test_pipeline.py    # Suíte de testes automatizados do pipeline
+├── dataset/                # Diretório com datasets de código .txt
 └── weights/                # Diretório reservado para armazenamento dos pesos
-    ├── raw/                # Pesos originais em Safetensors / PyTorch (BF16 / FP16)
-    ├── checkpoints/        # Checkpoints intermediários do treinamento
+    ├── checkpoints/        # Checkpoints salvos durante o treinamento (checkpoint-epoch-X/)
     ├── final/              # Modelo final consolidado pós-treino
     └── gguf/               # Pesos quantizados (Q4_K_M, Q8_0) para llama.cpp e Mobile
 ```
 
 ---
 
+## ⚠️ Diferença entre Pesos Inicializados e Pesos Treinados
+
+- **Pesos Inicializados (Aleatórios):** Quando o modelo é instanciado sem carregar pesos pré-treinados (`pytorch_model.bin` ou `model.safetensors`), seus parâmetros são inicializados aleatoriamente a partir da distribuição definida em `config.json`. A geração de texto resultará em tokens aleatórios até que o modelo seja treinado.
+- **Pesos Treinados:** Pesos gerados após a execução do processo de otimização (`train.py`) com backpropagation sobre o dataset. Arquivos grandes de pesos não devem ser salvos diretamente no Git.
+
+---
+
 ## 🚀 Como Treinar e Utilizar
 
-Para obter todos os comandos detalhados de treinamento, fine-tuning com LoRA, conversão para GGUF e inferência:
+1. **Dependências:** `pip install torch transformers peft datasets accelerate`
+2. **Iniciar Treinamento:**
+   ```bash
+   python3 models/code/llpt-code-nano/src/train.py \
+     --config models/code/llpt-code-nano/config.json \
+     --data_path models/code/llpt-code-nano/dataset/ \
+     --output_dir models/code/llpt-code-nano/weights/checkpoints/ \
+     --epochs 3 --batch_size 2 --learning_rate 5e-5
+   ```
+3. **Retomar Treinamento:**
+   ```bash
+   python3 models/code/llpt-code-nano/src/train.py \
+     --resume_from_checkpoint models/code/llpt-code-nano/weights/checkpoints/checkpoint-epoch-1
+   ```
+4. **Executar Inferência:**
+   ```bash
+   python3 models/code/llpt-code-nano/src/inference.py \
+     --model_dir models/code/llpt-code-nano/weights/checkpoints/final/ \
+     --prompt "def calculate_fibonacci(n):"
+   ```
 
-1. Consulte **[COMANDOS.txt](./COMANDOS.txt)** para a lista completa de comandos organizados por plataforma (**Desktop** e **Mobile**).
-2. Consulte **[PESOS_E_FORMATOS.txt](./PESOS_E_FORMATOS.txt)** para detalhes de onde posicionar os arquivos de pesos e quais formatos utilizar (`.safetensors`, `.gguf`, `.onnx`).
-
----
-
-## 🎯 Casos de Uso Recomendados
-
-- Autocompletar trechos de código (Inline Completion) em IDEs como VS Code, Neovim e JetBrains.
-- Preenchimento Fill-In-the-Middle (FIM) para inserção de código no meio de arquivos existentes.
-- Geração instantânea de funções, testes unitários e docstrings.
-- Execução local em smartphones Android/iOS e computadores sem necessidade de conexão com a internet.
-
----
-
-## 🔄 Navegação na Família Code
-
-- **Modelo Atual:** LLPT Code Nano (1B)
-- **Próximo Modelo:** [LLPT Code Small (10B) →](../llpt-code-small/README.md)
+Para lista completa de comandos organizados por plataforma (**Desktop** e **Mobile / Termux**), consulte **[COMANDOS.txt](./COMANDOS.txt)**.

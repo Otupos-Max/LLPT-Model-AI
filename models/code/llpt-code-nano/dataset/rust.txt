@@ -1,0 +1,5 @@
+// Rust Example Dataset
+fn main() {
+    let msg = "LLPT Code Nano Rust Example";
+    println!("{}", msg);
+}

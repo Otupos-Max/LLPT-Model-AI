@@ -1,0 +1,10 @@
+// Swift Example Dataset
+import Foundation
+
+struct Device {
+    let name: String
+    let ramGB: Int
+}
+
+let phone = Device(name: "Mobile", ramGB: 4)
+print("Device: \(phone.name), RAM: \(phone.ramGB)GB")

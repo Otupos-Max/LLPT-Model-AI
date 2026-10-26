@@ -1,0 +1,5 @@
+// Kotlin Example Dataset
+fun main() {
+    val languages = listOf("Kotlin", "Python", "Rust", "Go")
+    languages.forEach { println("Supported: $it") }
+}
