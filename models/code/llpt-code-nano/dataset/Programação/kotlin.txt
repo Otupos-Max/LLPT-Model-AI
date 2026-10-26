@@ -145,3 +145,26 @@ class DataStreamRepository {
         }
     }
 }
+
+
+// ==========================================
+// 3. Instruction & Response Example
+// ==========================================
+
+// Instruction: Write a thread-safe Singleton in Kotlin using lazy delegate and state handling.
+// Response:
+class DatabaseManager private constructor() {
+    init {
+        println("DatabaseManager initialized.")
+    }
+
+    fun query(sql: String): List<String> {
+        return listOf("Row 1 for: $sql", "Row 2 for: $sql")
+    }
+
+    companion object {
+        val instance: DatabaseManager by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+            DatabaseManager()
+        }
+    }
+}

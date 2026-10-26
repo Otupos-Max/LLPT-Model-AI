@@ -173,3 +173,42 @@ public class DataRepository : IDataRepository
         }
     }
 }
+
+
+// ==========================================
+// 3. Instruction & Response Example
+// ==========================================
+
+// Instruction: Implement an ASP.NET Core Middleware pattern in C# to log request execution time.
+// Response:
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+
+public class RequestTimingMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<RequestTimingMiddleware> _logger;
+
+    public RequestTimingMiddleware(RequestDelegate next, ILogger<RequestTimingMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            await _next(context);
+        }
+        finally
+        {
+            sw.Stop();
+            _logger.LogInformation("HTTP {Method} {Path} responded {StatusCode} in {Elapsed}ms",
+                context.Request.Method, context.Request.Path, context.Response.StatusCode, sw.ElapsedMilliseconds);
+        }
+    }
+}

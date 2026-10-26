@@ -193,3 +193,34 @@ export function stateReducer(state: State, action: Action): State {
             return state;
     }
 }
+
+
+// ==========================================
+// 5. Instruction & Response Pair
+// ==========================================
+
+// Instruction: Create a type-safe EventBus implementation in TypeScript with strictly typed event names and payloads.
+// Response:
+export type EventMap = {
+    user:created: { id: string; email: string };
+    user:deleted: { id: string };
+    log:info: { message: string; timestamp: number };
+};
+
+export class TypedEventBus<T extends Record<string, any>> {
+    private listeners: { [K in keyof T]?: Array<(payload: T[K]) => void> } = {};
+
+    on<K extends keyof T>(event: K, handler: (payload: T[K]) => void): void {
+        if (!this.listeners[event]) {
+            this.listeners[event] = [];
+        }
+        this.listeners[event]!.push(handler);
+    }
+
+    emit<K extends keyof T>(event: K, payload: T[K]): void {
+        const handlers = this.listeners[event];
+        if (handlers) {
+            handlers.forEach(fn => fn(payload));
+        }
+    }
+}

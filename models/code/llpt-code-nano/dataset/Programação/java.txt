@@ -189,3 +189,53 @@ public class ThreadPoolManager {
         }
     }
 }
+
+
+// ==========================================
+// 4. Multi-File Microservice Architecture
+// ==========================================
+
+// File: src/main/java/com/llpt/code/domain/Order.java
+package com.llpt.code.domain;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+public record Order(UUID id, String customerId, BigDecimal amount, String status) {
+    public Order withStatus(String newStatus) {
+        return new Order(this.id, this.customerId, this.amount, newStatus);
+    }
+}
+
+// File: src/main/java/com/llpt/code/repository/OrderRepository.java
+package com.llpt.code.repository;
+
+import com.llpt.code.domain.Order;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface OrderRepository {
+    Order save(Order order);
+    Optional<Order> findById(UUID id);
+}
+
+// File: src/main/java/com/llpt/code/service/OrderService.java
+package com.llpt.code.service;
+
+import com.llpt.code.domain.Order;
+import com.llpt.code.repository.OrderRepository;
+import java.math.BigDecimal;
+import java.util.UUID;
+
+public class OrderService {
+    private final OrderRepository repository;
+
+    public OrderService(OrderRepository repository) {
+        this.repository = repository;
+    }
+
+    public Order createOrder(String customerId, BigDecimal amount) {
+        Order order = new Order(UUID.randomUUID(), customerId, amount, "PENDING");
+        return repository.save(order);
+    }
+}
