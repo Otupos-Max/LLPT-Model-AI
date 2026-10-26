@@ -223,3 +223,98 @@ if __name__ == "__main__":
         print(f"User is admin: {user.has_permission('admin')}")
 
     asyncio.run(process_batch_tasks(["/api/v1/users", "/api/v1/posts"]))
+
+
+# ==========================================
+# 4. Advanced Data Analysis & Concurrency
+# ==========================================
+
+import multiprocessing
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from typing import Dict, List, Any
+
+def process_data_chunk(chunk: List[int]) -> Dict[str, float]:
+    """Processes a data chunk in parallel, returning statistical metrics."""
+    if not chunk:
+        return {"sum": 0, "mean": 0.0, "max": 0, "min": 0}
+    total = sum(chunk)
+    mean = total / len(chunk)
+    return {
+        "sum": total,
+        "mean": mean,
+        "max": max(chunk),
+        "min": min(chunk)
+    }
+
+def parallel_pipeline(data: List[int], batch_size: int = 100) -> List[Dict[str, float]]:
+    chunks = [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
+    with ProcessPoolExecutor() as executor:
+        results = list(executor.map(process_data_chunk, chunks))
+    return results
+
+
+# ==========================================
+# 5. Metaprogramming & Custom Descriptors
+# ==========================================
+
+class BoundedNumber:
+    """Descriptor that validates numerical properties within bounds."""
+    def __init__(self, min_val: float = None, max_val: float = None):
+        self.min_val = min_val
+        self.max_val = max_val
+
+    def __set_name__(self, owner, name):
+        self.private_name = f"_{name}"
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return getattr(instance, self.private_name, None)
+
+    def __set__(self, instance, value):
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"Expected int or float, got {type(value).__name__}")
+        if self.min_val is not None and value < self.min_val:
+            raise ValueError(f"Value {value} is below minimum {self.min_val}")
+        if self.max_val is not None and value > self.max_val:
+            raise ValueError(f"Value {value} exceeds maximum {self.max_val}")
+        setattr(instance, self.private_name, value)
+
+
+class SensorReading:
+    temperature = BoundedNumber(min_val=-273.15, max_val=1000.0)
+    humidity = BoundedNumber(min_val=0.0, max_val=100.0)
+
+    def __init__(self, temperature: float, humidity: float):
+        self.temperature = temperature
+        self.humidity = humidity
+
+
+# ==========================================
+# 6. Bug Fix Example: Race Condition & Fix
+# ==========================================
+
+import threading
+
+# Problem: Non-thread-safe counter
+class UnsafeCounter:
+    def __init__(self):
+        self.count = 0
+
+    def increment(self):
+        # Bug: Race condition when accessed concurrently
+        self.count += 1
+
+# Solution: Thread-safe counter using Mutex Lock
+class SafeCounter:
+    def __init__(self):
+        self.count = 0
+        self._lock = threading.Lock()
+
+    def increment(self):
+        with self._lock:
+            self.count += 1
+
+    def get_value(self) -> int:
+        with self._lock:
+            return self.count

@@ -140,3 +140,27 @@ perform_backup() {
 }
 
 perform_backup "${TARGET_DIR}" "${OUTPUT_DIR}"
+
+
+# ==========================================
+# 4. Robust Log Rotation Script
+# ==========================================
+
+#!/usr/bin/env bash
+set -euo pipefail
+
+LOG_DIR="/var/log/myapp"
+BACKUP_DIR="/var/log/myapp/archive"
+MAX_DAYS=7
+
+mkdir -p "${BACKUP_DIR}"
+
+find "${LOG_DIR}" -type f -name "*.log" -mtime +1 | while read -r logfile; do
+    filename=$(basename "${logfile}")
+    timestamp=$(date +%Y%m%d_%H%M%S)
+    gzip -c "${logfile}" > "${BACKUP_DIR}/${filename}_${timestamp}.gz"
+    > "${logfile}"
+    echo "Archived ${logfile}"
+done
+
+find "${BACKUP_DIR}" -type f -name "*.gz" -mtime +${MAX_DAYS} -delete

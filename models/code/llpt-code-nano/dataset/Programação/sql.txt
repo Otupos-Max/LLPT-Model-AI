@@ -97,3 +97,21 @@ VALUES (
 );
 
 COMMIT;
+
+
+-- ==========================================
+-- 4. Window Functions & Recursive CTE
+-- ==========================================
+
+WITH RECURSIVE CategoryHierarchy AS (
+    SELECT id, name, parent_id, 1 as depth
+    FROM categories
+    WHERE parent_id IS NULL
+    UNION ALL
+    SELECT c.id, c.name, c.parent_id, ch.depth + 1
+    FROM categories c
+    INNER JOIN CategoryHierarchy ch ON c.parent_id = ch.id
+)
+SELECT id, name, depth
+FROM CategoryHierarchy
+ORDER BY depth, name;

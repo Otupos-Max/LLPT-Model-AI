@@ -225,3 +225,44 @@ func main() {
 		fmt.Printf("[Result] Task #%d -> %s\n", r.TaskID, r.Output)
 	}
 }
+
+
+// ==========================================
+// 4. Worker Pool Pattern with Context Cancellation
+// ==========================================
+
+package main
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+)
+
+type Job struct {
+	ID    int
+	Value int
+}
+
+type Result struct {
+	JobID  int
+	Output int
+	Err    error
+}
+
+func worker(ctx context.Context, id int, jobs <-chan Job, results chan<- Result, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case job, ok := <-jobs:
+			if !ok {
+				return
+			}
+			res := job.Value * 2
+			results <- Result{JobID: job.ID, Output: res, Err: nil}
+		}
+	}
+}

@@ -114,3 +114,34 @@ suspend fun main() = coroutineScope {
         println(user.toSummaryString())
     }
 }
+
+
+// ==========================================
+// 4. Coroutines Flow & Channel Pattern
+// ==========================================
+
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.channels.Channel
+
+class DataStreamRepository {
+    fun fetchNumbersStream(): Flow<Int> = flow {
+        for (i in 1..5) {
+            delay(100)
+            emit(i * 10)
+        }
+    }.flowOn(Dispatchers.Default)
+
+    suspend fun processChannelCommunication() = coroutineScope {
+        val channel = Channel<String>()
+        launch {
+            channel.send("Event 1")
+            channel.send("Event 2")
+            channel.close()
+        }
+
+        for (msg in channel) {
+            println("Received channel message: $msg")
+        }
+    }
+}

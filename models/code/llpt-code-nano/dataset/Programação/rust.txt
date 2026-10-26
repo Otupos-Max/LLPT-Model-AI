@@ -155,3 +155,43 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+
+// ==========================================
+// 4. Async Tokio Stream & Error Handling Pattern
+// ==========================================
+
+use std::fmt;
+
+#[derive(Debug)]
+pub enum DatabaseError {
+    NotFound(String),
+    ConnectionFailed,
+}
+
+impl fmt::Display for DatabaseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DatabaseError::NotFound(id) => write!(f, "Record with ID {} not found", id),
+            DatabaseError::ConnectionFailed => write!(f, "Failed to connect to database"),
+        }
+    }
+}
+
+impl std::error::Error for DatabaseError {}
+
+pub struct UserRecord {
+    pub id: u64,
+    pub name: String,
+}
+
+pub async fn find_user_by_id(id: u64) -> Result<UserRecord, DatabaseError> {
+    if id == 0 {
+        Err(DatabaseError::NotFound(id.to_string()))
+    } else {
+        Ok(UserRecord {
+            id,
+            name: String::from("Alice"),
+        })
+    }
+}

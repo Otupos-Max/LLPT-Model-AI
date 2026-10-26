@@ -138,3 +138,26 @@
     </footer>
 </body>
 </html>
+
+
+<!-- ========================================== -->
+<!-- 4. Modern Accessible Form & Grid Dashboard -->
+<!-- ========================================== -->
+
+<main class="dashboard-container">
+    <header class="dashboard-header">
+        <h1>Analytics Overview</h1>
+        <nav aria-label="Main Navigation">
+            <ul>
+                <li><a href="#metrics">Metrics</a></li>
+                <li><a href="#reports">Reports</a></li>
+            </ul>
+        </nav>
+    </header>
+    <section id="metrics" class="metrics-grid">
+        <article class="card">
+            <h2>Total Revenue</h2>
+            <p class="value">$124,500</p>
+        </article>
+    </section>
+</main>

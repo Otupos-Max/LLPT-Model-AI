@@ -140,3 +140,29 @@ struct SwiftDatasetMain {
         }
     }
 }
+
+
+// ==========================================
+// 4. Swift Concurrency & Actor Model
+// ==========================================
+
+import Foundation
+
+actor BankAccount {
+    private(set) var balance: Double
+
+    init(initialBalance: Double) {
+        self.balance = initialBalance
+    }
+
+    func deposit(amount: Double) {
+        balance += amount
+    }
+
+    func withdraw(amount: Double) throws {
+        guard balance >= amount else {
+            throw NSError(domain: "InsufficientFunds", code: 400)
+        }
+        balance -= amount
+    }
+}

@@ -1,0 +1,13 @@
+# Análise de Repositórios, Bibliotecas, Stack Traces, Conversão entre Linguagens e Casos-Limite
+
+# ==============================================================================
+# 1. Análise de Stack Trace e Correção de Erro de Indexação
+# ==============================================================================
+
+from typing import List
+
+def safe_batch_access(batch: List[int], index: int, default: int = 0) -> int:
+    """Retorna o item no índice se válido, caso contrário retorna o valor padrão seguro."""
+    if 0 <= index < len(batch):
+        return batch[index]
+    return default

@@ -148,3 +148,48 @@ export type Nullable<T> = { [P in keyof T]: T[P] | null };
 export type DeepReadonly<T> = {
   readonly [P in keyof T]: T[P] extends object ? DeepReadonly<T[P]> : T[P];
 };
+
+
+// ==========================================
+// 4. Advanced Utility Types & State Machine
+// ==========================================
+
+export type DeepReadonly<T> = {
+    readonly [P in keyof T]: T[P] extends object ? DeepReadonly<T[P]> : T[P];
+};
+
+export type Result<T, E = Error> =
+    | { ok: true; value: T }
+    | { ok: false; error: E };
+
+export function ok<T>(value: T): Result<T, never> {
+    return { ok: true, value };
+}
+
+export function err<E>(error: E): Result<never, E> {
+    return { ok: false, error };
+}
+
+export type State =
+    | { status: 'idle' }
+    | { status: 'loading' }
+    | { status: 'success'; data: string[] }
+    | { status: 'error'; message: string };
+
+export type Action =
+    | { type: 'FETCH_START' }
+    | { type: 'FETCH_SUCCESS'; payload: string[] }
+    | { type: 'FETCH_ERROR'; error: string };
+
+export function stateReducer(state: State, action: Action): State {
+    switch (action.type) {
+        case 'FETCH_START':
+            return { status: 'loading' };
+        case 'FETCH_SUCCESS':
+            return { status: 'success', data: action.payload };
+        case 'FETCH_ERROR':
+            return { status: 'error', message: action.error };
+        default:
+            return state;
+    }
+}

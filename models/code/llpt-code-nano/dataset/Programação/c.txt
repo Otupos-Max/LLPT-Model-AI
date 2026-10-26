@@ -223,3 +223,44 @@ int main(void) {
 
     return 0;
 }
+
+
+/* ==========================================
+ * 4. Memory Pool Allocator & Circular Buffer
+ * ========================================== */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+
+#define BUFFER_SIZE 8
+
+typedef struct {
+    int data[BUFFER_SIZE];
+    size_t head;
+    size_t tail;
+    size_t count;
+} CircularBuffer;
+
+void cb_init(CircularBuffer *cb) {
+    cb->head = 0;
+    cb->tail = 0;
+    cb->count = 0;
+}
+
+bool cb_push(CircularBuffer *cb, int value) {
+    if (cb->count == BUFFER_SIZE) return false; // Buffer full
+    cb->data[cb->tail] = value;
+    cb->tail = (cb->tail + 1) % BUFFER_SIZE;
+    cb->count++;
+    return true;
+}
+
+bool cb_pop(CircularBuffer *cb, int *value) {
+    if (cb->count == 0) return false; // Buffer empty
+    *value = cb->data[cb->head];
+    cb->head = (cb->head + 1) % BUFFER_SIZE;
+    cb->count--;
+    return true;
+}

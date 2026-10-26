@@ -161,3 +161,34 @@ class UserService {
         return $user;
     }
 }
+
+
+// ==========================================
+// 4. PSR-11 Container & Middleware Pattern
+// ==========================================
+
+namespace App\Core;
+
+interface ContainerInterface {
+    public function get(string $id);
+    public function has(string $id): bool;
+}
+
+class ServiceContainer implements ContainerInterface {
+    private array $services = [];
+
+    public function set(string $id, callable $factory): void {
+        $this->services[$id] = $factory;
+    }
+
+    public function get(string $id) {
+        if (!$this->has($id)) {
+            throw new \Exception("Service not found: {$id}");
+        }
+        return $this->services[$id]($this);
+    }
+
+    public function has(string $id): bool {
+        return isset($this->services[$id]);
+    }
+}

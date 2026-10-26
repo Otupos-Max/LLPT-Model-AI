@@ -1,0 +1,46 @@
+# Refatoração, Revisão de Código, Testes, Padrões de Projeto e Análise Estática
+
+# ==============================================================================
+# 1. Padrão de Projeto: Factory Method & Strategy Pattern Refatorado
+# ==============================================================================
+
+from abc import ABC, abstractmethod
+from typing import Dict, Type
+
+class PaymentStrategy(ABC):
+    @abstractmethod
+    def process_payment(self, amount: float) -> bool:
+        pass
+
+class CreditCardPayment(PaymentStrategy):
+    def __init__(self, card_number: str):
+        self.card_number = card_number
+
+    def process_payment(self, amount: float) -> bool:
+        print(f"Processando R${amount:.2f} via Cartão de Crédito final {self.card_number[-4:]}")
+        return True
+
+class PixPayment(PaymentStrategy):
+    def __init__(self, pix_key: str):
+        self.pix_key = pix_key
+
+    def process_payment(self, amount: float) -> bool:
+        print(f"Gerando QR Code PIX para a chave {self.pix_key} no valor de R${amount:.2f}")
+        return True
+
+class PaymentFactory:
+    _strategies: Dict[str, Type[PaymentStrategy]] = {}
+
+    @classmethod
+    def register(cls, payment_type: str, strategy: Type[PaymentStrategy]):
+        cls._strategies[payment_type] = strategy
+
+    @classmethod
+    def create(cls, payment_type: str, **kwargs) -> PaymentStrategy:
+        strategy_cls = cls._strategies.get(payment_type)
+        if not strategy_cls:
+            raise ValueError(f"Tipo de pagamento não suportado: {payment_type}")
+        return strategy_cls(**kwargs)
+
+PaymentFactory.register("credit_card", CreditCardPayment)
+PaymentFactory.register("pix", PixPayment)
