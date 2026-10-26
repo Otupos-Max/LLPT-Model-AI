@@ -1,5 +1,116 @@
-// Kotlin Example Dataset
-fun main() {
-    val languages = listOf("Kotlin", "Python", "Rust", "Go")
-    languages.forEach { println("Supported: $it") }
+// Kotlin Dataset - Modern Idiomatic Kotlin, Coroutines & Functional Code
+
+package com.llpt.code
+
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import java.time.Instant
+
+// ==========================================
+// 1. Data Classes & Sealed Interfaces
+// ==========================================
+
+enum class UserRole { ADMIN, DEVELOPER, GUEST }
+
+data class User(
+    val id: String,
+    val username: String,
+    val email: String,
+    val role: UserRole = UserRole.GUEST,
+    val isActive: Boolean = true,
+    val createdAt: Instant = Instant.now()
+)
+
+sealed interface UIState<out T> {
+    data object Idle : UIState<Nothing>
+    data object Loading : UIState<Nothing>
+    data class Success<T>(val data: T) : UIState<T>
+    data class Error(val message: String, val cause: Throwable? = null) : UIState<Nothing>
+}
+
+// ==========================================
+// 2. Extension Functions & Scope Functions
+// ==========================================
+
+fun String.isValidEmail(): Boolean {
+    val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
+    return this.matches(emailRegex.toRegex())
+}
+
+fun List<User>.filterActiveDevelopers(): List<User> = this
+    .filter { it.isActive && it.role == UserRole.DEVELOPER }
+    .sortedBy { it.username }
+
+fun User.toSummaryString(): String = run {
+    "[User #$id] $username ($email) - Role: $role | Active: $isActive"
+}
+
+// ==========================================
+// 3. Repository & Coroutines Flow
+// ==========================================
+
+interface UserRepository {
+    fun getUserStream(): Flow<UIState<List<User>>>
+    suspend fun getUserById(id: String): UIState<User>
+    suspend fun saveUser(user: User): Result<User>
+}
+
+class InMemoryUserRepository : UserRepository {
+    private val usersMap = mutableMapOf<String, User>()
+    private val _userFlow = MutableStateFlow<UIState<List<User>>>(UIState.Idle)
+
+    override fun getUserStream(): Flow<UIState<List<User>>> = _userFlow.asStateFlow()
+
+    override suspend fun getUserById(id: String): UIState<User> = withContext(Dispatchers.IO) {
+        val user = usersMap[id]
+        if (user != null) {
+            UIState.Success(user)
+        } else {
+            UIState.Error("User with id $id not found")
+        }
+    }
+
+    override suspend fun saveUser(user: User): Result<User> = withContext(Dispatchers.IO) {
+        runCatching {
+            require(user.email.isValidEmail()) { "Invalid email address format: ${user.email}" }
+            usersMap[user.id] = user
+            _userFlow.value = UIState.Success(usersMap.values.toList())
+            user
+        }
+    }
+}
+
+// ==========================================
+// 4. Coroutines Concurrent Fetching
+// ==========================================
+
+class DataAggregator(private val repository: UserRepository) {
+
+    suspend fun aggregateUserData(userIds: List<String>): List<User> = coroutineScope {
+        userIds.map { id ->
+            async {
+                when (val state = repository.getUserById(id)) {
+                    is UIState.Success -> state.data
+                    else -> null
+                }
+            }
+        }.awaitAll().filterNotNull()
+    }
+}
+
+suspend fun main() = coroutineScope {
+    val repo = InMemoryUserRepository()
+    val u1 = User(id = "1", username = "alice", email = "alice@example.com", role = UserRole.ADMIN)
+    val u2 = User(id = "2", username = "bob", email = "bob@example.com", role = UserRole.DEVELOPER)
+
+    repo.saveUser(u1)
+    repo.saveUser(u2)
+
+    val aggregator = DataAggregator(repo)
+    val users = aggregator.aggregateUserData(listOf("1", "2", "3"))
+    println("Aggregated Users Count: ${users.size}")
+
+    users.forEach { user ->
+        println(user.toSummaryString())
+    }
 }

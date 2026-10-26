@@ -1,6 +1,155 @@
-// JavaScript Example Dataset
-function greet(name) {
-    return `Hello, ${name}! Welcome to LLPT Code Nano.`;
+// JavaScript Dataset - Modern ES6+ Code Examples & Async Utilities
+
+// ==========================================
+// 1. Array Operations & Functional Programming
+// ==========================================
+
+const users = [
+  { id: 1, name: 'Alice', age: 28, role: 'admin', active: true },
+  { id: 2, name: 'Bob', age: 34, role: 'developer', active: true },
+  { id: 3, name: 'Charlie', age: 22, role: 'designer', active: false },
+  { id: 4, name: 'Diana', age: 31, role: 'developer', active: true }
+];
+
+function getActiveDevelopers(userList) {
+  return userList
+    .filter(u => u.active && u.role === 'developer')
+    .map(u => ({ id: u.id, name: u.name, uppercaseName: u.name.toUpperCase() }));
 }
 
-console.log(greet("Developer"));
+function calculateAverageAge(userList) {
+  if (!userList.length) return 0;
+  const total = userList.reduce((acc, user) => acc + user.age, 0);
+  return total / userList.length;
+}
+
+function groupByRole(userList) {
+  return userList.reduce((acc, user) => {
+    const role = user.role;
+    if (!acc[role]) acc[role] = [];
+    acc[role].push(user);
+    return acc;
+  }, {});
+}
+
+// ==========================================
+// 2. Async/Await, Fetch API & Retry Logic
+// ==========================================
+
+async function fetchWithRetry(url, options = {}, retries = 3, backoffMs = 500) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      console.warn(`Request failed. Retrying in ${backoffMs}ms... (Attempt ${i + 1}/${retries})`);
+      await new Promise(resolve => setTimeout(resolve, backoffMs));
+      backoffMs *= 2;
+    }
+  }
+}
+
+// ==========================================
+// 3. Event Emitter Pattern
+// ==========================================
+
+class EventEmitter {
+  constructor() {
+    this.events = new Map();
+  }
+
+  on(event, listener) {
+    if (!this.events.has(event)) {
+      this.events.set(event, []);
+    }
+    this.events.get(event).push(listener);
+    return () => this.off(event, listener);
+  }
+
+  off(event, listenerToRemove) {
+    if (!this.events.has(event)) return;
+    const filtered = this.events.get(event).filter(l => l !== listenerToRemove);
+    this.events.set(event, filtered);
+  }
+
+  emit(event, ...args) {
+    if (!this.events.has(event)) return;
+    this.events.get(event).forEach(listener => {
+      try {
+        listener(...args);
+      } catch (err) {
+        console.error(`Error in event listener for '${event}':`, err);
+      }
+    });
+  }
+}
+
+// ==========================================
+// 4. Closures & Debounce/Throttle
+// ==========================================
+
+function debounce(func, wait) {
+  let timeoutId = null;
+  return function (...args) {
+    const context = this;
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(context, args);
+    }, wait);
+  };
+}
+
+function throttle(func, limit) {
+  let inThrottle = false;
+  return function (...args) {
+    const context = this;
+    if (!inThrottle) {
+      func.apply(context, args);
+      inThrottle = true;
+      setTimeout(() => { inThrottle = false; }, limit);
+    }
+  };
+}
+
+// ==========================================
+// 5. Utility Storage Wrapper & DOM Helpers
+// ==========================================
+
+class StorageHelper {
+  static setJSON(key, value) {
+    try {
+      const serialized = JSON.stringify(value);
+      localStorage.setItem(key, serialized);
+    } catch (e) {
+      console.error('Failed to set localStorage key:', key, e);
+    }
+  }
+
+  static getJSON(key, defaultValue = null) {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch (e) {
+      console.error('Failed to parse localStorage key:', key, e);
+      return defaultValue;
+    }
+  }
+}
+
+// Export / Execution
+if (typeof module !== 'undefined') {
+  module.exports = {
+    getActiveDevelopers,
+    calculateAverageAge,
+    groupByRole,
+    fetchWithRetry,
+    EventEmitter,
+    debounce,
+    throttle,
+    StorageHelper
+  };
+}

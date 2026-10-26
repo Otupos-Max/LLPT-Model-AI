@@ -1,7 +1,225 @@
-/* C Example Dataset */
+/* C Dataset - Low-level System Programming, Data Structures & Memory Management */
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+/* ==========================================
+ * 1. Dynamic Array (Vector) Implementation
+ * ========================================== */
+
+typedef struct {
+    int *data;
+    size_t size;
+    size_t capacity;
+} Vector;
+
+Vector *vector_create(size_t initial_capacity) {
+    Vector *vec = (Vector *)malloc(sizeof(Vector));
+    if (!vec) return NULL;
+
+    vec->data = (int *)malloc(initial_capacity * sizeof(int));
+    if (!vec->data) {
+        free(vec);
+        return NULL;
+    }
+
+    vec->size = 0;
+    vec->capacity = initial_capacity;
+    return vec;
+}
+
+bool vector_push(Vector *vec, int value) {
+    if (!vec) return false;
+
+    if (vec->size >= vec->capacity) {
+        size_t new_capacity = vec->capacity * 2;
+        int *new_data = (int *)realloc(vec->data, new_capacity * sizeof(int));
+        if (!new_data) return false;
+
+        vec->data = new_data;
+        vec->capacity = new_capacity;
+    }
+
+    vec->data[vec->size++] = value;
+    return true;
+}
+
+int vector_get(const Vector *vec, size_t index, bool *out_success) {
+    if (!vec || index >= vec->size) {
+        if (out_success) *out_success = false;
+        return 0;
+    }
+    if (out_success) *out_success = true;
+    return vec->data[index];
+}
+
+void vector_free(Vector *vec) {
+    if (vec) {
+        free(vec->data);
+        free(vec);
+    }
+}
+
+/* ==========================================
+ * 2. Doubly Linked List
+ * ========================================== */
+
+typedef struct Node {
+    int data;
+    struct Node *prev;
+    struct Node *next;
+} Node;
+
+typedef struct {
+    Node *head;
+    Node *tail;
+    size_t length;
+} LinkedList;
+
+LinkedList *list_create(void) {
+    LinkedList *list = (LinkedList *)malloc(sizeof(LinkedList));
+    if (!list) return NULL;
+    list->head = NULL;
+    list->tail = NULL;
+    list->length = 0;
+    return list;
+}
+
+bool list_append(LinkedList *list, int data) {
+    if (!list) return false;
+
+    Node *new_node = (Node *)malloc(sizeof(Node));
+    if (!new_node) return false;
+
+    new_node->data = data;
+    new_node->next = NULL;
+    new_node->prev = list->tail;
+
+    if (list->tail) {
+        list->tail->next = new_node;
+    } else {
+        list->head = new_node;
+    }
+
+    list->tail = new_node;
+    list->length++;
+    return true;
+}
+
+void list_free(LinkedList *list) {
+    if (!list) return;
+
+    Node *current = list->head;
+    while (current) {
+        Node *next = current->next;
+        free(current);
+        current = next;
+    }
+    free(list);
+}
+
+/* ==========================================
+ * 3. Hash Table with Chaining
+ * ========================================== */
+
+#define HASH_TABLE_SIZE 128
+
+typedef struct Entry {
+    char *key;
+    char *value;
+    struct Entry *next;
+} Entry;
+
+typedef struct {
+    Entry *buckets[HASH_TABLE_SIZE];
+} HashTable;
+
+unsigned int hash(const char *key) {
+    unsigned int value = 0;
+    for (; *key != '\0'; key++) {
+        value = value * 37 + (unsigned char)(*key);
+    }
+    return value % HASH_TABLE_SIZE;
+}
+
+HashTable *ht_create(void) {
+    HashTable *ht = (HashTable *)calloc(1, sizeof(HashTable));
+    return ht;
+}
+
+bool ht_put(HashTable *ht, const char *key, const char *value) {
+    if (!ht || !key || !value) return false;
+
+    unsigned int slot = hash(key);
+    Entry *entry = ht->buckets[slot];
+
+    while (entry) {
+        if (strcmp(entry->key, key) == 0) {
+            free(entry->value);
+            entry->value = strdup(value);
+            return true;
+        }
+        entry = entry->next;
+    }
+
+    Entry *new_entry = (Entry *)malloc(sizeof(Entry));
+    if (!new_entry) return false;
+
+    new_entry->key = strdup(key);
+    new_entry->value = strdup(value);
+    new_entry->next = ht->buckets[slot];
+    ht->buckets[slot] = new_entry;
+    return true;
+}
+
+const char *ht_get(HashTable *ht, const char *key) {
+    if (!ht || !key) return NULL;
+
+    unsigned int slot = hash(key);
+    Entry *entry = ht->buckets[slot];
+
+    while (entry) {
+        if (strcmp(entry->key, key) == 0) {
+            return entry->value;
+        }
+        entry = entry->next;
+    }
+    return NULL;
+}
+
+void ht_free(HashTable *ht) {
+    if (!ht) return;
+
+    for (int i = 0; i < HASH_TABLE_SIZE; i++) {
+        Entry *entry = ht->buckets[i];
+        while (entry) {
+            Entry *next = entry->next;
+            free(entry->key);
+            free(entry->value);
+            free(entry);
+            entry = next;
+        }
+    }
+    free(ht);
+}
 
 int main(void) {
-    printf("LLPT Code Nano C Example\n");
+    printf("--- C System Programming Examples ---\n");
+
+    Vector *v = vector_create(4);
+    for (int i = 1; i <= 10; i++) {
+        vector_push(v, i * 10);
+    }
+    printf("Vector size: %zu, capacity: %zu\n", v->size, v->capacity);
+    vector_free(v);
+
+    HashTable *ht = ht_create();
+    ht_put(ht, "language", "C");
+    ht_put(ht, "version", "C11");
+    printf("Language: %s | Version: %s\n", ht_get(ht, "language"), ht_get(ht, "version"));
+    ht_free(ht);
+
     return 0;
 }

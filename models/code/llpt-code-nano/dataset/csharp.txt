@@ -1,8 +1,148 @@
-// C# Example Dataset
-using System;
+// C# Dataset - Modern .NET 8 / C# 12 Web API, LINQ, Async & Design Patterns
 
-class Program {
-    static void Main() {
-        Console.WriteLine("LLPT Code Nano C# Example");
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace LlptCode.Dataset
+{
+    // ==========================================
+    // 1. Records, Enums & Interfaces
+    // ==========================================
+
+    public enum UserStatus
+    {
+        Active,
+        Inactive,
+        PendingApproval,
+        Suspended
+    }
+
+    public record UserDto(
+        Guid Id,
+        string Username,
+        string Email,
+        UserStatus Status,
+        DateTime CreatedAt
+    );
+
+    public record CreateUserRequest(string Username, string Email);
+
+    public interface IUserService
+    {
+        Task<UserDto> GetByIdAsync(Guid id, CancellationToken ct = default);
+        IAsyncEnumerable<UserDto> GetAllActiveUsersAsync(CancellationToken ct = default);
+        Task<UserDto> CreateUserAsync(CreateUserRequest request, CancellationToken ct = default);
+    }
+
+    // ==========================================
+    // 2. Extension Methods & Custom Exceptions
+    // ==========================================
+
+    public static class StringExtensions
+    {
+        public static bool IsValidEmail(this string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return false;
+            return email.Contains('@') && email.Contains('.');
+        }
+    }
+
+    public class UserNotFoundException : Exception
+    {
+        public UserNotFoundException(Guid id) : base($"User with ID {id} was not found.") { }
+    }
+
+    // ==========================================
+    // 3. Service Implementation with LINQ & Async
+    // ==========================================
+
+    public class UserService : IUserService
+    {
+        private readonly Dictionary<Guid, UserDto> _users = new();
+
+        public UserService()
+        {
+            var u1 = new UserDto(Guid.NewGuid(), "alice", "alice@example.com", UserStatus.Active, DateTime.UtcNow);
+            var u2 = new UserDto(Guid.NewGuid(), "bob", "bob@example.com", UserStatus.Active, DateTime.UtcNow);
+            _users[u1.Id] = u1;
+            _users[u2.Id] = u2;
+        }
+
+        public async Task<UserDto> GetByIdAsync(Guid id, CancellationToken ct = default)
+        {
+            await Task.Delay(50, ct); // Simulate IO operation
+            if (_users.TryGetValue(id, out var user))
+            {
+                return user;
+            }
+            throw new UserNotFoundException(id);
+        }
+
+        public async IAsyncEnumerable<UserDto> GetAllActiveUsersAsync(CancellationToken ct = default)
+        {
+            var activeUsers = _users.Values
+                .Where(u => u.Status == UserStatus.Active)
+                .OrderBy(u => u.Username);
+
+            foreach (var user in activeUsers)
+            {
+                await Task.Delay(20, ct);
+                yield return user;
+            }
+        }
+
+        public async Task<UserDto> CreateUserAsync(CreateUserRequest request, CancellationToken ct = default)
+        {
+            if (!request.Email.IsValidEmail())
+            {
+                throw new ArgumentException("Invalid email format", nameof(request.Email));
+            }
+
+            await Task.Delay(100, ct);
+            var newUser = new UserDto(
+                Guid.NewGuid(),
+                request.Username,
+                request.Email,
+                UserStatus.Active,
+                DateTime.UtcNow
+            );
+
+            _users[newUser.Id] = newUser;
+            return newUser;
+        }
+
+        // Pattern Matching Example
+        public string EvaluateUserStatus(UserDto user) => user.Status switch
+        {
+            UserStatus.Active => "User is fully operational.",
+            UserStatus.PendingApproval => "Awaiting administrator validation.",
+            UserStatus.Inactive or UserStatus.Suspended => "Access restricted.",
+            _ => "Unknown status code."
+        };
+    }
+
+    // ==========================================
+    // 4. Console App Entrypoint
+    // ==========================================
+
+    public class Program
+    {
+        public static async Task Main(string[] args)
+        {
+            Console.WriteLine("=== C# .NET 8 Dataset Examples ===");
+
+            IUserService userService = new UserService();
+
+            var created = await userService.CreateUserAsync(new CreateUserRequest("charlie", "charlie@example.com"));
+            Console.WriteLine($"Created User: {created.Username} | ID: {created.Id}");
+
+            await foreach (var user in userService.GetAllActiveUsersAsync())
+            {
+                Console.WriteLine($"Active User Stream: {user.Username} ({user.Email})");
+            }
+        }
     }
 }

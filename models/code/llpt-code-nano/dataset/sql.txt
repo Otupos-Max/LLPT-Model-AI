@@ -1,8 +1,99 @@
--- SQL Example Dataset
-CREATE TABLE models (
-    id INT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    parameters_billion FLOAT NOT NULL
+-- SQL Dataset - Advanced Relational Queries, CTEs, Window Functions & DDL Schemas
+
+-- ==========================================
+-- 1. Database Schema DDL Definitions
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS roles (
+    role_id INT PRIMARY KEY AUTO_INCREMENT,
+    role_name VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO models (id, name, parameters_billion) VALUES (1, 'LLPT Code Nano', 1.0);
+CREATE TABLE IF NOT EXISTS users (
+    user_id UUID PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    role_id INT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES roles(role_id) ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS activity_logs (
+    log_id BIGSERIAL PRIMARY KEY,
+    user_id UUID NOT NULL,
+    action_type VARCHAR(100) NOT NULL,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_log_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Optimization Indexes
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_role_active ON users(role_id, is_active);
+CREATE INDEX idx_logs_user_created ON activity_logs(user_id, created_at DESC);
+
+-- ==========================================
+-- 2. Common Table Expressions (CTEs) & Aggregations
+-- ==========================================
+
+WITH UserActivitySummary AS (
+    SELECT
+        u.user_id,
+        u.username,
+        u.email,
+        r.role_name,
+        COUNT(l.log_id) AS total_actions,
+        MAX(l.created_at) AS last_active_at
+    FROM users u
+    INNER JOIN roles r ON u.role_id = r.role_id
+    LEFT JOIN activity_logs l ON u.user_id = l.user_id
+    WHERE u.is_active = TRUE
+    GROUP BY u.user_id, u.username, u.email, r.role_name
+)
+SELECT
+    user_id,
+    username,
+    email,
+    role_name,
+    total_actions,
+    COALESCE(last_active_at, created_at) AS last_activity
+FROM UserActivitySummary
+WHERE total_actions >= 5
+ORDER BY total_actions DESC, last_activity DESC;
+
+-- ==========================================
+-- 3. Window Functions (Partitioning & Ranking)
+-- ==========================================
+
+SELECT
+    user_id,
+    action_type,
+    created_at,
+    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS action_rank,
+    COUNT(*) OVER (PARTITION BY user_id) AS user_total_logs
+FROM activity_logs
+WHERE created_at >= NOW() - INTERVAL '30 days'
+ORDER BY user_id, action_rank;
+
+-- ==========================================
+-- 4. Safe Transaction Example
+-- ==========================================
+
+BEGIN TRANSACTION;
+
+UPDATE users
+SET is_active = FALSE, updated_at = NOW()
+WHERE user_id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+INSERT INTO activity_logs (user_id, action_type, metadata)
+VALUES (
+    'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    'ACCOUNT_DEACTIVATED',
+    '{"reason": "User request", "admin_id": "system"}'::jsonb
+);
+
+COMMIT;
