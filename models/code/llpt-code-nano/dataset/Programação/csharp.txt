@@ -146,3 +146,30 @@ namespace LlptCode.Dataset
         }
     }
 }
+
+
+// ==========================================
+// 4. Async Enumerable & Dependency Injection
+// ==========================================
+
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+public interface IDataRepository
+{
+    IAsyncEnumerable<int> GetStreamDataAsync(CancellationToken cancellationToken = default);
+}
+
+public class DataRepository : IDataRepository
+{
+    public async IAsyncEnumerable<int> GetStreamDataAsync(CancellationToken cancellationToken = default)
+    {
+        for (int i = 1; i <= 5; i++)
+        {
+            await Task.Delay(100, cancellationToken);
+            yield return i * 100;
+        }
+    }
+}

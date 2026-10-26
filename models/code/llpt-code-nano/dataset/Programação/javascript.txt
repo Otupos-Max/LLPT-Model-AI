@@ -153,3 +153,68 @@ if (typeof module !== 'undefined') {
     StorageHelper
   };
 }
+
+
+// ==========================================
+// 4. Async Event Emitter & Middleware Pipeline
+// ==========================================
+
+class AsyncEventEmitter {
+    constructor() {
+        this.listeners = new Map();
+    }
+
+    on(event, fn) {
+        if (!this.listeners.has(event)) {
+            this.listeners.set(event, []);
+        }
+        this.listeners.get(event).push(fn);
+        return () => this.off(event, fn);
+    }
+
+    off(event, fn) {
+        const list = this.listeners.get(event);
+        if (!list) return;
+        this.listeners.set(event, list.filter(listener => listener !== fn));
+    }
+
+    async emit(event, ...args) {
+        const list = this.listeners.get(event) || [];
+        for (const listener of list) {
+            await listener(...args);
+        }
+    }
+}
+
+class Pipeline {
+    constructor() {
+        this.middlewares = [];
+    }
+
+    use(fn) {
+        this.middlewares.push(fn);
+        return this;
+    }
+
+    async execute(context) {
+        let index = -1;
+        const dispatch = async (i) => {
+            if (i <= index) throw new Error("next() called multiple times");
+            index = i;
+            const fn = this.middlewares[i];
+            if (fn) {
+                await fn(context, () => dispatch(i + 1));
+            }
+        };
+        await dispatch(0);
+        return context;
+    }
+}
+
+// Example usage of Pipeline
+const appPipeline = new Pipeline();
+appPipeline.use(async (ctx, next) => {
+    ctx.startTime = Date.now();
+    await next();
+    ctx.duration = Date.now() - ctx.startTime;
+});

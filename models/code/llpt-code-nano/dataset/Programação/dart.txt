@@ -158,3 +158,41 @@ Future<void> main() async {
 
   repo.dispose();
 }
+
+
+// ==========================================
+// 4. Streams & State Management (BLoC Pattern)
+// ==========================================
+
+import 'dart:async';
+
+abstract class CounterEvent {}
+class IncrementEvent extends CounterEvent {}
+class DecrementEvent extends CounterEvent {}
+
+class CounterBloc {
+  int _counter = 0;
+  final _stateController = StreamController<int>();
+  final _eventController = StreamController<CounterEvent>();
+
+  Stream<int> get state => _stateController.stream;
+  Sink<CounterEvent> get eventSink => _eventController.sink;
+
+  CounterBloc() {
+    _eventController.stream.listen(_mapEventToState);
+  }
+
+  void _mapEventToState(CounterEvent event) {
+    if (event is IncrementEvent) {
+      _counter++;
+    } else if (event is DecrementEvent) {
+      _counter--;
+    }
+    _stateController.add(_counter);
+  }
+
+  void dispose() {
+    _stateController.close();
+    _eventController.close();
+  }
+}

@@ -1,0 +1,99 @@
+# Algoritmos, Estruturas de Dados, Matemática Computacional e Complexidade
+
+# ==============================================================================
+# 1. Estruturas de Dados Avançadas: Fenwick Tree (Binary Indexed Tree)
+# Complexidade: Construção O(N log N) ou O(N), Consulta de Soma de Prefixo O(log N), Atualização O(log N)
+# Espaço: O(N)
+# ==============================================================================
+
+class FenwickTree:
+    """
+    Estrutura de dados Fenwick Tree (Binary Indexed Tree) para consultas e
+    atualizações eficientes de somas de prefixo em arranjos mutáveis.
+    """
+    def __init__(self, size: int):
+        self.size = size
+        self.tree = [0] * (size + 1)
+
+    def update(self, index: int, delta: int) -> None:
+        """Adiciona delta ao elemento no índice base 1."""
+        while index <= self.size:
+            self.tree[index] += delta
+            index += index & (-index)
+
+    def query(self, index: int) -> int:
+        """Retorna a soma dos elementos no intervalo [1, index]."""
+        sum_val = 0
+        while index > 0:
+            sum_val += self.tree[index]
+            index -= index & (-index)
+        return sum_val
+
+    def range_query(self, left: int, right: int) -> int:
+        """Retorna a soma no intervalo inclusivo [left, right] (base 1)."""
+        return self.query(right) - self.query(left - 1)
+
+
+# ==============================================================================
+# 2. Algoritmos de Grafos: Menor Caminho com A* (A-Star Search)
+# Complexidade de Tempo: O(E) no pior caso
+# Complexidade de Espaço: O(V)
+# ==============================================================================
+
+import heapq
+from typing import Dict, List, Tuple, Optional
+
+def a_star_search(
+    graph: Dict[str, List[Tuple[str, float]]],
+    heuristics: Dict[str, float],
+    start: str,
+    goal: str
+) -> Tuple[Optional[List[str]], float]:
+    """
+    Busca o caminho mínimo entre 'start' e 'goal' utilizando a heurística admissível.
+    """
+    open_set = [(heuristics[start], 0.0, start, [start])]
+    visited_cost = {start: 0.0}
+
+    while open_set:
+        f_score, g_score, current, path = heapq.heappop(open_set)
+
+        if current == goal:
+            return path, g_score
+
+        for neighbor, weight in graph.get(current, []):
+            new_g = g_score + weight
+            if neighbor not in visited_cost or new_g < visited_cost[neighbor]:
+                visited_cost[neighbor] = new_g
+                f = new_g + heuristics.get(neighbor, 0.0)
+                heapq.heappush(open_set, (f, new_g, neighbor, path + [neighbor]))
+
+    return None, float('inf')
+
+
+# ==============================================================================
+# 3. Matemática Computacional: Exponenciação Matricial & Fibonacci O(log N)
+# Complexidade: Tempo O(log N), Espaço O(1)
+# ==============================================================================
+
+def matrix_multiply(A: List[List[int]], B: List[List[int]], mod: int) -> List[List[int]]:
+    return [
+        [(A[0][0]*B[0][0] + A[0][1]*B[1][0]) % mod, (A[0][0]*B[0][1] + A[0][1]*B[1][1]) % mod],
+        [(A[1][0]*B[0][0] + A[1][1]*B[1][0]) % mod, (A[1][0]*B[0][1] + A[1][1]*B[1][1]) % mod]
+    ]
+
+def fibonacci_matrix_log_n(n: int, mod: int = 10**9 + 7) -> int:
+    """Calcula o n-ésimo número de Fibonacci em O(log N) usando exponenciação matricial."""
+    if n == 0:
+        return 0
+    result = [[1, 0], [0, 1]]
+    base = [[1, 1], [1, 0]]
+    power = n - 1
+
+    while power > 0:
+        if power % 2 == 1:
+            result = matrix_multiply(result, base, mod)
+        base = matrix_multiply(base, base, mod)
+        power //= 2
+
+    return result[0][0]

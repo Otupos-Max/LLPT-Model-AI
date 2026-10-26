@@ -1,0 +1,21 @@
+# Entendimento de Requisitos, Planejamento, Geração, Conclusão, Explicação e Reparo de Código
+
+# ==============================================================================
+# 1. Reparo de Código: Bug de Recursão Infinita & Estouro de Memória Stack
+# ==============================================================================
+
+from typing import Optional
+
+class TreeNode:
+    def __init__(self, value: int, left: 'Optional[TreeNode]' = None, right: 'Optional[TreeNode]' = None):
+        self.value = value
+        self.left = left
+        self.right = right
+
+def sum_tree_nodes_repaired(node: Optional[TreeNode]) -> int:
+    """
+    Soma recursivamente todos os valores de uma árvore binária com verificação do caso-base.
+    """
+    if node is None:
+        return 0
+    return node.value + sum_tree_nodes_repaired(node.left) + sum_tree_nodes_repaired(node.right)

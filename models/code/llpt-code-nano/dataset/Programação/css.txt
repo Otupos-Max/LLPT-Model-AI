@@ -161,3 +161,31 @@ code {
   border-radius: var(--radius-sm);
   font-size: 0.875em;
 }
+
+
+/* ========================================== */
+/* 4. CSS Grid Layout & Dark Mode Variables  */
+/* ========================================== */
+
+:root {
+    --bg-primary: #ffffff;
+    --text-primary: #1a1a1a;
+    --accent-color: #0066cc;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #121212;
+        --text-primary: #f0f0f0;
+        --accent-color: #4d94ff;
+    }
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}

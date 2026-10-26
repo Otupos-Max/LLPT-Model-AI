@@ -80,3 +80,18 @@
     }
   }
 }
+
+
+  "advanced_configuration": {
+    "cluster": {
+      "nodes": [
+        {"id": "node-1", "host": "10.0.0.1", "port": 9092, "role": "leader"},
+        {"id": "node-2", "host": "10.0.0.2", "port": 9092, "role": "follower"}
+      ],
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 15,
+        "timeout_seconds": 3
+      }
+    }
+  }

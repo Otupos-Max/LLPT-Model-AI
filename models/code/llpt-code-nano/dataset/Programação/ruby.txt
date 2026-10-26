@@ -135,3 +135,27 @@ if __FILE__ == $PROGRAM_NAME
   found_alice = repo.find_by_username('alice')
   puts "Found via metaprogramming: #{found_alice.to_json}"
 end
+
+
+# ==========================================
+# 4. Metaprogramming DSL & Concurrent Queue
+# ==========================================
+
+class TaskPipeline
+  def self.step(name, &block)
+    @steps ||= []
+    @steps << { name: name, block: block }
+  end
+
+  def self.steps
+    @steps || []
+  end
+
+  def execute(context = {})
+    self.class.steps.each do |step|
+      puts "Executing step: #{step[:name]}"
+      step[:block].call(context)
+    end
+    context
+  end
+end
