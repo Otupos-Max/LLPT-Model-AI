@@ -1,226 +1,68 @@
-// TypeScript Dataset - Advanced Types, Generics & Clean Design Patterns
+// TypeScript Production Features: Interfaces, Generics, Async/Await & Utility Types
 
-// ==========================================
-// 1. Interfaces, Types & Generics
-// ==========================================
-
-export type Role = 'admin' | 'user' | 'editor' | 'guest';
-
-export interface BaseEntity {
+export interface User {
   readonly id: string;
-  readonly createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface User extends BaseEntity {
   name: string;
   email: string;
-  role: Role;
-  metadata?: Record<string, unknown>;
+  role: 'admin' | 'user' | 'guest';
+  createdAt: Date;
 }
 
-export type CreateUserDto = Omit<User, 'id' | 'createdAt' | 'updatedAt'>;
-export type UpdateUserDto = Partial<CreateUserDto>;
+export type ApiResponse<T> =
+  | { success: true; data: T; timestamp: number }
+  | { success: false; error: string; code: number };
 
-// Generic Result Type for Error Handling
-export type Result<T, E = Error> =
-  | { success: true; value: T }
-  | { success: false; error: E };
+export class HttpClient {
+  private baseUrl: string;
 
-export function ok<T>(value: T): Result<T, never> {
-  return { success: true, value };
-}
-
-export function fail<E>(error: E): Result<never, E> {
-  return { success: false, error };
-}
-
-// ==========================================
-// 2. Generic Repository Pattern
-// ==========================================
-
-export interface Repository<T extends BaseEntity> {
-  findById(id: string): Promise<Result<T>>;
-  findAll(filter?: Partial<T>): Promise<T[]>;
-  create(data: Omit<T, keyof BaseEntity>): Promise<Result<T>>;
-  update(id: string, data: Partial<T>): Promise<Result<T>>;
-  delete(id: string): Promise<Result<boolean>>;
-}
-
-export class InMemoryRepository<T extends BaseEntity> implements Repository<T> {
-  private items: Map<string, T> = new Map();
-
-  async findById(id: string): Promise<Result<T>> {
-    const item = this.items.get(id);
-    if (!item) {
-      return fail(new Error(`Entity with ID ${id} not found`));
-    }
-    return ok(item);
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl.replace(/\/$/, '');
   }
 
-  async findAll(filter?: Partial<T>): Promise<T[]> {
-    const all = Array.from(this.items.values());
-    if (!filter) return all;
-    return all.filter(item =>
-      Object.entries(filter).every(([key, value]) => item[key as keyof T] === value)
-    );
-  }
-
-  async create(data: Omit<T, keyof BaseEntity>): Promise<Result<T>> {
-    const id = Math.random().toString(36).substring(2, 11);
-    const now = new Date();
-    const entity = {
-      ...data,
-      id,
-      createdAt: now,
-      updatedAt: now,
-    } as unknown as T;
-
-    this.items.set(id, entity);
-    return ok(entity);
-  }
-
-  async update(id: string, data: Partial<T>): Promise<Result<T>> {
-    const existing = this.items.get(id);
-    if (!existing) {
-      return fail(new Error(`Cannot update: Entity ${id} not found`));
-    }
-    const updated: T = {
-      ...existing,
-      ...data,
-      updatedAt: new Date(),
-    };
-    this.items.set(id, updated);
-    return ok(updated);
-  }
-
-  async delete(id: string): Promise<Result<boolean>> {
-    const existed = this.items.delete(id);
-    if (!existed) {
-      return fail(new Error(`Cannot delete: Entity ${id} not found`));
-    }
-    return ok(true);
-  }
-}
-
-// ==========================================
-// 3. Type Guards & Discriminated Unions
-// ==========================================
-
-export type NetworkState =
-  | { state: 'idle' }
-  | { state: 'loading' }
-  | { state: 'success'; data: unknown }
-  | { state: 'error'; message: string };
-
-export function isUser(obj: unknown): obj is User {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'id' in obj &&
-    'email' in obj &&
-    'role' in obj
-  );
-}
-
-export function handleState(state: NetworkState): string {
-  switch (state.state) {
-    case 'idle':
-      return 'Ready to fetch data';
-    case 'loading':
-      return 'Loading data, please wait...';
-    case 'success':
-      return `Data received successfully: ${JSON.stringify(state.data)}`;
-    case 'error':
-      return `An error occurred: ${state.message}`;
-    default: {
-      const _exhaustiveCheck: never = state;
-      return _exhaustiveCheck;
+  async get<T>(endpoint: string, headers?: Record<string, string>): Promise<ApiResponse<T>> {
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json', ...headers }
+      });
+      if (!response.ok) {
+        return { success: false, error: response.statusText, code: response.status };
+      }
+      const data: T = await response.json();
+      return { success: true, data, timestamp: Date.now() };
+    } catch (err) {
+      return { success: false, error: (err as Error).message, code: 500 };
     }
   }
 }
 
-// ==========================================
-// 4. Utility Mapped Types
-// ==========================================
-
-export type Nullable<T> = { [P in keyof T]: T[P] | null };
-export type DeepReadonly<T> = {
-  readonly [P in keyof T]: T[P] extends object ? DeepReadonly<T[P]> : T[P];
-};
-
-
-// ==========================================
-// 4. Advanced Utility Types & State Machine
-// ==========================================
-
-export type DeepReadonly<T> = {
-    readonly [P in keyof T]: T[P] extends object ? DeepReadonly<T[P]> : T[P];
-};
-
-export type Result<T, E = Error> =
-    | { ok: true; value: T }
-    | { ok: false; error: E };
-
-export function ok<T>(value: T): Result<T, never> {
-    return { ok: true, value };
+// Advanced TypeScript generic repository interface
+export interface Repository<T extends { id: string }> {
+  findById(id: string): Promise<T | null>;
+  findAll(): Promise<T[]>;
+  save(item: Omit<T, 'id'>): Promise<T>;
+  delete(id: string): Promise<boolean>;
 }
 
-export function err<E>(error: E): Result<never, E> {
-    return { ok: false, error };
-}
+export class InMemoryRepository<T extends { id: string }> implements Repository<T> {
+  private items = new Map<string, T>();
 
-export type State =
-    | { status: 'idle' }
-    | { status: 'loading' }
-    | { status: 'success'; data: string[] }
-    | { status: 'error'; message: string };
+  async findById(id: string): Promise<T | null> {
+    return this.items.get(id) ?? null;
+  }
 
-export type Action =
-    | { type: 'FETCH_START' }
-    | { type: 'FETCH_SUCCESS'; payload: string[] }
-    | { type: 'FETCH_ERROR'; error: string };
+  async findAll(): Promise<T[]> {
+    return Array.from(this.items.values());
+  }
 
-export function stateReducer(state: State, action: Action): State {
-    switch (action.type) {
-        case 'FETCH_START':
-            return { status: 'loading' };
-        case 'FETCH_SUCCESS':
-            return { status: 'success', data: action.payload };
-        case 'FETCH_ERROR':
-            return { status: 'error', message: action.error };
-        default:
-            return state;
-    }
-}
+  async save(item: Omit<T, 'id'>): Promise<T> {
+    const id = Math.random().toString(36).substr(2, 9);
+    const newItem = { ...item, id } as T;
+    this.items.set(id, newItem);
+    return newItem;
+  }
 
-
-// ==========================================
-// 5. Instruction & Response Pair
-// ==========================================
-
-// Instruction: Create a type-safe EventBus implementation in TypeScript with strictly typed event names and payloads.
-// Response:
-export type EventMap = {
-    user:created: { id: string; email: string };
-    user:deleted: { id: string };
-    log:info: { message: string; timestamp: number };
-};
-
-export class TypedEventBus<T extends Record<string, any>> {
-    private listeners: { [K in keyof T]?: Array<(payload: T[K]) => void> } = {};
-
-    on<K extends keyof T>(event: K, handler: (payload: T[K]) => void): void {
-        if (!this.listeners[event]) {
-            this.listeners[event] = [];
-        }
-        this.listeners[event]!.push(handler);
-    }
-
-    emit<K extends keyof T>(event: K, payload: T[K]): void {
-        const handlers = this.listeners[event];
-        if (handlers) {
-            handlers.forEach(fn => fn(payload));
-        }
-    }
+  async delete(id: string): Promise<boolean> {
+    return this.items.delete(id);
+  }
 }

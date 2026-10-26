@@ -1,0 +1,87 @@
+# Conversação Técnica & Perguntas e Respostas (Technical Q&A & Developer Discussions)
+
+---
+Pergunta: Como funciona o algoritmo QuickSort e qual é a sua complexidade de tempo?
+Resposta: O QuickSort é um algoritmo de ordenação eficiente baseado no paradigma Divisão e Conquista (Divide and Conquer).
+Ele escolhe um elemento como 'pivô' (pivot) e particiona o vetor de forma que elementos menores que o pivô fiquem à esquerda e elementos maiores fiquem à direita. Em seguida, aplica a mesma lógica recursivamente nos sub-vetores.
+Complexidade:
+- Caso Médio e Melhor Caso: O(N log N) quando o pivô divide o vetor em partes balanceadas.
+- Pior Caso: O(N^2) quando o vetor já está ordenado e o pivô escolhido é sempre o menor ou maior elemento. Pode ser mitigado usando técnica de pivô aleatório ou 'mediana de três'.
+- Espaço Auxiliar: O(log N) devido à pilha de chamadas recursivas.
+
+---
+Pergunta: Qual é a diferença entre Concorrência e Paralelismo em programação?
+Resposta:
+- Concorrência (Concurrency) diz respeito à *estrutura* do programa: lidar com múltiplas tarefas ao mesmo tempo dividindo o tempo de execução (por exemplo, através de intercalação/event loop em um único núcleo de CPU).
+- Paralelismo (Parallelism) diz respeito à *execução física simultânea*: executar múltiplas tarefas ao mesmo tempo em múltiplos núcleos de CPU físicos ou processadores.
+Resumo famoso de Rob Pike: "Concorrência é sobre lidar com muitas coisas ao mesmo tempo. Paralelismo é sobre fazer muitas coisas ao mesmo tempo."
+
+---
+Pergunta: Como evitar vazamentos de memória (memory leaks) em C e C++?
+Resposta:
+Em C:
+1. Sempre garanta que cada chamada a `malloc()`, `calloc()` ou `realloc()` tenha uma chamada correspondente a `free()`.
+2. Atribua `NULL` aos ponteiros após liberá-los para evitar 'dangling pointers'.
+3. Utilize ferramentas de análise dinâmica como Valgrind (`valgrind --leak-check=full ./meu_programa`) ou AddressSanitizer (`-fsanitize=address`).
+
+Em C++ moderno (C++11 em diante):
+1. Utilize RAII (Resource Acquisition Is Initialization) e ponteiros inteligentes (`std::unique_ptr`, `std::shared_ptr`, `std::weak_ptr`).
+2. Evite o uso de `new` e `delete` brutos, preferindo `std::make_unique` e `std::make_shared`.
+3. Evite referências circulares com `std::shared_ptr` utilizando `std::weak_ptr`.
+
+---
+Pergunta: O que é o modelo de concorrência por Atores (Actor Model) e como ele difere de Mutexes?
+Resposta:
+No Actor Model (usado em linguagens como Erlang, Elixir e Akka/Scala):
+- O "Ator" é a unidade fundamental de computação.
+- Atores não compartilham estado diretamente. Em vez disso, comunicam-se exclusivamente enviando e recebendo mensagens assíncronas imutáveis.
+- Cada ator possui uma caixa de correio (mailbox) e processa mensagens sequencialmente.
+
+Diferença para Mutexes:
+- Com Mutexes/Locks, múltiplas threads compartilham a mesma memória e usam travas para sincronizar o acesso, o que pode levar a Deadlocks, Race Conditions e alto custo de contenção.
+- O Actor Model elimina disputas de memória compartilhada (shared mutable state), tornando o sistema inerentemente mais seguro para escalabilidade concorrente e distribuída.
+
+---
+Pergunta: Como funciona a garbage collection no Java (JVM) e Go?
+Resposta:
+- Java JVM: Utiliza algoritmos geracionais baseados na hipótese de que a maioria dos objetos morre jovem. O heap é dividido em Young Generation (Eden, Survivor spaces) e Tenured/Old Generation. Coletores modernos (G1GC, ZGC, Shenandoah) realizam coleta simultânea com pausas mínimas de Stop-The-World (STW).
+- Go (Golang): Utiliza um GC tricolor de marcação e varredura (concurrent tri-color mark-sweep collector). Não é geracional, priorizando baixíssima latência (pausas STW sub-milissegundo) em vez de throughput máximo absoluto.
+
+---
+Pergunta: O que é e para que serve o padrão Circuit Breaker em microsserviços?
+Resposta:
+O Circuit Breaker (Disjuntor) é um padrão de design de resiliência usado para evitar falhas em cascata em arquiteturas distribuídas. Ele possui três estados principais:
+1. Closed (Fechado): A requisição passa normalmente. Erros são monitorados.
+2. Open (Aberto): Se a taxa de falha exceder o limite (threshold), o disjuntor "abre" e falha imediatamente sem tentar chamar o serviço downstream, poupando recursos.
+3. Half-Open (Meio-Aberto): Após um período de cooldown, permite uma quantidade limitada de requisições de teste para verificar se o serviço aterrissou e se recuperou. Se for bem-sucedido, volta para Closed; caso contrário, retorna para Open.
+
+---
+Question: What is the difference between SQL and NoSQL databases?
+Response:
+SQL (Relational) Databases:
+- Structured data with fixed schemas defined by tables and foreign keys.
+- ACID compliance (Atomicity, Consistency, Isolation, Durability) guarantees strong transactional safety.
+- Scaling: Typically scales vertically (upgrading server hardware), though sharding is possible.
+- Examples: PostgreSQL, MySQL, SQLite, Oracle.
+
+NoSQL (Non-Relational) Databases:
+- Flexible data models: Document (JSON), Key-Value, Column-family, Graph.
+- Dynamic schema allows easy structural evolution without migrations.
+- Scale: Designed to scale horizontally (adding more node instances).
+- BASE properties (Basically Available, Soft state, Eventual consistency).
+- Examples: MongoDB, Redis, Cassandra, Neo4j.
+
+---
+Question: How does the Event Loop work in Node.js and JavaScript?
+Response:
+The JavaScript engine runs on a single thread. The Event Loop is a mechanism that allows Node.js to perform non-blocking I/O operations by offloading tasks to the system kernel whenever possible.
+
+Phases of the Node.js Event Loop:
+1. Timers: Executes callbacks scheduled by `setTimeout()` and `setInterval()`.
+2. Pending Callbacks: Executes I/O callbacks deferred to the next loop iteration.
+3. Idle, Prepare: Internal engine use only.
+4. Poll: Retrieves new I/O events and executes their callbacks.
+5. Check: Executes `setImmediate()` callbacks.
+6. Close Callbacks: Executes close event handlers (e.g., `socket.on('close')`).
+
+Microtask Queue (Promises and `process.nextTick()`) is executed immediately after every phase before moving to the next.

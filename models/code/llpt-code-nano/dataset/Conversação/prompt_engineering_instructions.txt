@@ -1,0 +1,115 @@
+# Prompt Engineering & System Instructions for Developer Assistant
+
+# ==========================================
+# System Prompt 1: Code Completion & Inline Suggestions
+# ==========================================
+System: You are LLPT Code Nano, a lightweight 1B parameter AI programming assistant optimized for fast code completion, Fill-In-The-Middle (FIM), and clear code explanations. Respond accurately, strictly follow requested programming constraints, write idiomatic and clean code, and provide clear concise explanations when asked.
+
+User: Write a clean Python function that calculates the exponential moving average (EMA) of a sequence of floating point numbers with a given alpha smoothing factor.
+Assistant:
+```python
+from typing import List
+
+def calculate_ema(data: List[float], alpha: float) -> List[float]:
+    """Calculates Exponential Moving Average (EMA) for a list of values.
+
+    Args:
+        data: List of numeric float values.
+        alpha: Smoothing factor between 0.0 and 1.0.
+
+    Returns:
+        List of EMA values corresponding to input data points.
+    """
+    if not data:
+        return []
+    if not (0.0 < alpha <= 1.0):
+        raise ValueError("Alpha must be in range (0.0, 1.0].")
+
+    ema_values = [data[0]]  # First EMA point is initialized to first data point
+    for value in data[1:]:
+        current_ema = alpha * value + (1.0 - alpha) * ema_values[-1]
+        ema_values.append(current_ema)
+
+    return ema_values
+```
+
+# ==========================================
+# System Prompt 2: Step-by-Step Code Debugging
+# ==========================================
+User: A minha função Go de leitura de arquivos está gerando vazamento de arquivo de sistema (file descriptor leak) quando ocorre um erro no processamento do JSON. Como posso corrigir?
+
+Código com bug:
+```go
+func LoadConfig(filename string) (*Config, error) {
+    file, err := os.Open(filename)
+    if err != nil {
+        return nil, err
+    }
+    var cfg Config
+    err = json.NewDecoder(file).Decode(&cfg)
+    if err != nil {
+        return nil, err // O arquivo 'file' permanece aberto aqui!
+    }
+    file.Close()
+    return &cfg, nil
+}
+```
+
+Assistant:
+O bug acontece porque se a decodificação do JSON falhar (`json.NewDecoder().Decode()`), o programa retorna antecipadamente sem executar `file.Close()`.
+
+Para corrigir o vazamento em Go de maneira simples e idiomática, utilize a instrução `defer file.Close()` imediatamente após verificar que o arquivo foi aberto com sucesso:
+
+```go
+func LoadConfig(filename string) (*Config, error) {
+    file, err := os.Open(filename)
+    if err != nil {
+        return nil, err
+    }
+    // O defer garante que file.Close() será executado ao sair da função em qualquer caminho
+    defer file.Close()
+
+    var cfg Config
+    if err := json.NewDecoder(file).Decode(&cfg); err != nil {
+        return nil, fmt.Errorf("falha ao decodificar config json: %w", err)
+    }
+
+    return &cfg, nil
+}
+```
+
+# ==========================================
+# System Prompt 3: Code Refactoring & Security Audit
+# ==========================================
+User: Refatore o trecho SQL abaixo para evitar SQL Injection e melhorar a segurança do aplicativo.
+
+Código Inseguro em JavaScript (Node.js):
+```javascript
+const query = `SELECT id, username, email FROM users WHERE email = '${req.body.email}' AND password = '${req.body.password}'`;
+db.query(query, (err, results) => { ... });
+```
+
+Assistant:
+A interpolação de strings diretamente na query SQL (`'${req.body.email}'`) permite SQL Injection. Um atacante poderia enviar `' OR '1'='1` e burlar a autenticação.
+
+### Solução Refatorada (Queries Parameterizadas & Hashing de Senha)
+
+1. Use consultas parameterizadas (prepared statements):
+```javascript
+// Usando parâmetro $1 e $2 no PostgreSQL / MySQL preparado
+const query = 'SELECT id, username, password_hash FROM users WHERE email = $1';
+db.query(query, [req.body.email], async (err, results) => {
+  if (err || results.rows.length === 0) {
+    return res.status(401).json({ error: 'Credenciais inválidas.' });
+  }
+
+  const user = results.rows[0];
+  // Comparar senha plana recebida com o hash salvo no banco usando bcrypt
+  const match = await bcrypt.compare(req.body.password, user.password_hash);
+  if (!match) {
+    return res.status(401).json({ error: 'Credenciais inválidas.' });
+  }
+
+  // Login com sucesso
+});
+```
