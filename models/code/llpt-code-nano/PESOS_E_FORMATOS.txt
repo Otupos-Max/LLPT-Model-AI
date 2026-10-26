@@ -23,11 +23,14 @@ O modelo LLPT Code Nano organiza seus pesos e checkpoints no seguinte fluxo:
   │       ├── llpt-code-nano-f16.gguf
   │       ├── llpt-code-nano-q8_0.gguf
   │       └── llpt-code-nano-q4_k_m.gguf
-  └── dataset/           -> Conjuntos de dados de código em formato .txt
-      ├── python.txt
-      ├── javascript.txt
-      ├── ...
-      └── fim_examples.txt
+  └── dataset/           -> Conjuntos de dados em formato .txt reorganizados por finalidade
+      ├── Programação/
+      │   ├── python.txt
+      │   ├── javascript.txt
+      │   ├── ...
+      │   └── fim_examples.txt
+      └── Conversação/
+          └── documentation.txt
 
 -------------------------------------------------------------------------------
 2. DIFERENÇA ENTRE PESOS INICIALIZADOS E PESOS TREINADOS

@@ -3,10 +3,11 @@
 Script de Treinamento e Fine-Tuning para LLPT Code Nano (1B)
 
 Este script suporta:
-- Leitura recursiva de arquivos .txt em diretórios ou arquivo individual.
+- Leitura recursiva e categorizada de arquivos .txt em diretórios (Programação vs Conversação).
 - Identificação e descarte de arquivos vazios com avisos claros.
 - Suporte nativo a Fill-In-The-Middle (FIM) e continuação de código normal.
 - Tokenização, chunking em janelas de contexto (até 8192 tokens).
+- Controle de proporção entre exemplos de programação e conversação (--prog_ratio).
 - Treinamento real via PyTorch com otimizador AdamW, backpropagation, cálculo de perda e validação.
 - Salvamento e retomada de checkpoints.
 """
@@ -20,7 +21,7 @@ import gc
 import json
 import argparse
 import logging
-from typing import List, Dict, Tuple, Any
+from typing import List, Dict, Tuple, Any, Optional
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -59,22 +60,41 @@ def find_txt_files(data_path: str) -> List[str]:
     return sorted(txt_files)
 
 
-def load_txt_datasets(data_path: str) -> Tuple[List[str], List[Dict[str, str]]]:
+def classify_file_category(filepath: str, base_data_path: str) -> str:
     """
-    Lê os arquivos .txt, ignora arquivos vazios com aviso,
-    e separa amostras FIM de amostras de código normal.
+    Classifica um arquivo .txt na categoria 'Programação', 'Conversação' ou 'Geral'
+    com base no caminho relativo e diretórios pai.
+    """
+    rel_path = os.path.relpath(filepath, base_data_path) if os.path.isdir(base_data_path) else filepath
+    parts = [p.lower() for p in rel_path.split(os.sep)]
+
+    for part in parts:
+        if "program" in part:
+            return "Programação"
+        if "convers" in part:
+            return "Conversação"
+
+    return "Geral"
+
+
+def load_categorized_txt_datasets(data_path: str) -> Dict[str, Tuple[List[str], List[Dict[str, str]]]]:
+    """
+    Lê os arquivos .txt e separa em categorias ('Programação', 'Conversação', 'Geral').
+    Retorna um dicionário: {categoria: (standard_texts, fim_samples)}
     """
     txt_files = find_txt_files(data_path)
     if not txt_files:
         logging.warning(f"Nenhum arquivo .txt encontrado em '{data_path}'.")
-        return [], []
+        return {}
 
-    logging.info(f"Encontrados {len(txt_files)} arquivo(s) em '{data_path}'. Processando...")
+    logging.info(f"Encontrados {len(txt_files)} arquivo(s) em '{data_path}'. Processando e categorizando...")
 
-    standard_texts = []
-    fim_samples = []
+    categorized = {
+        "Programação": ([], []),
+        "Conversação": ([], []),
+        "Geral": ([], [])
+    }
     empty_files_count = 0
-
     fim_pattern = re.compile(r'<PRE>(.*?)(?:<SUF>(.*?))?<MID>(.*?)(?:<EOT>|$)', re.DOTALL)
 
     for filepath in txt_files:
@@ -87,28 +107,50 @@ def load_txt_datasets(data_path: str) -> Tuple[List[str], List[Dict[str, str]]]:
                 empty_files_count += 1
                 continue
 
+            category = classify_file_category(filepath, data_path)
+            std_list, fim_list = categorized[category]
+
             if "<PRE>" in content and "<MID>" in content:
                 matches = fim_pattern.findall(content)
                 if matches:
                     for match in matches:
                         prefix, suffix, middle = match
-                        fim_samples.append({
+                        fim_list.append({
                             "prefix": prefix,
                             "suffix": suffix or "",
                             "middle": middle
                         })
-                    logging.info(f"Arquivo '{os.path.basename(filepath)}': {len(matches)} exemplo(s) FIM extraído(s).")
+                    logging.info(f"[{category}] Arquivo '{os.path.basename(filepath)}': {len(matches)} exemplo(s) FIM extraído(s).")
                 else:
-                    standard_texts.append(content)
+                    std_list.append(content)
             else:
-                standard_texts.append(content)
+                std_list.append(content)
         except Exception as e:
             logging.error(f"Erro ao ler arquivo '{filepath}': {e}")
 
     if empty_files_count > 0:
         logging.info(f"Total de arquivos vazios ignorados: {empty_files_count}")
 
-    return standard_texts, fim_samples
+    for cat, (stds, fims) in categorized.items():
+        if stds or fims:
+            logging.info(f"Categoria '{cat}': {len(stds)} texto(s) padrão, {len(fims)} amostra(s) FIM.")
+
+    return categorized
+
+
+def load_txt_datasets(data_path: str) -> Tuple[List[str], List[Dict[str, str]]]:
+    """
+    Lê os arquivos .txt, ignora arquivos vazios com aviso,
+    e separa amostras FIM de amostras de código normal.
+    Mantém compatibilidade com assinaturas existentes.
+    """
+    categorized = load_categorized_txt_datasets(data_path)
+    all_standard = []
+    all_fim = []
+    for stds, fims in categorized.values():
+        all_standard.extend(stds)
+        all_fim.extend(fims)
+    return all_standard, all_fim
 
 
 def get_or_create_tokenizer(model_dir_or_config: str):
@@ -131,30 +173,98 @@ def get_or_create_tokenizer(model_dir_or_config: str):
 
 class CodeTXTDataset(Dataset):
     """
-    Dataset customizado para tokenização e chunking em sequências de contexto.
+    Dataset customizado para tokenização e chunking em sequências de contexto,
+    com suporte opcional a categorização e controle de proporção (--prog_ratio).
     """
-    def __init__(self, standard_texts: List[str], fim_samples: List[Dict[str, str]], tokenizer, max_length: int = 2048):
+    def __init__(
+        self,
+        standard_texts: Optional[List[str]] = None,
+        fim_samples: Optional[List[Dict[str, str]]] = None,
+        tokenizer = None,
+        max_length: int = 2048,
+        categorized_data: Optional[Dict[str, Tuple[List[str], List[Dict[str, str]]]]] = None,
+        prog_ratio: Optional[float] = None
+    ):
         self.samples = []
         self.tokenizer = tokenizer
         self.max_length = min(max_length, 8192)
 
-        # 1. Processar textos normais de código
-        for text in standard_texts:
-            tokens = tokenizer.encode(text, add_special_tokens=True)
-            # Chunking em janelas de tamanho max_length
-            for i in range(0, len(tokens), self.max_length):
-                chunk = tokens[i:i + self.max_length]
-                if len(chunk) > 1:  # Ignorar sequências de 1 token
-                    self.samples.append(chunk)
+        if categorized_data is not None:
+            self._init_from_categorized(categorized_data, prog_ratio)
+        else:
+            standard_texts = standard_texts or []
+            fim_samples = fim_samples or []
+            self._init_from_raw(standard_texts, fim_samples)
 
-        # 2. Processar exemplos FIM
-        for fim in fim_samples:
-            fim_text = f"<PRE>{fim['prefix']}<SUF>{fim['suffix']}<MID>{fim['middle']}<EOT>"
-            tokens = tokenizer.encode(fim_text, add_special_tokens=True)
+    def _tokenize_item_list(self, standard_texts: List[str], fim_samples: List[Dict[str, str]]) -> List[List[int]]:
+        chunks = []
+        for text in standard_texts:
+            tokens = self.tokenizer.encode(text, add_special_tokens=True)
             for i in range(0, len(tokens), self.max_length):
                 chunk = tokens[i:i + self.max_length]
                 if len(chunk) > 1:
-                    self.samples.append(chunk)
+                    chunks.append(chunk)
+
+        for fim in fim_samples:
+            fim_text = f"<PRE>{fim['prefix']}<SUF>{fim['suffix']}<MID>{fim['middle']}<EOT>"
+            tokens = self.tokenizer.encode(fim_text, add_special_tokens=True)
+            for i in range(0, len(tokens), self.max_length):
+                chunk = tokens[i:i + self.max_length]
+                if len(chunk) > 1:
+                    chunks.append(chunk)
+        return chunks
+
+    def _init_from_raw(self, standard_texts: List[str], fim_samples: List[Dict[str, str]]):
+        self.samples = self._tokenize_item_list(standard_texts, fim_samples)
+
+    def _init_from_categorized(
+        self,
+        categorized_data: Dict[str, Tuple[List[str], List[Dict[str, str]]]],
+        prog_ratio: Optional[float] = None
+    ):
+        prog_stds, prog_fims = categorized_data.get("Programação", ([], []))
+        conv_stds, conv_fims = categorized_data.get("Conversação", ([], []))
+        gen_stds, gen_fims = categorized_data.get("Geral", ([], []))
+
+        prog_chunks = self._tokenize_item_list(prog_stds, prog_fims)
+        conv_chunks = self._tokenize_item_list(conv_stds, conv_fims)
+        gen_chunks = self._tokenize_item_list(gen_stds, gen_fims)
+
+        logging.info(
+            f"Chunking de sequências (max_length={self.max_length}): "
+            f"Programação: {len(prog_chunks)} sequências | "
+            f"Conversação: {len(conv_chunks)} sequências | "
+            f"Geral: {len(gen_chunks)} sequências."
+        )
+
+        if prog_ratio is not None and 0.0 < prog_ratio < 1.0 and (prog_chunks or conv_chunks):
+            if len(prog_chunks) > 0 and len(conv_chunks) > 0:
+                target_conv_count = max(1, int(len(prog_chunks) * (1.0 - prog_ratio) / prog_ratio))
+                if target_conv_count < len(conv_chunks):
+                    selected_conv_chunks = conv_chunks[:target_conv_count]
+                else:
+                    times = math.ceil(target_conv_count / len(conv_chunks))
+                    selected_conv_chunks = (conv_chunks * times)[:target_conv_count]
+
+                balanced_samples = prog_chunks + selected_conv_chunks + gen_chunks
+                actual_prog_ratio = len(prog_chunks) / (len(prog_chunks) + len(selected_conv_chunks))
+                logging.info(
+                    f"Ajuste de Proporção Aplicado (prog_ratio={prog_ratio:.2f}): "
+                    f"Programação={len(prog_chunks)}, Conversação (ajustado)={len(selected_conv_chunks)}. "
+                    f"Proporção final de Programação: {actual_prog_ratio:.2%}"
+                )
+                self.samples = balanced_samples
+            else:
+                self.samples = prog_chunks + conv_chunks + gen_chunks
+        else:
+            self.samples = prog_chunks + conv_chunks + gen_chunks
+            total_cat = len(prog_chunks) + len(conv_chunks)
+            if total_cat > 0:
+                logging.info(
+                    f"Proporção natural do dataset: "
+                    f"Programação={len(prog_chunks)/total_cat:.2%}, "
+                    f"Conversação={len(conv_chunks)/total_cat:.2%}"
+                )
 
     def __len__(self):
         return len(self.samples)
@@ -175,7 +285,6 @@ def collate_fn(batch, pad_token_id: int):
     for item in batch:
         pad_len = max_len - len(item)
         padded_ids = item + [pad_token_id] * pad_len
-        # Para Causal LM, os rótulos idênticos aos inputs, com -100 no padding
         padded_labels = item + [-100] * pad_len
         mask = [1] * len(item) + [0] * pad_len
 
@@ -232,7 +341,7 @@ def evaluate(model, dataloader, device):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Treinamento LLPT Code Nano (1B) com Datasets TXT")
+    parser = argparse.ArgumentParser(description="Treinamento LLPT Code Nano (1B) com Datasets TXT Categorizados")
     parser.add_argument("--config", type=str, default="models/code/llpt-code-nano/config.json", help="Caminho para o config.json")
     parser.add_argument("--data_path", type=str, default="models/code/llpt-code-nano/dataset/", help="Diretório ou arquivo .txt do dataset")
     parser.add_argument("--output_dir", type=str, default="models/code/llpt-code-nano/weights/checkpoints/", help="Diretório de saída dos checkpoints")
@@ -241,6 +350,7 @@ def main():
     parser.add_argument("--learning_rate", type=float, default=5e-5, help="Taxa de aprendizado")
     parser.add_argument("--max_length", type=int, default=512, help="Comprimento máximo da sequência (máx 8192)")
     parser.add_argument("--val_split", type=float, default=0.1, help="Proporção de validação")
+    parser.add_argument("--prog_ratio", type=float, default=None, help="Proporção de exemplos de programação (ex: 0.8)")
     parser.add_argument("--device", type=str, default="cpu", help="Dispositivo (cpu/cuda)")
     parser.add_argument("--use_lora", action="store_true", help="Usar LoRA se disponível")
     parser.add_argument("--resume_from_checkpoint", type=str, default="", help="Caminho do checkpoint para retomar")
@@ -252,10 +362,13 @@ def main():
     print(f"Dataset: {args.data_path}")
     print(f"Saída: {args.output_dir}")
     print(f"Épocas: {args.epochs} | Batch Size: {args.batch_size} | LR: {args.learning_rate}")
+    if args.prog_ratio is not None:
+        print(f"Proporção de Programação solicitada: {args.prog_ratio:.2f}")
 
-    # 1. Carregar dataset
-    standard_texts, fim_samples = load_txt_datasets(args.data_path)
-    if not standard_texts and not fim_samples:
+    # 1. Carregar dataset categorizado
+    categorized_data = load_categorized_txt_datasets(args.data_path)
+    has_data = any(stds or fims for stds, fims in categorized_data.values())
+    if not has_data:
         logging.error("Erro: Nenhum dado válido foi encontrado para iniciar o treinamento. Abortando.")
         sys.exit(1)
 
@@ -280,7 +393,12 @@ def main():
     model.to(device)
 
     # 3. Preparar Dataset e DataLoader
-    dataset = CodeTXTDataset(standard_texts, fim_samples, tokenizer, max_length=args.max_length)
+    dataset = CodeTXTDataset(
+        categorized_data=categorized_data,
+        tokenizer=tokenizer,
+        max_length=args.max_length,
+        prog_ratio=args.prog_ratio
+    )
     if len(dataset) == 0:
         logging.error("O dataset resultou em 0 amostras de sequências. Verifique o conteúdo dos arquivos .txt.")
         sys.exit(1)

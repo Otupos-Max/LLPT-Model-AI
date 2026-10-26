@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test Suite para LLPT Code Nano Pipeline com Datasets TXT
+Test Suite para LLPT Code Nano Pipeline com Datasets TXT Categorizados
 
 Testa:
 1. Leitura de dataset .txt
@@ -11,6 +11,7 @@ Testa:
 6. Inferência usando pesos carregados
 7. Tratamento de datasets vazios ou inexistentes
 8. Compatibilidade FIM
+9. Categorização Programação / Conversação e controle de proporção (prog_ratio)
 """
 
 import os
@@ -21,7 +22,15 @@ import torch
 from transformers import LlamaConfig, LlamaForCausalLM
 
 sys.path.insert(0, os.path.abspath("models/code/llpt-code-nano/src"))
-from train import load_txt_datasets, CodeTXTDataset, collate_fn, get_or_create_tokenizer, train_epoch, evaluate
+from train import (
+    load_txt_datasets,
+    load_categorized_txt_datasets,
+    CodeTXTDataset,
+    collate_fn,
+    get_or_create_tokenizer,
+    train_epoch,
+    evaluate
+)
 from inference import generate_text, generate_fim
 from model import load_model_config
 
@@ -57,7 +66,6 @@ def test_3_and_4_training_step_and_loss(model, tokenizer):
 
     loader = torch.utils.data.DataLoader(dataset, batch_size=2, shuffle=False, collate_fn=lambda b: collate_fn(b, tokenizer.pad_token_id or 0))
 
-    # Check weight before step
     initial_weight = list(model.parameters())[0].clone()
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
 
@@ -80,7 +88,6 @@ def test_5_and_6_checkpoint_and_inference(model, tokenizer, temp_dir):
     torch.save(model.state_dict(), os.path.join(ckpt_dir, "pytorch_model.bin"))
     tokenizer.save_pretrained(ckpt_dir)
 
-    # Load into fresh model
     loaded_model = LlamaForCausalLM(model.config)
     loaded_model.load_state_dict(torch.load(os.path.join(ckpt_dir, "pytorch_model.bin")))
 
@@ -119,12 +126,36 @@ def test_8_fim_compatibility(tokenizer):
     print("Test 8 Passed: FIM special tokens correctly preserved in tokenization!")
 
 
+def test_9_categorized_dataset_and_ratio(temp_dir, tokenizer):
+    print("\n--- Test 9: Categorized dataset (Programação/Conversação) and ratio control ---")
+    prog_dir = os.path.join(temp_dir, "dataset", "Programação")
+    conv_dir = os.path.join(temp_dir, "dataset", "Conversação")
+    os.makedirs(prog_dir, exist_ok=True)
+    os.makedirs(conv_dir, exist_ok=True)
+
+    with open(os.path.join(prog_dir, "python.txt"), "w", encoding="utf-8") as f:
+        f.write("def calculate_sum(a, b):\n    return a + b\n" * 10)
+
+    with open(os.path.join(conv_dir, "conversa.txt"), "w", encoding="utf-8") as f:
+        f.write("Usuário: Como funciona a ordenação rápida?\nAssistente: O Quicksort é um algoritmo eficiente...\n" * 10)
+
+    categorized = load_categorized_txt_datasets(os.path.join(temp_dir, "dataset"))
+    assert "Programação" in categorized and len(categorized["Programação"][0]) == 1
+    assert "Conversação" in categorized and len(categorized["Conversação"][0]) == 1
+
+    dataset_natural = CodeTXTDataset(categorized_data=categorized, tokenizer=tokenizer, max_length=128)
+    assert len(dataset_natural) > 0
+
+    dataset_balanced = CodeTXTDataset(categorized_data=categorized, tokenizer=tokenizer, max_length=128, prog_ratio=0.8)
+    assert len(dataset_balanced) > 0
+    print("Test 9 Passed: Categorized datasets and ratio adjustment verified successfully!")
+
+
 def main():
     print("Starting LLPT Code Nano Pipeline Test Suite...")
     temp_dir = tempfile.mkdtemp()
 
     try:
-        # Mini model configuration for fast testing
         mini_config = LlamaConfig(
             vocab_size=1000,
             hidden_size=64,
@@ -147,9 +178,10 @@ def main():
         test_5_and_6_checkpoint_and_inference(model, tokenizer, temp_dir)
         test_7_empty_or_nonexistent_dataset(temp_dir)
         test_8_fim_compatibility(tokenizer)
+        test_9_categorized_dataset_and_ratio(temp_dir, tokenizer)
 
         print("\n=======================================================")
-        print(" ALL 8 MANDATORY VERIFICATION TESTS PASSED SUCCESSFULLY!")
+        print(" ALL 9 MANDATORY VERIFICATION TESTS PASSED SUCCESSFULLY!")
         print("=======================================================")
     finally:
         shutil.rmtree(temp_dir)

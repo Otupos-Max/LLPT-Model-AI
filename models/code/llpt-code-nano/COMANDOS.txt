@@ -18,8 +18,8 @@ retomar, interromper, converter e executar a inferência do modelo LLPT Code Nan
   git clone https://github.com/ggerganov/llama.cpp
   cd llama.cpp && make -j
 
-[1.2 INICIAR TREINAMENTO COM DATASET .TXT]
-  # Treinar com todo o diretório de arquivos .txt (Python, JS, C++, Rust, FIM, etc.)
+[1.2 INICIAR TREINAMENTO COM DATASET .TXT CATEGORIZADO]
+  # Treinar com todo o diretório de datasets (Programação/ e Conversação/)
   python3 models/code/llpt-code-nano/src/train.py \
     --config models/code/llpt-code-nano/config.json \
     --data_path models/code/llpt-code-nano/dataset/ \
@@ -27,12 +27,13 @@ retomar, interromper, converter e executar a inferência do modelo LLPT Code Nan
     --epochs 3 \
     --batch_size 2 \
     --learning_rate 5e-5 \
-    --max_length 512
+    --max_length 512 \
+    --prog_ratio 0.8
 
-  # Treinar apenas com uma linguagem ou arquivo .txt específico (ex: python.txt)
+  # Treinar apenas com a pasta de programação ou arquivo .txt específico (ex: Programação/python.txt)
   python3 models/code/llpt-code-nano/src/train.py \
     --config models/code/llpt-code-nano/config.json \
-    --data_path models/code/llpt-code-nano/dataset/python.txt \
+    --data_path models/code/llpt-code-nano/dataset/Programação/python.txt \
     --output_dir models/code/llpt-code-nano/weights/checkpoints/ \
     --epochs 3
 
