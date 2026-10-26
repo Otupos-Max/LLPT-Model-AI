@@ -264,3 +264,63 @@ bool cb_pop(CircularBuffer *cb, int *value) {
     cb->count--;
     return true;
 }
+
+
+/* ==========================================
+ * 3. Instruction & System Programming Example
+ * ========================================== */
+
+/* Instruction: Implement a thread-safe Circular Buffer (FIFO) in C using mutexes and condition variables. */
+/* Response: */
+
+#include <pthread.h>
+
+typedef struct {
+    int *buffer;
+    size_t head;
+    size_t tail;
+    size_t max_len;
+    size_t count;
+    pthread_mutex_t mutex;
+    pthread_cond_t not_full;
+    pthread_cond_t not_empty;
+} CircularBuffer;
+
+CircularBuffer *cb_init(size_t capacity) {
+    CircularBuffer *cb = (CircularBuffer *)malloc(sizeof(CircularBuffer));
+    if (!cb) return NULL;
+    cb->buffer = (int *)malloc(capacity * sizeof(int));
+    cb->head = 0;
+    cb->tail = 0;
+    cb->max_len = capacity;
+    cb->count = 0;
+    pthread_mutex_init(&cb->mutex, NULL);
+    pthread_cond_init(&cb->not_full, NULL);
+    pthread_cond_init(&cb->not_empty, NULL);
+    return cb;
+}
+
+void cb_push(CircularBuffer *cb, int data) {
+    pthread_mutex_lock(&cb->mutex);
+    while (cb->count == cb->max_len) {
+        pthread_cond_wait(&cb->not_full, &cb->mutex);
+    }
+    cb->buffer[cb->tail] = data;
+    cb->tail = (cb->tail + 1) % cb->max_len;
+    cb->count++;
+    pthread_cond_signal(&cb->not_empty);
+    pthread_mutex_unlock(&cb->mutex);
+}
+
+int cb_pop(CircularBuffer *cb) {
+    pthread_mutex_lock(&cb->mutex);
+    while (cb->count == 0) {
+        pthread_cond_wait(&cb->not_empty, &cb->mutex);
+    }
+    int data = cb->buffer[cb->head];
+    cb->head = (cb->head + 1) % cb->max_len;
+    cb->count--;
+    pthread_cond_signal(&cb->not_full);
+    pthread_mutex_unlock(&cb->mutex);
+    return data;
+}

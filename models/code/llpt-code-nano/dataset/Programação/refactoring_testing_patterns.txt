@@ -44,3 +44,23 @@ class PaymentFactory:
 
 PaymentFactory.register("credit_card", CreditCardPayment)
 PaymentFactory.register("pix", PixPayment)
+
+
+# ==============================================================================
+# 2. Refatoração Clean Code: Strategy Pattern para Cálculo de Frete
+# ==============================================================================
+
+from abc import ABC, abstractmethod
+
+class ShippingStrategy(ABC):
+    @abstractmethod
+    def calculate(self, weight: float) -> float:
+        pass
+
+class FedExShipping(ShippingStrategy):
+    def calculate(self, weight: float) -> float:
+        return weight * 2.5 + 5.0
+
+class DHLShipping(ShippingStrategy):
+    def calculate(self, weight: float) -> float:
+        return weight * 3.0 + 2.0

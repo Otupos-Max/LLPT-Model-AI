@@ -195,3 +195,33 @@ pub async fn find_user_by_id(id: u64) -> Result<UserRecord, DatabaseError> {
         })
     }
 }
+
+
+// ==========================================
+// 3. Multi-File Project Layout Simulation
+// ==========================================
+
+// File: src/models.rs
+pub struct User {
+    pub id: u64,
+    pub name: String,
+}
+
+// File: src/db.rs
+use crate::models::User;
+
+pub trait Database {
+    fn find_user(&self, id: u64) -> Option<User>;
+}
+
+pub struct InMemoryDb;
+
+impl Database for InMemoryDb {
+    fn find_user(&self, id: u64) -> Option<User> {
+        if id == 1 {
+            Some(User { id: 1, name: "Alice".to_string() })
+        } else {
+            None
+        }
+    }
+}

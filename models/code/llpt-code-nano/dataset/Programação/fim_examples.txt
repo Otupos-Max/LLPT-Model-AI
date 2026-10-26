@@ -196,3 +196,45 @@ fi<MID>mkdir -p "$backup_dir"<EOT>
         clearTimeout(timer);
         timer = setTimeout(() => fn.apply(this, args), delay);
     };<EOT>
+
+
+<PRE>import torch
+import torch.nn as nn
+
+class MLP(nn.Module):
+    def __init__(self, in_dim: int, hidden_dim: int, out_dim: int):
+        super().__init__()
+        self.fc1 = nn.Linear(in_dim, hidden_dim)
+        <SUF>
+        self.fc2 = nn.Linear(hidden_dim, out_dim)
+
+    def forward(self, x):
+        return self.fc2(self.act(self.fc1(x)))<MID>self.act = nn.ReLU()<EOT>
+
+<PRE>struct Point {
+    x: f64,
+    y: f64,
+}
+
+impl Point {
+    fn distance(&self, other: &Point) -> f64 {
+        <SUF>
+    }
+}<MID>let dx = self.x - other.x;
+        let dy = self.y - other.y;
+        (dx * dx + dy * dy).sqrt()<EOT>
+
+<PRE>func BinarySearch(arr []int, target int) int {
+    low, high := 0, len(arr)-1
+    for low <= high {
+        mid := (low + high) / 2
+        <SUF>
+    }
+    return -1
+}<MID>if arr[mid] == target {
+            return mid
+        } else if arr[mid] < target {
+            low = mid + 1
+        } else {
+            high = mid - 1
+        }<EOT>

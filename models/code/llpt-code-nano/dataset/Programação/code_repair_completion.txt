@@ -19,3 +19,28 @@ def sum_tree_nodes_repaired(node: Optional[TreeNode]) -> int:
     if node is None:
         return 0
     return node.value + sum_tree_nodes_repaired(node.left) + sum_tree_nodes_repaired(node.right)
+
+
+# ==============================================================================
+# 2. Conclusão e Reparo: Busca em Largura (BFS) em Grafos
+# ==============================================================================
+
+from collections import deque
+
+def breadth_first_search(graph: dict, start_node: str) -> list[str]:
+    """Performs BFS traversal on a graph safely avoiding infinite cycles."""
+    visited = set()
+    queue = deque([start_node])
+    visited.add(start_node)
+    result = []
+
+    while queue:
+        current = queue.popleft()
+        result.append(current)
+
+        for neighbor in graph.get(current, []):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append(neighbor)
+
+    return result

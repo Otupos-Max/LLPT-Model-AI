@@ -208,3 +208,60 @@ public:
         for(std::thread &worker : workers) worker.join();
     }
 };
+
+
+// ==========================================
+// 3. Instruction & Modern C++ Concept Example
+// ==========================================
+
+// Instruction: Write a modern C++20 thread pool implementation using std::jthread and std::condition_variable.
+// Response:
+
+#include <queue>
+#include <functional>
+#include <condition_variable>
+#include <mutex>
+
+class SimpleThreadPool {
+private:
+    std::vector<std::jthread> workers_;
+    std::queue<std::function<void()>> tasks_;
+    std::mutex queue_mutex_;
+    std::condition_variable cv_;
+    bool stop_ = false;
+
+public:
+    explicit SimpleThreadPool(size_t threads) {
+        for (size_t i = 0; i < threads; ++i) {
+            workers_.emplace_back([this] {
+                while (true) {
+                    std::function<void()> task;
+                    {
+                        std::unique_lock<std::mutex> lock(this->queue_mutex_);
+                        this->cv_.wait(lock, [this] { return this->stop_ || !this->tasks_.empty(); });
+                        if (this->stop_ && this->tasks_.empty()) return;
+                        task = std::move(this->tasks_.front());
+                        this->tasks_.pop();
+                    }
+                    task();
+                }
+            });
+        }
+    }
+
+    void enqueue(std::function<void()> task) {
+        {
+            std::lock_guard<std::mutex> lock(queue_mutex_);
+            tasks_.push(task);
+        }
+        cv_.notify_one();
+    }
+
+    ~SimpleThreadPool() {
+        {
+            std::lock_guard<std::mutex> lock(queue_mutex_);
+            stop_ = true;
+        }
+        cv_.notify_all();
+    }
+};

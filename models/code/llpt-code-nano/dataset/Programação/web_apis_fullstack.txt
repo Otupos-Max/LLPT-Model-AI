@@ -36,3 +36,16 @@ async def create_user(user_in: UserCreate):
     user_obj = UserResponse(id=user_id, **user_in.model_dump())
     db_users[user_id] = user_obj
     return user_obj
+
+
+# ==============================================================================
+# 2. FastAPI Endpoints com Validação Pydantic
+# ==============================================================================
+
+from pydantic import BaseModel, Field, EmailStr
+from uuid import UUID, uuid4
+
+class UserRegisterSchema(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    email: EmailStr
+    password: str = Field(..., min_length=8)

@@ -318,3 +318,34 @@ class SafeCounter:
     def get_value(self) -> int:
         with self._lock:
             return self.count
+
+
+# ==========================================
+# 7. Instruction & Task Format Examples
+# ==========================================
+
+# Instruction: Implement a thread-safe Memory Cache class in Python with TTL expiration.
+# Response:
+import time
+import threading
+from typing import Any, Dict, Optional
+
+class MemoryCacheTTL:
+    def __init__(self):
+        self._store: Dict[str, tuple[Any, Optional[float]]] = {}
+        self._lock = threading.RLock()
+
+    def set(self, key: str, value: Any, ttl_seconds: Optional[float] = None) -> None:
+        with self._lock:
+            expire_at = time.time() + ttl_seconds if ttl_seconds else None
+            self._store[key] = (value, expire_at)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        with self._lock:
+            if key not in self._store:
+                return default
+            val, expire_at = self._store[key]
+            if expire_at and time.time() > expire_at:
+                del self._store[key]
+                return default
+            return val

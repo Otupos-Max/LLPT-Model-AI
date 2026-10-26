@@ -41,3 +41,34 @@ class MultiHeadAttention(nn.Module):
 
         output = output.transpose(1, 2).contiguous().view(batch_size, seq_len, embed_dim)
         return self.out_proj(output)
+
+
+# ==============================================================================
+# 2. Redes Neurais e Regressão Linear do Zero com NumPy
+# ==============================================================================
+
+import numpy as np
+
+class LinearRegressionScratch:
+    """Gradient Descent Linear Regression implementation using NumPy."""
+    def __init__(self, lr: float = 0.01, epochs: int = 1000):
+        self.lr = lr
+        self.epochs = epochs
+        self.weights = None
+        self.bias = None
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> None:
+        n_samples, n_features = X.shape
+        self.weights = np.zeros(n_features)
+        self.bias = 0.0
+
+        for _ in range(self.epochs):
+            y_pred = np.dot(X, self.weights) + self.bias
+            dw = (1 / n_samples) * np.dot(X.T, (y_pred - y))
+            db = (1 / n_samples) * np.sum(y_pred - y)
+
+            self.weights -= self.lr * dw
+            self.bias -= self.lr * db
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        return np.dot(X, self.weights) + self.bias
