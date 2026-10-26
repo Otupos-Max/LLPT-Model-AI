@@ -12,7 +12,7 @@
 - **Escala de Parâmetros:** 1B (1 Bilhão de Parâmetros)
 - **Arquitetura Base:** Llama Causal LM (`LlamaForCausalLM`) com suporte nativo a Fill-In-the-Middle (FIM)
 - **Janela de Contexto:** Configurável até 8.192 tokens
-- **Linguagens Suportadas:** Python, JavaScript, TypeScript, Java, Kotlin, C, C++, C#, Rust, Go, PHP, Ruby, Swift, Dart, HTML, CSS, SQL, Shell, JSON, Documentação e exemplos FIM.
+- **Linguagens e Conversação Suportadas:** Python, JavaScript, TypeScript, Java, Kotlin, C, C++, C#, Rust, Go, PHP, Ruby, Swift, Dart, HTML, CSS, SQL, Shell, JSON, Exemplos FIM, além de Q&A e documentações/conversações técnicas.
 - **Hardware Recomendado:**
   - **Desktop:** CPU / GPU (2GB+ VRAM para inferência, 6GB+ VRAM para treino/fine-tuning completo de 1B)
   - **Mobile:** Dispositivos Android (Termux / MLC-LLM) / iOS com 4GB+ RAM (modelo quantizado Q4_K_M)
@@ -22,39 +22,43 @@
 
 ## 📂 Estrutura do Dataset (.txt)
 
-O LLPT Code Nano utiliza arquivos de texto plano (`.txt`) organizados por linguagem e finalidade dentro do diretório `dataset/`:
+O LLPT Code Nano organiza os arquivos de texto plano (`.txt`) em duas pastas principais dentro do diretório `dataset/` de acordo com a finalidade do conjunto de dados:
 
 ```text
 models/code/llpt-code-nano/dataset/
-├── python.txt           # Código Python
-├── javascript.txt       # Código JavaScript
-├── typescript.txt       # Código TypeScript
-├── java.txt             # Código Java
-├── kotlin.txt           # Código Kotlin
-├── c.txt                # Código C
-├── cpp.txt              # Código C++
-├── csharp.txt           # Código C#
-├── rust.txt             # Código Rust
-├── go.txt               # Código Go
-├── php.txt              # Código PHP
-├── ruby.txt             # Código Ruby
-├── swift.txt            # Código Swift
-├── dart.txt             # Código Dart
-├── html.txt             # Estruturas HTML
-├── css.txt              # Estilos CSS
-├── sql.txt              # Consultas e scripts SQL
-├── shell.txt            # Scripts Shell / Bash
-├── json.txt             # Estruturas JSON
-├── documentation.txt    # Documentação técnica e docstrings
-└── fim_examples.txt     # Exemplos de Fill-in-the-Middle com tokens <PRE>, <SUF>, <MID>, <EOT>
+├── Programação/
+│   ├── python.txt           # Código Python
+│   ├── javascript.txt       # Código JavaScript
+│   ├── typescript.txt       # Código TypeScript
+│   ├── java.txt             # Código Java
+│   ├── kotlin.txt           # Código Kotlin
+│   ├── c.txt                # Código C
+│   ├── cpp.txt              # Código C++
+│   ├── csharp.txt           # Código C#
+│   ├── rust.txt             # Código Rust
+│   ├── go.txt               # Código Go
+│   ├── php.txt              # Código PHP
+│   ├── ruby.txt             # Código Ruby
+│   ├── swift.txt            # Código Swift
+│   ├── dart.txt             # Código Dart
+│   ├── html.txt             # Estruturas HTML
+│   ├── css.txt              # Estilos CSS
+│   ├── sql.txt              # Consultas e scripts SQL
+│   ├── shell.txt            # Scripts Shell / Bash
+│   ├── json.txt             # Estruturas JSON
+│   └── fim_examples.txt     # Exemplos FIM com tokens <PRE>, <SUF>, <MID>, <EOT>
+│
+└── Conversação/
+    └── documentation.txt    # Perguntas, respostas, documentação técnica, docstrings e explicações
 ```
 
-### Como Adicionar Novos Arquivos e Linguagens
+### Como Adicionar Novos Arquivos e Categorias
 
-1. Basta criar ou adicionar arquivos `.txt` dentro de `models/code/llpt-code-nano/dataset/` ou em subdiretórios.
-2. O leitor do `train.py` varre o diretório recursivamente.
-3. Arquivos vazios ou compostos apenas por espaços são identificados e ignorados com aviso no log.
-4. Para exemplos FIM, utilize a estrutura documentada com as tags `<PRE>`, `<SUF>`, `<MID>` e `<EOT>`.
+1. Adicione arquivos `.txt` dentro de `models/code/llpt-code-nano/dataset/Programação/` para código-fonte e exemplos de linguagens.
+2. Adicione arquivos `.txt` dentro de `models/code/llpt-code-nano/dataset/Conversação/` para conversas, Q&A, explicações de tarefas e auxílio ao desenvolvedor.
+3. O leitor do `train.py` varre o diretório e categoriza automaticamente as amostras.
+4. Utilize a flag `--prog_ratio` (ex: `--prog_ratio 0.8`) no `train.py` para controlar a proporção de exemplos de programação e conversação.
+5. Arquivos vazios ou compostos apenas por espaços são identificados e ignorados com aviso no log.
 
 ---
 
@@ -69,11 +73,13 @@ models/code/llpt-code-nano/
 ├── tokenizer_config.json   # Configuração do tokenizer com tokens especiais de FIM
 ├── src/
 │   ├── model.py            # Definição e carregamento do modelo PyTorch
-│   ├── train.py            # Pipeline completo de treinamento, FIM, chunking e checkpoints
+│   ├── train.py            # Pipeline completo de treinamento, FIM, chunking, categorização e checkpoints
 │   └── inference.py        # Pipeline de geração de código e autocompletar FIM
 ├── tests/
 │   └── test_pipeline.py    # Suíte de testes automatizados do pipeline
-├── dataset/                # Diretório com datasets de código .txt
+├── dataset/                # Diretório com datasets organizados em Programação/ e Conversação/
+│   ├── Programação/
+│   └── Conversação/
 └── weights/                # Diretório reservado para armazenamento dos pesos
     ├── checkpoints/        # Checkpoints salvos durante o treinamento (checkpoint-epoch-X/)
     ├── final/              # Modelo final consolidado pós-treino
@@ -98,7 +104,7 @@ models/code/llpt-code-nano/
      --config models/code/llpt-code-nano/config.json \
      --data_path models/code/llpt-code-nano/dataset/ \
      --output_dir models/code/llpt-code-nano/weights/checkpoints/ \
-     --epochs 3 --batch_size 2 --learning_rate 5e-5
+     --epochs 3 --batch_size 2 --learning_rate 5e-5 --prog_ratio 0.8
    ```
 3. **Retomar Treinamento:**
    ```bash
