@@ -93,3 +93,27 @@ class DeepResNetBlock(nn.Module):
         out = self.relu(self.fc1(x))
         out = self.fc2(out)
         return self.relu(out + residual)
+# ==========================================
+# Native PyTorch Evaluation Loop
+# ==========================================
+
+@torch.no_grad()
+def evaluate_model(model, dataloader, criterion, device):
+    model.eval()
+    total_loss = 0.0
+    for x_batch, y_batch in dataloader:
+        x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+        outputs = model(x_batch)
+        loss = criterion(outputs, y_batch)
+        total_loss += loss.item()
+    return total_loss / len(dataloader)
+
+# FIM Example
+<PRE>
+def accuracy(y_pred: torch.Tensor, y_true: torch.Tensor) -> float:
+    preds = torch.argmax(y_pred, dim=-1)
+<SUF>
+    return correct.item() / len(y_true)
+<MID>
+    correct = (preds == y_true).sum()
+<EOT>

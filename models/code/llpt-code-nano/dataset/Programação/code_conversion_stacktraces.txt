@@ -31,3 +31,25 @@ async function fetchUserData(userId) {
     await new Promise(resolve => setTimeout(resolve, 100));
     return { id: userId, status: "active" };
 }
+# ==========================================
+# Native Python Exception Handling & Logging
+# ==========================================
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+def log_and_raise(err: Exception, msg: str):
+    logger.error("%s: %s", msg, str(err))
+    raise RuntimeError(msg) from err
+
+# FIM Example
+<PRE>
+def safe_cast_int(val, default=0):
+    try:
+<SUF>
+    except (ValueError, TypeError):
+        return default
+<MID>
+        return int(val)
+<EOT>

@@ -64,3 +64,30 @@ class FedExShipping(ShippingStrategy):
 class DHLShipping(ShippingStrategy):
     def calculate(self, weight: float) -> float:
         return weight * 3.0 + 2.0
+# ==========================================
+# Native Python Builder Pattern
+# ==========================================
+
+class HttpRequestBuilder:
+    def __init__(self):
+        self.url = ""
+        self.headers = {}
+
+    def set_url(self, url: str):
+        self.url = url
+        return self
+
+    def add_header(self, key: str, value: str):
+        self.headers[key] = value
+        return self
+
+# FIM Example
+<PRE>
+def test_builder():
+    builder = HttpRequestBuilder()
+    builder.set_url("https://api.example.com")
+<SUF>
+    assert builder.url == "https://api.example.com"
+<MID>
+    assert builder is not None
+<EOT>

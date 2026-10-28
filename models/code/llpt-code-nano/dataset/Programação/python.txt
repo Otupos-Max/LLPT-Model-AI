@@ -467,3 +467,30 @@ async def create_item(item: ItemSchema):
     if item.price > 10000:
         raise HTTPException(status_code=400, detail="Price exceeds maximum allowed limit")
     return item
+# ==========================================
+# Native Python 3.12 Protocol & Utility
+# ==========================================
+
+from typing import Protocol, TypeVar
+
+T_co = TypeVar("T_co", covariant=True)
+
+class ContainerProtocol(Protocol[T_co]):
+    def __len__(self) -> int: ...
+    def __getitem__(self, index: int) -> T_co: ...
+
+def get_first_or_default(container: ContainerProtocol[T_co], default: T_co) -> T_co:
+    if len(container) > 0:
+        return container[0]
+    return default
+
+# Python FIM Example
+<PRE>
+def calculate_sum(numbers: list[int]) -> int:
+    total = 0
+    for num in numbers:
+<SUF>
+    return total
+<MID>
+        total += num
+<EOT>

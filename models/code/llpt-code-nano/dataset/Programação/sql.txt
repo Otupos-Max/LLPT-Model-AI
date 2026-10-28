@@ -131,3 +131,25 @@ WITH RankedOrders AS (
 SELECT customer_id, order_id, total_amount
 FROM RankedOrders
 WHERE rank_num = 1;
+-- ==========================================
+-- Native SQL Common Table Expressions
+-- ==========================================
+
+WITH active_users AS (
+    SELECT id, email, created_at
+    FROM users
+    WHERE status = 'ACTIVE'
+)
+SELECT id, email FROM active_users;
+
+-- SQL FIM Example
+/*
+<PRE>
+SELECT category_id, COUNT(*) as total_items
+FROM products
+<SUF>
+HAVING COUNT(*) > 5;
+<MID>
+GROUP BY category_id
+<EOT>
+*/

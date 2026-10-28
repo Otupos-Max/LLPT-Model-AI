@@ -205,3 +205,31 @@ code {
     flex-direction: row;
   }
 }
+/* ==========================================
+   Native CSS3 Utility Classes
+   ========================================== */
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* CSS FIM Example */
+/*
+<PRE>
+.aspect-ratio-box {
+    position: relative;
+    width: 100%;
+<SUF>
+}
+<MID>
+    padding-top: 56.25%;
+<EOT>
+*/

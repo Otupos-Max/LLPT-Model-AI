@@ -397,3 +397,37 @@ void spinlock_lock(Spinlock *lock) {
 void spinlock_unlock(Spinlock *lock) {
     atomic_flag_clear(&lock->flag);
 }
+/* ==========================================
+   Native C17 Stack Data Structure
+   ========================================== */
+
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    int *data;
+    size_t capacity;
+    size_t top;
+} c_stack_t;
+
+c_stack_t* c_stack_init(size_t capacity) {
+    c_stack_t *s = (c_stack_t*)malloc(sizeof(c_stack_t));
+    if (!s) return NULL;
+    s->data = (int*)malloc(capacity * sizeof(int));
+    s->capacity = capacity;
+    s->top = 0;
+    return s;
+}
+
+/* C FIM Example */
+/*
+<PRE>
+int c_stack_push(c_stack_t *s, int val) {
+    if (s->top >= s->capacity) return 0;
+<SUF>
+    return 1;
+}
+<MID>
+    s->data[s->top++] = val;
+<EOT>
+*/

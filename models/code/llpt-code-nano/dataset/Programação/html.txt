@@ -175,3 +175,28 @@
     <slot name="content">Conteúdo Padrão</slot>
   </div>
 </template>
+<!-- ==========================================
+     Native HTML5 Form Elements
+     ========================================== -->
+
+<fieldset>
+    <legend>Notification Preferences</legend>
+    <label>
+        <input type="checkbox" name="email_notif" checked>
+        Email Notifications
+    </label>
+</fieldset>
+
+<!-- HTML FIM Example -->
+<!--
+<PRE>
+<nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol>
+        <li><a href="/">Home</a></li>
+<SUF>
+    </ol>
+</nav>
+<MID>
+        <li><a href="/docs">Docs</a></li>
+<EOT>
+-->

@@ -410,3 +410,40 @@ func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	resp := HealthResponse{Status: "UP", Timestamp: time.Now()}
 	json.NewEncoder(w).Encode(resp)
 }
+// ==========================================
+// Native Go 1.22 Synchronization Primitives
+// ==========================================
+
+package main
+
+import (
+	"sync"
+)
+
+type OnceCell[T any] struct {
+	once  sync.Once
+	value T
+	err   error
+}
+
+func (c *OnceCell[T]) GetOrInit(init func() (T, error)) (T, error) {
+	c.once.Do(func() {
+		c.value, c.err = init()
+	})
+	return c.value, c.err
+}
+
+// Go FIM Example
+/*
+<PRE>
+func SumIntSlice(numbers []int) int {
+	sum := 0
+	for _, n := range numbers {
+<SUF>
+	}
+	return sum
+}
+<MID>
+		sum += n
+<EOT>
+*/

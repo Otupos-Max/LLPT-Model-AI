@@ -43,3 +43,23 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build -t llpt-code-nano:latest .
+# ==========================================
+# Native GitHub Actions Artifact Upload
+# ==========================================
+
+    - name: Archive Production Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist-files
+        path: dist/
+
+# GitHub Actions FIM Example
+# <PRE>
+#     - name: Download Build Artifacts
+# <SUF>
+#         path: dist/
+# <MID>
+#       uses: actions/download-artifact@v4
+#       with:
+#         name: dist-files
+# <EOT>

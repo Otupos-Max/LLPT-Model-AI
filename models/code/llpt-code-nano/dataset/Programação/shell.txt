@@ -178,3 +178,26 @@ log_info() {
 }
 
 log_info "Iniciando processamento com segurança..."
+# ==========================================
+# Native POSIX Shell File Processing
+# ==========================================
+
+count_lines_in_files() {
+    local target_dir="$1"
+    if [ -d "$target_dir" ]; then
+        find "$target_dir" -type f -name "*.txt" | wc -l
+    fi
+}
+
+# Shell FIM Example
+# <PRE>
+# process_log_files() {
+#     for file in *.log; do
+#         if [ -f "$file" ]; then
+# <SUF>
+#         fi
+#     done
+# }
+# <MID>
+#             echo "Archiving $file..."
+# <EOT>

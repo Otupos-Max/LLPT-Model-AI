@@ -61,3 +61,22 @@ FROM gcr.io/distroless/static-debian12
 COPY --from=builder /app/app /app
 USER nonroot:nonroot
 ENTRYPOINT ["/app"]
+# ==========================================
+# Native Linux Permissions Management
+# ==========================================
+
+# Secure file permissions script
+# chmod 600 /etc/llpt/secret.key
+# chown root:root /etc/llpt/secret.key
+
+# FIM Example
+# <PRE>
+# secure_directory_permissions() {
+#     local dir="$1"
+#     if [ -d "$dir" ]; then
+# <SUF>
+#     fi
+# }
+# <MID>
+#         chmod 700 "$dir"
+# <EOT>

@@ -44,3 +44,22 @@ CREATE INDEX idx_orders_user_status_date ON orders (user_id, status, created_at 
 CREATE INDEX idx_pending_transactions ON transactions (account_id, created_at)
 WHERE status = 'PENDING';
 ```
+-- ==========================================
+-- Native SQL Composite Index Design
+-- ==========================================
+
+CREATE INDEX IF NOT EXISTS idx_users_status_created
+ON users(status, created_at DESC);
+
+-- FIM Example
+/*
+<PRE>
+SELECT id, email, status
+FROM users
+WHERE status = 'ACTIVE'
+<SUF>
+LIMIT 50;
+<MID>
+ORDER BY created_at DESC
+<EOT>
+*/
