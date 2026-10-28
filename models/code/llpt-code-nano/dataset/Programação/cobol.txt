@@ -1,21 +1,88 @@
-IDENTIFICATION DIVISION.
-       PROGRAM-ID. FINANCIAL-CALCULATOR.
-       AUTHOR. LLPT-NANO.
+      *================================================================*
+      * LLPT Code Nano - Modern COBOL Batch & Transaction Processing   *
+      *================================================================*
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. CUSTOMER-PROCESSOR.
+       AUTHOR. LLPT-ENGINE.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT CUST-FILE ASSIGN TO "CUSTOMERS.DAT"
+               ORGANIZATION IS LINE SEQUENTIAL
+               FILE STATUS IS WS-CUST-STATUS.
 
        DATA DIVISION.
+       FILE SECTION.
+       FD  CUST-FILE.
+       01  CUST-RECORD.
+           05  CUST-ID           PIC 9(6).
+           05  CUST-NAME         PIC X(30).
+           05  CUST-BALANCE      PIC S9(7)V99.
+           05  CUST-STATUS-CODE  PIC X(01).
+
        WORKING-STORAGE SECTION.
-       01  WS-BALANCE        PIC 9(7)V99 VALUE 1000.00.
-       01  WS-DEPOSIT        PIC 9(5)V99 VALUE 250.50.
-       01  WS-NEW-BALANCE    PIC 9(7)V99.
-       01  WS-INTEREST-RATE  PIC V99 VALUE .05.
-       01  WS-INTEREST-GAINED PIC 9(5)V99.
+       01  WS-CUST-STATUS        PIC X(02).
+       01  WS-EOF-FLAG           PIC X(01) VALUE 'N'.
+           88  END-OF-FILE       VALUE 'Y'.
+           88  NOT-END-OF-FILE   VALUE 'N'.
+
+       01  WS-TOTAL-COUNTERS.
+           05  WS-TOTAL-RECS     PIC 9(8) COMP-3 VALUE 0.
+           05  WS-TOTAL-BAL      PIC S9(9)V99 COMP-3 VALUE 0.
 
        PROCEDURE DIVISION.
-       MAIN-PROCEDURE.
-           COMPUTE WS-NEW-BALANCE = WS-BALANCE + WS-DEPOSIT
-           COMPUTE WS-INTEREST-GAINED = WS-NEW-BALANCE * WS-INTEREST-RATE
-           ADD WS-INTEREST-GAINED TO WS-NEW-BALANCE
+       0000-MAIN-LOGIC.
+           PERFORM 1000-INITIALIZE
+           PERFORM 2000-PROCESS-RECORDS UNTIL END-OF-FILE
+           PERFORM 3000-FINALIZE
+           GOBACK.
 
-           DISPLAY "INITIAL BALANCE: " WS-BALANCE
-           DISPLAY "NEW BALANCE AFTER DEPOSIT & INTEREST: " WS-NEW-BALANCE
-           STOP RUN.
+       1000-INITIALIZE.
+           OPEN INPUT CUST-FILE
+           IF WS-CUST-STATUS NOT = "00"
+               DISPLAY "ERROR OPENING FILE: " WS-CUST-STATUS
+               MOVE 'Y' TO WS-EOF-FLAG
+           ELSE
+               PERFORM 1500-READ-RECORD
+           END-IF.
+
+       1500-READ-RECORD.
+           READ CUST-FILE
+               AT END
+                   MOVE 'Y' TO WS-EOF-FLAG
+               NOT AT END
+                   ADD 1 TO WS-TOTAL-RECS
+           END-READ.
+
+       2000-PROCESS-RECORDS.
+           EVALUATE CUST-STATUS-CODE
+               WHEN 'A'
+                   ADD CUST-BALANCE TO WS-TOTAL-BAL
+                   DISPLAY "ACTIVE CUST: " CUST-ID " NAME: " CUST-NAME
+               WHEN 'I'
+                   DISPLAY "INACTIVE CUST: " CUST-ID
+               WHEN OTHER
+                   DISPLAY "SUSPENDED CUST: " CUST-ID
+           END-EVALUATE
+           PERFORM 1500-READ-RECORD.
+
+       3000-FINALIZE.
+           CLOSE CUST-FILE
+           DISPLAY "TOTAL RECORDS READ: " WS-TOTAL-RECS
+           DISPLAY "TOTAL BALANCE: " WS-TOTAL-BAL.
+
+      *================================================================*
+      * FIM Examples
+      *================================================================*
+<PRE>       IDENTIFICATION DIVISION.
+       PROGRAM-ID. CALCULATE-TAX.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 WS-AMOUNT PIC 9(5)V99 VALUE 1000.00.
+       01 WS-TAX PIC 9(5)V99.
+<SUF>       PROCEDURE DIVISION.
+           COMPUTE WS-TAX = WS-AMOUNT * 0.15.
+           GOBACK.
+<MID>       01 WS-RATE PIC V99 VALUE .15.
+<EOT>

@@ -1,0 +1,81 @@
+// ==========================================
+// LLPT Code Nano - Gradle DSL & Jenkins Pipeline Automation
+// ==========================================
+
+// ------------------------------------------
+// build.gradle (Groovy DSL)
+// ------------------------------------------
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.springframework.boot' version '3.1.2'
+    id 'io.spring.dependency-management' version '1.1.2'
+}
+
+group = 'com.llpt.code'
+version = '1.2.0'
+sourceCompatibility = '17'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'org.postgresql:postgresql'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+application {
+    mainClass = 'com.llpt.code.LLPTApplication'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+// ------------------------------------------
+// Jenkinsfile (Declarative Pipeline)
+// ------------------------------------------
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = 'llpt-code-nano'
+        DOCKER_REGISTRY = 'registry.llpt.internal'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/llpt/code-nano.git'
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                sh './gradlew clean build test --no-daemon'
+            }
+        }
+
+        stage('Containerize') {
+            steps {
+                sh "docker build -t ${DOCKER_REGISTRY}/${APP_NAME}:${BUILD_NUMBER} ."
+            }
+        }
+    }
+}
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>task customJar(type: Jar) {
+    archiveBaseName = 'llpt-nano-standalone'
+<SUF>    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+<MID>    manifest { attributes 'Main-Class': 'com.llpt.Main' }
+<EOT>

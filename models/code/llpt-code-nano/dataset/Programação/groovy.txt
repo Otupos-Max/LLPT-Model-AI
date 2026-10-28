@@ -1,25 +1,69 @@
-// Apache Groovy Builder, Meta-programming & Gradle DSL Scripting
+// ==========================================
+// LLPT Code Nano - Groovy, Gradle DSL & Spock Testing
+// ==========================================
 
+package com.llpt.code.nano
+
+import groovy.transform.Canonical
+import groovy.transform.ToString
+import groovy.transform.CompileStatic
+
+@CompileStatic
+@Canonical
 class Person {
-    String name
+    String firstName
+    String lastName
     int age
     List<String> hobbies = []
 
-    def speak() {
-        println "Hello, I am ${name}, age ${age}."
+    String getFullName() {
+        return "${firstName} ${lastName}"
     }
 }
 
-def people = [
-    new Person(name: "Alice", age: 30, hobbies: ["Coding", "Reading"]),
-    new Person(name: "Bob", age: 25, hobbies: ["Gaming", "Hiking"])
-]
+class GroovyDataProcessor {
 
-def adults = people.findAll { it.age >= 18 }.collect { it.name.toUpperCase() }
-println "Adult names: ${adults}"
+    static List<Map<String, Object>> processUsers(List<Person> people) {
+        return people
+            .findAll { it.age >= 18 }
+            .collect { [name: it.fullName, age: it.age, isAdult: true] }
+    }
 
-String.metaClass.reverseAndCapitalize = {
-    delegate.reverse().toUpperCase()
+    static void metaProgrammingDemo() {
+        String.metaClass.toSlug = { ->
+            delegate.toLowerCase().replaceAll(/[^a-z0-9]+/, '-')
+        }
+
+        def title = "LLPT Code Nano 1B Model release!"
+        println title.toSlug() // Output: llpt-code-nano-1b-model-release
+    }
 }
 
-println "groovy".reverseAndCapitalize()
+// Spock Specification Example
+class PersonSpec extends spock.lang.Specification {
+
+    def "should correctly process adult persons"() {
+        given: "a list of people"
+        def people = [
+            new Person(firstName: "Alice", lastName: "Smith", age: 25),
+            new Person(firstName: "Bob", lastName: "Junior", age: 15)
+        ]
+
+        when: "processing people list"
+        def results = GroovyDataProcessor.processUsers(people)
+
+        then: "only adults are returned"
+        results.size() == 1
+        results[0].name == "Alice Smith"
+    }
+}
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>def calculateDiscount(double price, double rate) {
+    if (price <= 0) return 0.0
+<SUF>    return price - discount
+}
+<MID>    double discount = price * rate
+<EOT>

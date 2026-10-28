@@ -1,0 +1,69 @@
+# ==========================================
+# LLPT Code Nano - Crystal Language High-Performance Object Systems
+# ==========================================
+
+module LLPT::Engine
+  class Customer
+    include JSON::Serializable
+
+    getter id : Int64
+    property name : String
+    property email : String
+    property balance : Float64
+    property status : String = "active"
+
+    def initialize(@id : Int64, @name : String, @email : String, @balance : Float64 = 0.0)
+      validate!
+    end
+
+    private def validate!
+      raise ArgumentError.new("Email must contain @") unless @email.includes?("@")
+      raise ArgumentError.new("Name cannot be blank") if @name.empty?
+    end
+
+    def credit(amount : Float64) : Float64
+      raise ArgumentError.new("Amount must be positive") if amount <= 0
+      @balance += amount
+    end
+
+    def debit(amount : Float64) : Float64
+      raise ArgumentError.new("Insufficient balance") if amount > @balance
+      @balance -= amount
+    end
+  end
+
+  class Processor
+    def self.process_batch(customers : Array(Customer))
+      # Concurrent Fiber processing
+      channel = Channel(String).new
+
+      customers.each do |c|
+        spawn do
+          sleep 0.01
+          channel.send("Processed: #{c.name} (#{c.balance})")
+        end
+      end
+
+      customers.size.times do
+        puts channel.receive
+      end
+    end
+  end
+end
+
+# Macro Example
+macro generate_getter(name, type)
+  def {{name.id}} : {{type}}
+    @{{name.id}}
+  end
+end
+
+# ==========================================
+# FIM Examples
+# ==========================================
+<PRE>def fibonacci(n : Int32) : Int32
+  return 0 if n <= 0
+  return 1 if n == 1
+<SUF>end
+<MID>  fibonacci(n - 1) + fibonacci(n - 2)
+<EOT>

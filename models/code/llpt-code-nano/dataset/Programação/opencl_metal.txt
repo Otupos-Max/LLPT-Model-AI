@@ -1,0 +1,56 @@
+// ==========================================
+// LLPT Code Nano - Apple Metal Shading Language (MSL) & GPU Kernels
+// ==========================================
+
+#include <metal_stdlib>
+using namespace metal;
+
+struct TensorDimensions {
+    uint rows;
+    uint cols;
+};
+
+// Metal Kernel: Matrix Multiplication
+kernel void matrix_multiply_msl(
+    device const float* A [[buffer(0)]],
+    device const float* B [[buffer(1)]],
+    device float* C [[buffer(2)]],
+    constant TensorDimensions& dims [[buffer(3)]],
+    uint2 position [[thread_position_in_grid]]
+) {
+    if (position.x >= dims.cols || position.y >= dims.rows) {
+        return;
+    }
+
+    float sum = 0.0f;
+    for (uint k = 0; k < dims.cols; ++k) {
+        float a_val = A[position.y * dims.cols + k];
+        float b_val = B[k * dims.cols + position.x];
+        sum += a_val * b_val;
+    }
+
+    C[position.y * dims.cols + position.x] = sum;
+}
+
+// Metal Kernel: Elementwise ReLU Activation
+kernel void elementwise_relu(
+    device const float* input [[buffer(0)]],
+    device float* output [[buffer(1)]],
+    uint id [[thread_position_in_grid]]
+) {
+    output[id] = max(0.0f, input[id]);
+}
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>kernel void add_vectors(
+    device const float* inA [[buffer(0)]],
+    device const float* inB [[buffer(1)]],
+    device float* out [[buffer(2)]],
+    uint id [[thread_position_in_grid]]
+) {
+<SUF>    out[id] = inA[id] + inB[id];
+}
+<MID>
+<EOT>

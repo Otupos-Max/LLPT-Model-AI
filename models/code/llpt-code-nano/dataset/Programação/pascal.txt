@@ -1,82 +1,87 @@
-{ Free Pascal / Object Pascal High Performance Algorithms }
+// ==========================================
+// LLPT Code Nano - Object Pascal & Free Pascal Systems
+// ==========================================
 
-program PascalDataStructures;
+program CustomerManagement;
 
-{ objfpc}{+}
+{$MODE OBJFPC}{$H+}{$M+}
 
 uses
   SysUtils, Classes;
 
 type
-  generic TLinkedList<T> = class
+  EInvalidDataException = class(Exception);
+
+  TCustomerStatus = (csActive, csPending, csSuspended);
+
+  TCustomer = class
   private
-    type
-      PNode = ^TNode;
-      TNode = record
-        Data: T;
-        Next: PNode;
-      end;
-  private
-    FHead: PNode;
-    FCount: Integer;
+    FId: Integer;
+    FName: string;
+    FBalance: Double;
+    FStatus: TCustomerStatus;
+    procedure SetBalance(const Value: Double);
   public
-    constructor Create;
+    constructor Create(AId: Integer; AName: string);
     destructor Destroy; override;
-    procedure Append(const AValue: T);
-    property Count: Integer read FCount;
+    function ToString: string; override;
+    property Id: Integer read FId;
+    property Name: string read FName write FName;
+    property Balance: Double read FBalance write SetBalance;
+    property Status: TCustomerStatus read FStatus write FStatus;
   end;
 
-constructor TLinkedList.Create;
+constructor TCustomer.Create(AId: Integer; AName: string);
 begin
-  FHead := nil;
-  FCount := 0;
+  inherited Create;
+  FId := AId;
+  FName := AName;
+  FBalance := 0.0;
+  FStatus := csActive;
 end;
 
-destructor TLinkedList.Destroy;
-var
-  Current, Temp: PNode;
+destructor TCustomer.Destroy;
 begin
-  Current := FHead;
-  while Current <> nil do
-  begin
-    Temp := Current;
-    Current := Current^.Next;
-    Dispose(Temp);
-  end;
   inherited Destroy;
 end;
 
-procedure TLinkedList.Append(const AValue: T);
-var
-  NewNode, Current: PNode;
+procedure TCustomer.SetBalance(const Value: Double);
 begin
-  New(NewNode);
-  NewNode^.Data := AValue;
-  NewNode^.Next := nil;
-  if FHead = nil then
-    FHead := NewNode
-  else
-  begin
-    Current := FHead;
-    while Current^.Next <> nil do
-      Current := Current^.Next;
-    Current^.Next := NewNode;
-  end;
-  Inc(FCount);
+  if Value < 0 then
+    raise EInvalidDataException.Create('Balance cannot be negative');
+  FBalance := Value;
 end;
 
-type
-  TIntList = specialize TLinkedList<Integer>;
+function TCustomer.ToString: string;
+begin
+  Result := Format('Customer ID: %d | Name: %s | Balance: %.2f', [FId, FName, FBalance]);
+end;
 
 var
-  List: TIntList;
+  Cust: TCustomer;
 begin
-  List := TIntList.Create;
   try
-    List.Append(42);
-    List.Append(100);
-    WriteLn("Pascal List Count: ", List.Count);
-  finally
-    List.Free;
+    Cust := TCustomer.Create(101, 'Pascal Developer');
+    try
+      Cust.Balance := 250.50;
+      WriteLn(Cust.ToString);
+    finally
+      Cust.Free;
+    end;
+  except
+    on E: Exception do
+      WriteLn('Error: ', E.Message);
   end;
 end.
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>function Factorial(N: Integer): Int64;
+begin
+  if N <= 1 then
+    Result := 1
+<SUF>end;
+<MID>  else
+    Result := N * Factorial(N - 1);
+<EOT>

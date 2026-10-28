@@ -1,0 +1,60 @@
+-- ==========================================
+-- LLPT Code Nano - Ada 2012 / SPARK High-Integrity Systems
+-- ==========================================
+
+package LLPT.Safety_Critical is
+
+   type Customer_ID is range 1 .. 1_000_000;
+   type Account_Balance is delta 0.01 digits 12;
+
+   type Account_Status is (Active, Pending, Suspended, Closed);
+
+   type Bank_Account is record
+      ID      : Customer_ID;
+      Status  : Account_Status := Active;
+      Balance : Account_Balance := 0.0;
+   end record;
+
+   -- SPARK Contract with Pre and Post conditions
+   procedure Deposit (Account : in out Bank_Account;
+                      Amount  : in     Account_Balance)
+     with Pre  => Amount > 0.0 and then Account.Status = Active,
+          Post => Account.Balance = Account.Balance'Old + Amount;
+
+   procedure Withdraw (Account : in out Bank_Account;
+                       Amount  : in     Account_Balance)
+     with Pre  => Amount > 0.0 and then
+                  Account.Status = Active and then
+                  Account.Balance >= Amount,
+          Post => Account.Balance = Account.Balance'Old - Amount;
+
+end LLPT.Safety_Critical;
+
+package body LLPT.Safety_Critical is
+
+   procedure Deposit (Account : in out Bank_Account;
+                      Amount  : in     Account_Balance) is
+   begin
+      Account.Balance := Account.Balance + Amount;
+   end Deposit;
+
+   procedure Withdraw (Account : in out Bank_Account;
+                       Amount  : in     Account_Balance) is
+   begin
+      Account.Balance := Account.Balance - Amount;
+   end Withdraw;
+
+end LLPT.Safety_Critical;
+
+-- ==========================================
+-- FIM Examples
+-- ==========================================
+<PRE>function Factorial (N : Positive) return Positive is
+begin
+   if N = 1 then
+      return 1;
+<SUF>   end if;
+end Factorial;
+<MID>   else
+      return N * Factorial (N - 1);
+<EOT>

@@ -1,0 +1,46 @@
+;; ==========================================
+;; LLPT Code Nano - Hy Language (Lisp Syntax for Python AST)
+;; ==========================================
+
+(import [functools [reduce]]
+        [json [dumps loads]])
+
+(defclass Customer []
+  (defn --init-- [self customer-id name email [balance 0.0]]
+    (setv self.customer-id customer-id)
+    (setv self.name name)
+    (setv self.email email)
+    (setv self.balance balance))
+
+  (defn deposit [self amount]
+    (if (<= amount 0)
+      (raise (ValueError "Amount must be positive"))
+      (setv self.balance (+ self.balance amount)))
+    self.balance)
+
+  (defn to-dict [self]
+    {"id" self.customer-id
+     "name" self.name
+     "email" self.email
+     "balance" self.balance}))
+
+(defn calculate-total-balance [customers]
+  (reduce (fn [acc cust] (+ acc cust.balance)) customers 0.0))
+
+(defn main []
+  (setv c1 (Customer 101 "Hy Developer" "hy@example.com" 150.75))
+  (c1.deposit 50.25)
+  (print (dumps (c1.to-dict) :indent 2)))
+
+(if (= --name-- "__main__")
+  (main))
+
+;; ==========================================
+;; FIM Examples
+;; ==========================================
+<PRE>(defn fibonacci [n]
+  (cond [(<= n 0) 0]
+        [(= n 1) 1]
+<SUF>))
+<MID>        [True (+ (fibonacci (- n 1)) (fibonacci (- n 2)))]
+<EOT>

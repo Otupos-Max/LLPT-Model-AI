@@ -1,51 +1,100 @@
-! Modern Fortran 2008 / 2018 Numerical Calculations & Array Processing
+! ==========================================
+! LLPT Code Nano - Modern Fortran 2018 Numerical Computing
+! ==========================================
 
-module matrix_operations
+module linear_algebra_mod
     implicit none
     private
-    public :: matrix_multiply, compute_trace
+    public :: matrix_mult, vector_norm, solve_linear_system
 
 contains
 
-    function matrix_multiply(a, b) result(c)
-        real, intent(in) :: a(:,:), b(:,:)
-        real, allocatable :: c(:,:)
-        integer :: n, m, p
+    pure function vector_norm(v) result(norm_val)
+        real(kind=8), intent(in) :: v(:)
+        real(kind=8) :: norm_val
+        norm_val = sqrt(sum(v**2))
+    end function vector_norm
 
-        n = size(a, 1)
-        m = size(a, 2)
-        p = size(b, 2)
+    subroutine matrix_mult(A, B, C, n, m, p)
+        integer, intent(in) :: n, m, p
+        real(kind=8), intent(in) :: A(n, m), B(m, p)
+        real(kind=8), intent(out) :: C(n, p)
+        integer :: i, j, k
 
-        if (m /= size(b, 1)) then
-            error stop "Matrix dimensions do not match for multiplication!"
-        end if
-
-        c = matmul(a, b)
-    end function matrix_multiply
-
-    function compute_trace(a) result(tr)
-        real, intent(in) :: a(:,:)
-        real :: tr
-        integer :: i, n
-
-        n = min(size(a, 1), size(a, 2))
-        tr = 0.0
-        do i = 1, n
-            tr = tr + a(i, i)
+        ! OpenMP parallel loop for high performance
+        !$omp parallel do collapse(2) private(i, j, k)
+        do j = 1, p
+            do i = 1, n
+                C(i, j) = 0.0_8
+                do k = 1, m
+                    C(i, j) = C(i, j) + A(i, k) * B(k, j)
+                end do
+            end do
         end do
-    end function compute_trace
+        !$omp end parallel do
+    end subroutine matrix_mult
 
-end module matrix_operations
+    subroutine solve_linear_system(A, b, x, n)
+        integer, intent(in) :: n
+        real(kind=8), intent(inout) :: A(n, n)
+        real(kind=8), intent(inout) :: b(n)
+        real(kind=8), intent(out) :: x(n)
+        integer :: i, j, k, max_row
+        real(kind=8) :: factor, pivot_val
 
-program test_fortran
-    use matrix_operations
+        ! Gaussian elimination with partial pivoting
+        do k = 1, n - 1
+            max_row = k
+            pivot_val = abs(A(k, k))
+            do i = k + 1, n
+                if (abs(A(i, k)) > pivot_val) then
+                    pivot_val = abs(A(i, k))
+                    max_row = i
+                end if
+            end do
+
+            if (max_row /= k) then
+                call swap_rows(A, b, k, max_row, n)
+            end if
+
+            do i = k + 1, n
+                factor = A(i, k) / A(k, k)
+                A(i, k:n) = A(i, k:n) - factor * A(k, k:n)
+                b(i) = b(i) - factor * b(k)
+            end do
+        end do
+
+        ! Back substitution
+        x(n) = b(n) / A(n, n)
+        do i = n - 1, 1, -1
+            x(i) = (b(i) - sum(A(i, i+1:n) * x(i+1:n))) / A(i, i)
+        end do
+    contains
+        subroutine swap_rows(Mat, vec, r1, r2, dim_val)
+            integer, intent(in) :: r1, r2, dim_val
+            real(kind=8), intent(inout) :: Mat(dim_val, dim_val), vec(dim_val)
+            real(kind=8) :: temp_row(dim_val), temp_v
+            temp_row = Mat(r1, :)
+            Mat(r1, :) = Mat(r2, :)
+            Mat(r2, :) = temp_row
+            temp_v = vec(r1)
+            vec(r1) = vec(r2)
+            vec(r2) = temp_v
+        end subroutine swap_rows
+    end subroutine solve_linear_system
+
+end module linear_algebra_mod
+
+! ==========================================
+! FIM Examples
+! ==========================================
+<PRE>program test_fortran
+    use linear_algebra_mod
     implicit none
-    real, allocatable :: A(:,:), B(:,:), C(:,:)
-
-    allocate(A(2,2), B(2,2))
-    A = reshape([1.0, 2.0, 3.0, 4.0], [2,2])
-    B = reshape([5.0, 6.0, 7.0, 8.0], [2,2])
-
-    C = matrix_multiply(A, B)
-    print *, "Trace of Matrix C:", compute_trace(C)
+    real(kind=8) :: vec(3)
+    vec = [3.0_8, 4.0_8, 0.0_8]
+<SUF>    print *, "Norm = ", vec_n
 end program test_fortran
+<MID>    real(kind=8) :: vec_n
+    vec_n = vector_norm(vec)
+<EOT>

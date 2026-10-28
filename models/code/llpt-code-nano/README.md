@@ -12,7 +12,7 @@
 - **Escala de Parâmetros:** 1B (1 Bilhão de Parâmetros)
 - **Arquitetura Base:** Llama Causal LM (`LlamaForCausalLM`) com suporte nativo a Fill-In-the-Middle (FIM)
 - **Janela de Contexto:** Configurável até 8.192 tokens
-- **Linguagens e Conversação Suportadas:** Python, JavaScript, TypeScript, Java, Kotlin, C, C++, C#, Rust, Go, PHP, Ruby, Swift, Dart, HTML, CSS, SQL, Shell, JSON, Scala, Elixir, Haskell, Zig, Lua, R, Perl, Julia, Clojure, Assembly (x86_64/ARM64), Solidity, GraphQL, YAML/TOML/XML, Exemplos FIM, além de Q&A, System Design, Code Review e documentações/conversações técnicas.
+- **Linguagens e Conversação Suportadas:** Python, JavaScript, TypeScript, Java, Kotlin, C, C++, C#, Rust, Go, PHP, Ruby, Swift, Dart, HTML, CSS, SQL, Shell, JSON, Scala, Elixir, Haskell, Zig, Lua, R, Perl, Julia, Clojure, Assembly (x86_64/ARM64), Solidity, GraphQL, YAML/TOML/XML, Ada, Apex, AWK, Azure Bicep/ARM, CMake/Makefile, Common Lisp, Crystal, D, Delphi, Dockerfile/Compose, Elm, GDScript (Godot 4), GLSL/HLSL, Gradle/Groovy, Hack, HCL/Terraform, Hy, Protocol Buffers/IDL, KCL/CUE, Kotlin Multiplatform, Lean 4, LLVM IR, Luau, Mojo, Nix Flakes, Apple Metal MSL/OpenCL, Mercury, Q#, Racket, ReScript, SAS/Stata, Scala 3 Cats/ZIO, Smalltalk/Pharo, SystemVerilog/VHDL, Tcl/Tk, Unreal Engine C++, VBA/VBScript, WebAssembly Text (WAT), Wolfram/Mathematica, XSLT/XPath, Exemplos FIM, além de Q&A, System Design, Code Review e documentações/conversações técnicas.
 - **Hardware Recomendado:**
   - **Desktop:** CPU / GPU (2GB+ VRAM para inferência, 6GB+ VRAM para treino/fine-tuning completo de 1B)
   - **Mobile:** Dispositivos Android (Termux / MLC-LLM) / iOS com 4GB+ RAM (modelo quantizado Q4_K_M)
@@ -54,14 +54,46 @@ models/code/llpt-code-nano/dataset/
 │   ├── solidity.txt                     # Smart Contracts Solidity
 │   ├── graphql.txt                      # Schemas e Queries GraphQL
 │   ├── yaml_toml_xml.txt                # Configurações K8s, TOML, XML
-│   ├── html.txt                         # Estruturas HTML
-│   ├── css.txt                          # Estilos CSS
-│   ├── sql.txt                          # Consultas e scripts SQL
-│   ├── shell.txt                        # Scripts Shell / Bash
-│   ├── json.txt                         # Estruturas JSON
-│   ├── ai_machine_learning.txt          # PyTorch, ML & DL
-│   ├── devops_linux_security.txt        # Docker, Linux & Security
-│   ├── security_cryptography.txt        # Criptografia e Autenticação
+│   ├── ada.txt                          # Ada 2012 / SPARK
+│   ├── apex.txt                         # Salesforce Apex & SOQL
+│   ├── awk.txt                          # Scripting e parsing AWK
+│   ├── bicep_arm.txt                    # Azure Bicep & ARM IaC
+│   ├── cmake_makefile.txt               # CMake & Makefile
+│   ├── common_lisp.txt                  # Common Lisp / SBCL
+│   ├── crystal.txt                      # Linguagem Crystal
+│   ├── d_lang.txt                       # D Programming Language
+│   ├── delphi_pascal.txt                # Object Pascal / Delphi
+│   ├── dockerfile_compose.txt           # Dockerfile & Docker Compose
+│   ├── elm.txt                          # Elm Frontend Architecture
+│   ├── gdscript.txt                     # Godot 4 GDScript
+│   ├── glsl_hlsl.txt                    # Shaders GLSL, HLSL, WGSL
+│   ├── groovy_gradle.txt                # Gradle DSL & Jenkins pipelines
+│   ├── hack.txt                         # Hack / HHVM
+│   ├── hcl_terraform.txt                # HashiCorp HCL & Terraform
+│   ├── hy.txt                           # Hy (Lisp em Python AST)
+│   ├── idl_protobuf.txt                 # Protocol Buffers v3 & gRPC
+│   ├── kcl_cue.txt                      # Linguagens CUE & KCL
+│   ├── kotlin_multiplatform.txt         # Kotlin Multiplatform, Coroutines, Flow
+│   ├── lean.txt                         # Theorem Prover Lean 4
+│   ├── llvm_ir.txt                      # LLVM IR & TableGen
+│   ├── lua_luau.txt                     # Luau (Roblox / Typed Lua)
+│   ├── mojo.txt                         # Mojo AI Programming
+│   ├── nix.txt                          # Nix Expressions & Flakes
+│   ├── opencl_metal.txt                 # Metal MSL & OpenCL
+│   ├── prolog_mercury.txt               # Mercury & Declarative Logic
+│   ├── qsharp.txt                       # Q# Quantum & OpenQASM
+│   ├── racket.txt                       # Racket Functional Language
+│   ├── reasonml_rescript.txt            # ReScript & ReasonML
+│   ├── sas_stata.txt                    # SAS & Stata Data Science
+│   ├── scala_3_cats.txt                 # Scala 3, Cats Effect, ZIO
+│   ├── smalltalk.txt                    # Smalltalk / Pharo OOP
+│   ├── systemverilog_vhdl.txt           # SystemVerilog, Verilog, VHDL
+│   ├── tcl_tk.txt                       # Scripting Tcl/Tk
+│   ├── unreal_cpp_blueprints.txt        # Unreal C++ & Unity C#
+│   ├── vbs_vba.txt                      # VBA Excel & VBScript
+│   ├── wasm_wat.txt                     # WebAssembly Text (WAT)
+│   ├── wolfram_mathematica.txt          # Wolfram Language
+│   ├── xslt_xpath.txt                   # XSLT 3.0 & XPath
 │   └── fim_examples.txt                 # Exemplos FIM com tokens <PRE>, <SUF>, <MID>, <EOT>
 │
 └── Conversação/

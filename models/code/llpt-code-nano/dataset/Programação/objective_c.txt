@@ -1,36 +1,75 @@
-// Objective-C Foundations, Cocoa Touch & Memory Management (ARC)
+// ==========================================
+// LLPT Code Nano - Objective-C & Cocoa Foundation Architecture
+// ==========================================
 
 #import <Foundation/Foundation.h>
 
-@interface LLPTItem : NSObject
-@property (nonatomic, copy) NSString *name;
-@property (nonatomic, assign) NSInteger itemId;
+@interface LLPTUser : NSObject
 
-- (instancetype)initWithName:(NSString *)name itemId:(NSInteger)itemId;
-- (void)displayInfo;
+@property (nonatomic, copy) NSString *userId;
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic, copy) NSString *email;
+@property (nonatomic, assign) NSInteger age;
+
+- (instancetype)initWithUserId:(NSString *)userId
+                          name:(NSString *)name
+                         email:(NSString *)email
+                           age:(NSInteger)age NS_DESIGNATED_INITIALIZER;
+
+- (BOOL)isValidEmail;
+- (void)fetchPreferencesWithCompletion:(void (^)(NSDictionary * _Nullable prefs, NSError * _Nullable error))completion;
+
 @end
 
-@implementation LLPTItem
+@implementation LLPTUser
 
-- (instancetype)initWithName:(NSString *)name itemId:(NSInteger)itemId {
+- (instancetype)initWithUserId:(NSString *)userId
+                          name:(NSString *)name
+                         email:(NSString *)email
+                           age:(NSInteger)age {
     self = [super init];
     if (self) {
+        _userId = [userId copy];
         _name = [name copy];
-        _itemId = itemId;
+        _email = [email copy];
+        _age = age;
     }
     return self;
 }
 
-- (void)displayInfo {
-    NSLog(@"[LLPTItem] ID: %ld | Name: %@", (long)self.itemId, self.name);
+- (instancetype)init {
+    return [self initWithUserId:@"" name:@"" email:@"" age:0];
+}
+
+- (BOOL)isValidEmail {
+    NSPredicate *emailTest = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", @"[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"];
+    return [emailTest evaluateWithObject:self.email];
+}
+
+- (void)fetchPreferencesWithCompletion:(void (^)(NSDictionary * _Nullable, NSError * _Nullable))completion {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [NSThread sleepForTimeInterval:0.1];
+        if (self.userId.length > 0) {
+            NSDictionary *prefs = @{@"theme": @"dark", @"notifications": @YES};
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(prefs, nil);
+            });
+        } else {
+            NSError *error = [NSError errorWithDomain:@"com.llpt.error" code:404 userInfo:@{NSLocalizedDescriptionKey: @"Invalid User ID"}];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(nil, error);
+            });
+        }
+    });
 }
 
 @end
 
-int main(int argc, const char * argv[]) {
-    @autoreleasepool {
-        LLPTItem *item = [[LLPTItem alloc] initWithName:@"LLPT Code Nano ObjC" itemId:101];
-        [item displayInfo];
-    }
-    return 0;
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>- (NSInteger)calculateSquare:(NSInteger)number {
+<SUF>    return result;
 }
+<MID>    NSInteger result = number * number;
+<EOT>

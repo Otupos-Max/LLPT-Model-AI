@@ -1,0 +1,47 @@
+#lang racket/base
+
+;; ==========================================
+;; LLPT Code Nano - Racket Lisp Dialect & Macro Engine
+;; ==========================================
+
+(require racket/contract
+         racket/list
+         racket/string)
+
+(struct user (id name email balance) #:transparent #:mutable)
+
+(provide (contract-out
+          [struct user ([id exact-positive-integer?]
+                        [name string?]
+                        [email string?]
+                        [balance (and/c real? (not/c negative?))])]
+          [make-active-user (-> exact-positive-integer? string? string? user?)]
+          [process-deposit! (-> user? (and/c real? positive?) void?)]
+          [calculate-total-balance (-> (listof user?) real?)]))
+
+(define (make-active-user id name email)
+  (user id name email 0.0))
+
+(define (process-deposit! u amount)
+  (set-user-balance! u (+ (user-balance u) amount)))
+
+(define (calculate-total-balance users)
+  (for/sum ([u (in-list users)])
+    (user-balance u)))
+
+;; Hygienic Syntax Transformer Macro
+(define-syntax-rule (while condition body ...)
+  (let loop ()
+    (when condition
+      body ...
+      (loop))))
+
+;; ==========================================
+;; FIM Examples
+;; ==========================================
+<PRE>(define (fibonacci n)
+  (cond [(<= n 0) 0]
+        [(= n 1) 1]
+<SUF>))
+<MID>        [else (+ (fibonacci (- n 1)) (fibonacci (- n 2)))])
+<EOT>

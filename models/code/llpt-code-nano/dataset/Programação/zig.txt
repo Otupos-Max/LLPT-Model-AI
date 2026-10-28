@@ -1,62 +1,113 @@
-// Zig Dataset - Low-level Systems Programming, Compile-time & Manual Memory
+// ==========================================
+// LLPT Code Nano - Zig 0.11+ High Performance Memory Management & Comptime
+// ==========================================
 
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const testing = std.testing;
 
-pub const ArrayList = struct {
-    items: []i32,
-    capacity: usize,
+pub const UserStatus = enum {
+    active,
+    pending,
+    suspended,
+};
+
+pub const User = struct {
+    id: u64,
+    name: []const u8,
+    email: []const u8,
+    status: UserStatus,
+
+    pub fn format(
+        self: User,
+        comptime fmt: []const u8,
+        options: std.fmt.FormatOptions,
+        writer: anytype,
+    ) !void {
+        _ = fmt;
+        _ = options;
+        try writer.print("User[id={d}, name={s}, email={s}, status={s}]", .{
+            self.id,
+            self.name,
+            self.email,
+            @tagName(self.status),
+        });
+    }
+};
+
+pub const UserRegistry = struct {
     allocator: Allocator,
+    users: std.ArrayList(User),
 
-    pub fn init(allocator: Allocator) ArrayList {
-        return ArrayList{
-            .items = &[_]i32{},
-            .capacity = 0,
+    pub fn init(allocator: Allocator) UserRegistry {
+        return UserRegistry{
             .allocator = allocator,
+            .users = std.ArrayList(User).init(allocator),
         };
     }
 
-    pub fn deinit(self: *ArrayList) void {
-        if (self.capacity > 0) {
-            self.allocator.free(self.items);
+    pub fn deinit(self: *UserRegistry) void {
+        for (self.users.items) |user| {
+            self.allocator.free(user.name);
+            self.allocator.free(user.email);
         }
+        self.users.deinit();
     }
 
-    pub fn append(self: *ArrayList, item: i32) !void {
-        if (self.items.len == self.capacity) {
-            const new_cap = if (self.capacity == 0) 8 else self.capacity * 2;
-            const new_buf = try self.allocator.realloc(self.items, new_cap);
-            self.items = new_buf;
-            self.capacity = new_cap;
-        }
-        self.items.len += 1;
-        self.items[self.items.len - 1] = item;
-    }
-};
+    pub fn register(self: *UserRegistry, id: u64, name: []const u8, email: []const u8) !void {
+        const dup_name = try self.allocator.dupe(u8, name);
+        errdefer self.allocator.free(dup_name);
 
+        const dup_email = try self.allocator.dupe(u8, email);
+        errdefer self.allocator.free(dup_email);
 
-// Zig Memory Allocator and Error Union Pattern
-
-const std = @import("std");
-
-pub const Stack = struct {
-    items: std.ArrayList(i32),
-
-    pub fn init(allocator: std.mem.Allocator) Stack {
-        return Stack{
-            .items = std.ArrayList(i32).init(allocator),
+        const user = User{
+            .id = id,
+            .name = dup_name,
+            .email = dup_email,
+            .status = .active,
         };
-    }
 
-    pub fn deinit(self: *Stack) void {
-        self.items.deinit();
-    }
-
-    pub fn push(self: *Stack, item: i32) !void {
-        try self.items.append(item);
-    }
-
-    pub fn pop(self: *Stack) ?i32 {
-        return self.items.popOrNull();
+        try self.users.append(user);
     }
 };
+
+// Comptime Generic Function
+pub fn genericVectorSum(comptime T: type, slice: []const T) T {
+    var sum: T = 0;
+    for (slice) |item| {
+        sum += item;
+    }
+    return sum;
+}
+
+test "UserRegistry registration test" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    var registry = UserRegistry.init(allocator);
+    defer registry.deinit();
+
+    try registry.register(1, "Zig Engine", "zig@example.com");
+    try testing.expectEqual(@as(usize, 1), registry.users.items.len);
+    try testing.expectEqualStrings("Zig Engine", registry.users.items[0].name);
+}
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>pub fn fibonacci(n: u32) u32 {
+    if (n == 0) return 0;
+    if (n == 1) return 1;
+<SUF>    return a + b;
+}
+<MID>    var a: u32 = 0;
+    var b: u32 = 1;
+    var i: u32 = 2;
+    while (i <= n) : (i += 1) {
+        const temp = a + b;
+        a = b;
+        b = temp;
+    }
+<EOT>

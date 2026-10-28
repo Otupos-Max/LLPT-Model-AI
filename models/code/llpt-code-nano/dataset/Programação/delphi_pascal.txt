@@ -1,0 +1,123 @@
+// ==========================================
+// LLPT Code Nano - Delphi RAD Studio & VCL/FMX Architecture
+// ==========================================
+
+unit LLPT.DataService;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, System.Generics.Collections, System.JSON;
+
+type
+  TAccountStatus = (asActive, asPending, asSuspended);
+
+  TAccount = class
+  private
+    FId: Int64;
+    FName: string;
+    FBalance: Double;
+    FStatus: TAccountStatus;
+    procedure SetBalance(const Value: Double);
+  public
+    constructor Create(AId: Int64; const AName: string);
+    function ToJSONObject: TJSONObject;
+    property Id: Int64 read FId;
+    property Name: string read FName write FName;
+    property Balance: Double read FBalance write SetBalance;
+    property Status: TAccountStatus read FStatus write FStatus;
+  end;
+
+  TAccountRepository = class
+  private
+    FList: TObjectList<TAccount>;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure AddAccount(AAccount: TAccount);
+    function FindById(AId: Int64): TAccount;
+    function GetActiveAccounts: TList<TAccount>;
+  end;
+
+implementation
+
+{ TAccount }
+
+constructor TAccount.Create(AId: Int64; const AName: string);
+begin
+  inherited Create;
+  FId := AId;
+  FName := AName;
+  FBalance := 0.0;
+  FStatus := asActive;
+end;
+
+procedure TAccount.SetBalance(const Value: Double);
+begin
+  if Value < 0 then
+    raise EArgumentOutOfRangeException.Create('Balance cannot be negative');
+  FBalance := Value;
+end;
+
+function TAccount.ToJSONObject: TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.AddPair('id', TJSONNumber.Create(FId));
+  Result.AddPair('name', FName);
+  Result.AddPair('balance', TJSONNumber.Create(FBalance));
+end;
+
+{ TAccountRepository }
+
+constructor TAccountRepository.Create;
+begin
+  inherited Create;
+  FList := TObjectList<TAccount>.Create(True);
+end;
+
+destructor TAccountRepository.Destroy;
+begin
+  FList.Free;
+  inherited Destroy;
+end;
+
+procedure TAccountRepository.AddAccount(AAccount: TAccount);
+begin
+  FList.Add(AAccount);
+end;
+
+function TAccountRepository.FindById(AId: Int64): TAccount;
+var
+  Acc: TAccount;
+begin
+  Result := nil;
+  for Acc in FList do
+  begin
+    if Acc.Id = AId then
+      Exit(Acc);
+  end;
+end;
+
+function TAccountRepository.GetActiveAccounts: TList<TAccount>;
+var
+  Acc: TAccount;
+begin
+  Result := TList<TAccount>.Create;
+  for Acc in FList do
+  begin
+    if Acc.Status = asActive then
+      Result.Add(Acc);
+  end;
+end;
+
+end.
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>function CalculateDiscount(const APrice, ARate: Double): Double;
+begin
+  if APrice <= 0 then Exit(0.0);
+<SUF>end;
+<MID>  Result := APrice * (1.0 - ARate);
+<EOT>

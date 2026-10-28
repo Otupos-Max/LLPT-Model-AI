@@ -1,15 +1,76 @@
 // SPDX-License-Identifier: MIT
+// ==========================================
+// LLPT Code Nano - Solidity 0.8.20 Smart Contract & Web3 Security
+// ==========================================
+
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract LlptToken is ERC20, Ownable {
-    constructor(uint256 initialSupply) ERC20("LLPT Token", "LLPT") Ownable(msg.sender) {
-        _mint(msg.sender, initialSupply * 10 ** decimals());
+error InsufficientBalance(uint256 requested, uint256 available);
+error TransferFailed();
+error ZeroAddressNotAllowed();
+
+contract LLPTTokenVault is ERC20, Ownable, ReentrancyGuard {
+
+    mapping(address => uint256) private _stakedBalances;
+    mapping(address => uint256) private _stakeTimestamps;
+
+    uint256 public constant STAKING_REWARD_RATE = 10; // 10% APY
+    uint256 public constant SECONDS_PER_YEAR = 365 days;
+
+    event Staked(address indexed user, uint256 amount);
+    event Unstaked(address indexed user, uint256 amount, uint256 reward);
+
+    constructor(uint256 initialSupply) ERC20("LLPT Nano Token", "LLPTN") Ownable(msg.sender) {
+        _mint(msg.sender, initialSupply * 10**decimals());
     }
 
-    function mint(address to, uint256 amount) public onlyOwner {
-        _mint(to, amount);
+    function stake(uint256 amount) external nonReentrant {
+        if (amount == 0) revert InsufficientBalance(amount, 0);
+        if (balanceOf(msg.sender) < amount) revert InsufficientBalance(amount, balanceOf(msg.sender));
+
+        _transfer(msg.sender, address(this), amount);
+        _stakedBalances[msg.sender] += amount;
+        _stakeTimestamps[msg.sender] = block.timestamp;
+
+        emit Staked(msg.sender, amount);
+    }
+
+    function calculateReward(address user) public view returns (uint256) {
+        uint256 staked = _stakedBalances[user];
+        if (staked == 0) return 0;
+
+        uint256 duration = block.timestamp - _stakeTimestamps[user];
+        uint256 reward = (staked * STAKING_REWARD_RATE * duration) / (100 * SECONDS_PER_YEAR);
+        return reward;
+    }
+
+    function unstake() external nonReentrant {
+        uint256 staked = _stakedBalances[msg.sender];
+        if (staked == 0) revert InsufficientBalance(0, 0);
+
+        uint256 reward = calculateReward(msg.sender);
+        _stakedBalances[msg.sender] = 0;
+
+        _transfer(address(this), msg.sender, staked);
+        if (reward > 0) {
+            _mint(msg.sender, reward);
+        }
+
+        emit Unstaked(msg.sender, staked, reward);
     }
 }
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>function withdraw(uint256 amount) external {
+    require(balances[msg.sender] >= amount, "Insufficient balance");
+    balances[msg.sender] -= amount;
+<SUF>    require(success, "Transfer failed");
+}
+<MID>    (bool success, ) = payable(msg.sender).call{value: amount}("");
+<EOT>

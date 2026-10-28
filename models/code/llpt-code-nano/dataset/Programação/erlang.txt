@@ -1,38 +1,74 @@
-% Erlang OTP GenServer Concurrent State Management
+%% ==========================================
+%% LLPT Code Nano - Erlang OTP & Actor Concurrency
+%% ==========================================
 
--module(bank_account).
+-module(llpt_worker_server).
 -behaviour(gen_server).
 
--export([start_link/1, deposit/2, withdraw/2, get_balance/1]).
+%% API
+-export([start_link/0, async_compute/1, sync_query/1, stop/0]).
+
+%% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
-start_link(InitialBalance) ->
-    gen_server:start_link(?MODULE, [InitialBalance], []).
+-record(state, {
+    count = 0 :: non_neg_integer(),
+    active_jobs = [] :: list()
+}).
 
-deposit(Pid, Amount) ->
-    gen_server:call(Pid, {deposit, Amount}).
+%% API Functions
+start_link() ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-withdraw(Pid, Amount) ->
-    gen_server:call(Pid, {withdraw, Amount}).
+async_compute(JobData) ->
+    gen_server:cast(?MODULE__, {compute, JobData}).
 
-get_balance(Pid) ->
-    gen_server:call(Pid, get_balance).
+sync_query(Key) ->
+    gen_server:call(?MODULE__, {query, Key}).
 
-init([InitialBalance]) ->
-    {ok, InitialBalance}.
+stop() ->
+    gen_server:call(?MODULE__, stop).
 
-handle_call({deposit, Amount}, _From, Balance) when Amount > 0 ->
-    NewBalance = Balance + Amount,
-    {reply, {ok, NewBalance}, NewBalance};
-handle_call({withdraw, Amount}, _From, Balance) when Amount =< Balance ->
-    NewBalance = Balance - Amount,
-    {reply, {ok, NewBalance}, NewBalance};
-handle_call({withdraw, _Amount}, _From, Balance) ->
-    {reply, {error, insufficient_funds}, Balance};
-handle_call(get_balance, _From, Balance) ->
-    {reply, {ok, Balance}, Balance}.
+%% gen_server callbacks
+init([]) ->
+    process_flag(trap_exit, true),
+    {ok, #state{count = 0, active_jobs = []}}.
 
-handle_cast(_Msg, State) -> {noreply, State}.
-handle_info(_Info, State) -> {noreply, State}.
-terminate(_Reason, _State) -> ok.
-code_change(_OldVsn, State, _Extra) -> {ok, State}.
+handle_call({query, Key}, _From, State) ->
+    Reply = {ok, Key, State#state.count},
+    {reply, Reply, State};
+
+handle_call(stop, _From, State) ->
+    {stop, normal, ok, State};
+
+handle_call(_Request, _From, State) ->
+    {reply, {error, unknown_call}, State}.
+
+handle_cast({compute, JobData}, #state{count = C, active_jobs = Jobs} = State) ->
+    NewJobs = [JobData | Jobs],
+    NewState = State#state{count = C + 1, active_jobs = NewJobs},
+    {noreply, NewState};
+
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+handle_info({'EXIT', _Pid, reason_normal}, State) ->
+    {noreply, State};
+
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%% ==========================================
+%% FIM Examples
+%% ==========================================
+<PRE>factorial(0) -> 1;
+factorial(N) when N > 0 ->
+<SUF>.
+<MID>    N * factorial(N - 1)
+<EOT>

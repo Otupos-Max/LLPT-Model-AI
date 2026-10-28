@@ -1,28 +1,62 @@
-(* OCaml Functional Data Structures & Variant Pattern Matching *)
+(* ==========================================
+   LLPT Code Nano - Modern OCaml Systems & Module Systems
+   ========================================== *)
 
-type 'a tree =
-  | Empty
-  | Node of 'a * 'a tree * 'a tree
+module type STORAGE = sig
+  type 'a t
+  val create : unit -> 'a t
+  val push : 'a -> 'a t -> unit
+  val pop : 'a t -> 'a option
+  val length : 'a t -> int
+end
 
-let rec insert x = function
-  | Empty -> Node (x, Empty, Empty)
-  | Node (v, left, right) ->
-      if x < v then Node (v, insert x left, right)
-      else if x > v then Node (v, left, insert x right)
-      else Node (v, left, right)
+module Stack : STORAGE = struct
+  type 'a t = 'a list ref
 
-let rec map f = function
-  | Empty -> Empty
-  | Node (v, left, right) -> Node (f v, map f left, map f right)
+  let create () = ref []
 
-let rec fold f acc = function
-  | Empty -> acc
-  | Node (v, left, right) ->
-      let acc_left = fold f acc left in
-      let acc_node = f acc_left v in
-      fold f acc_node right
+  let push x s =
+    s := x :: !s
 
-let () =
-  let t = insert 5 (insert 3 (insert 8 Empty)) in
-  let sum = fold (+) 0 t in
-  Printf.printf "Sum of tree elements: %d\n" sum
+  let pop s =
+    match !s with
+    | [] -> None
+    | x :: xs ->
+        s := xs;
+        Some x
+
+  let length s = List.length !s
+end
+
+(* Algebraic Data Types & GADTs *)
+type _ expr =
+  | Int : int -> int expr
+  | Bool : bool -> bool expr
+  | Add : int expr * int expr -> int expr
+  | Eq : 'a expr * 'a expr -> bool expr
+
+let rec eval : type a. a expr -> a = function
+  | Int n -> n
+  | Bool b -> b
+  | Add (e1, e2) -> (eval e1) + (eval e2)
+  | Eq (e1, e2) -> (eval e1) = (eval e2)
+
+(* Tail Recursive Pipeline *)
+let filter_map_tail f lst =
+  let rec aux acc = function
+    | [] -> List.rev acc
+    | x :: xs ->
+        match f x with
+        | None -> aux acc xs
+        | Some y -> aux (y :: acc) xs
+  in aux [] lst
+
+(* ==========================================
+   FIM Examples
+   ========================================== *)
+<PRE>let rec fibonacci n =
+  if n <= 0 then 0
+  else if n = 1 then 1
+<SUF>  else fibonacci (n - 1) + fibonacci (n - 2)
+<MID>
+<EOT>

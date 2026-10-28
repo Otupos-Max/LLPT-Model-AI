@@ -1,0 +1,52 @@
+# ==========================================
+# LLPT Code Nano - Mojo Programming Language for AI & Systems
+# ==========================================
+
+from memory.unsafe import DTypePointer
+from algorithm import vectorize
+from sys.info import simdbitwidth
+
+struct Tensor2D:
+    var data: DTypePointer[DType.float32]
+    var rows: Int
+    var cols: Int
+
+    fn __init__(inout self, rows: Int, cols: Int):
+        self.rows = rows
+        self.cols = cols
+        self.data = DTypePointer[DType.float32].alloc(rows * cols)
+
+    fn __del__(owned self):
+        self.data.free()
+
+    fn set(self, r: Int, c: Int, val: Float32):
+        self.data.store(r * self.cols + c, val)
+
+    fn get(self, r: Int, c: Int) -> Float32:
+        return self.data.load(r * self.cols + c)
+
+fn vector_add_mojo(A: Tensor2D, B: Tensor2D, inout C: Tensor2D):
+    alias simd_width = simdbitwidth() // 32
+
+    @parameter
+    fn add_simd[width: Int](idx: Int):
+        var a_vec = A.data.load[width=width](idx)
+        var b_vec = B.data.load[width=width](idx)
+        C.data.store[width=width](idx, a_vec + b_vec)
+
+    vectorize[add_simd, simd_width](A.rows * A.cols)
+
+fn main():
+    var t1 = Tensor2D(1024, 1024)
+    var t2 = Tensor2D(1024, 1024)
+    var t3 = Tensor2D(1024, 1024)
+    vector_add_mojo(t1, t2, t3)
+    print("Mojo SIMD Vector addition completed successfully!")
+
+# ==========================================
+# FIM Examples
+# ==========================================
+<PRE>fn fast_square(x: Float32) -> Float32:
+<SUF>    return res
+<MID>    var res = x * x
+<EOT>

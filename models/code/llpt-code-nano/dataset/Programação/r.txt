@@ -1,23 +1,54 @@
-# R Dataset - Dataframes, Tidyverse, Data Analysis & Statistical Modeling
+# ==========================================
+# LLPT Code Nano - R Data Science, Tidyverse & Statistical Modeling
+# ==========================================
 
 library(dplyr)
+library(tidyr)
+library(ggplot2)
 
-process_sales_data <- function(df) {
-  df_summary <- df %>%
-    filter(!is.na(amount) & amount > 0) %>%
-    group_by(category, region) %>%
-    summarise(
-      total_sales = sum(amount),
-      avg_sale = mean(amount),
-      count = n(),
-      .groups = "drop"
+# Data Processing & Transformation
+process_sales_data <- function(df, min_revenue = 1000) {
+  cleaned_df <- df %>%
+    filter(!is.na(customer_id)) %>%
+    mutate(
+      total_revenue = quantity * unit_price,
+      order_date = as.Date(order_date),
+      year_month = format(order_date, "%Y-%m")
     ) %>%
-    arrange(desc(total_sales))
+    filter(total_revenue >= min_revenue) %>%
+    group_by(year_month, category) %>%
+    summarise(
+      monthly_revenue = sum(total_revenue),
+      total_orders = n(),
+      avg_order_value = mean(total_revenue),
+      .groups = "drop"
+    )
 
-  return(df_summary)
+  return(cleaned_df)
 }
 
-fit_linear_model <- function(df) {
-  model <- lm(sales ~ marketing_budget + unit_price, data = df)
-  return(summary(model))
+# Linear Regression Model & Diagnostics
+fit_linear_model <- function(data) {
+  model <- lm(monthly_revenue ~ total_orders + avg_order_value, data = data)
+  summary_info <- summary(model)
+
+  diagnostics <- list(
+    r_squared = summary_info$r.squared,
+    coefficients = summary_info$coefficients,
+    residuals = residuals(model)
+  )
+
+  return(list(model = model, diagnostics = diagnostics))
 }
+
+# ==========================================
+# FIM Examples
+# ==========================================
+<PRE>calculate_summary_stats <- function(vec) {
+  cleaned_vec <- vec[!is.na(vec)]
+  mean_val <- mean(cleaned_vec)
+<SUF>  return(list(mean = mean_val, sd = sd_val, median = median_val))
+}
+<MID>  sd_val <- sd(cleaned_vec)
+  median_val <- median(cleaned_vec)
+<EOT>
