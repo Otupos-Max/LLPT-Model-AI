@@ -314,3 +314,36 @@ func (m *MemoryStore) Set(key, value string) error {
 	m.data[key] = value
 	return nil
 }
+
+// ==========================================
+// 2. Go Worker Pool & Context Cancellation
+// ==========================================
+
+package main
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+)
+
+type Job struct {
+	ID    int
+	Value string
+}
+
+func Worker(ctx context.Context, id int, jobs <-chan Job, results chan<- string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case job, ok := <-jobs:
+			if !ok {
+				return
+			}
+			results <- fmt.Sprintf("Worker %d processed job %d: %s", id, job.ID, job.Value)
+		}
+	}
+}

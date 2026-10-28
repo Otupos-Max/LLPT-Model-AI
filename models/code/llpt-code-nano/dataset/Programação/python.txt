@@ -312,3 +312,85 @@ class ThreadSafeWorkQueue:
     def stop(self):
         self.work_queue.join()
         self._shutdown_event.set()
+
+# ==========================================
+# 2. Advanced Metaprogramming & Decorators
+# ==========================================
+
+import inspect
+import time
+import functools
+from typing import Callable, Any, TypeVar, cast
+
+F = TypeVar('F', bound=Callable[..., Any])
+
+def retry(max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0, exceptions: tuple = (Exception,)):
+    """Decorator for retrying a function with exponential backoff."""
+    def decorator(func: F) -> F:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            current_delay = delay
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as e:
+                    if attempt == max_attempts:
+                        raise e
+                    time.sleep(current_delay)
+                    current_delay *= backoff
+        return cast(F, wrapper)
+    return decorator
+
+class SingletonMeta(type):
+    """Thread-safe Singleton Metaclass implementation."""
+    _instances: Dict[Any, Any] = {}
+    _lock = threading.Lock() if 'threading' in globals() else None
+
+    def __call__(cls, *args: Any, **kwargs: Any) -> Any:
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+# ==========================================
+# 3. Asynchronous I/O & Event Loop Management
+# ==========================================
+
+import asyncio
+import aiohttp
+
+async def fetch_url(session: Any, url: str) -> str:
+    """Asynchronously fetches content from a URL."""
+    async with session.get(url) as response:
+        response.raise_for_status()
+        return await response.text()
+
+async def batch_fetch(urls: List[str]) -> List[str]:
+    """Fetches multiple URLs concurrently using asyncio.gather."""
+    async with aiohttp.ClientSession() as session:
+        tasks = [fetch_url(session, url) for url in urls]
+        return await asyncio.gather(*tasks, return_exceptions=True)
+
+# ==========================================
+# 4. Context Managers & Resource Handling
+# ==========================================
+
+from contextlib import contextmanager, asynccontextmanager
+
+@contextmanager
+def timer(label: str):
+    """Context manager to measure execution time of code blocks."""
+    start = time.perf_counter()
+    try:
+        yield
+    finally:
+        elapsed = time.perf_counter() - start
+        print(f"[{label}] Elapsed time: {elapsed:.4f} seconds")
+
+# ==========================================
+# 5. Advanced Data Processing & Generators
+# ==========================================
+
+def chunk_generator(iterable: List[Any], chunk_size: int) -> Generator[List[Any], None, None]:
+    """Yield successive chunks from an iterable."""
+    for i in range(0, len(iterable), chunk_size):
+        yield iterable[i:i + chunk_size]

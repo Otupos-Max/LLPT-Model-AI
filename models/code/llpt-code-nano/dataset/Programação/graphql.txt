@@ -1,0 +1,24 @@
+# GraphQL Schema, Queries, Mutations & Resolvers
+
+type User {
+  id: ID!
+  username: String!
+  email: String!
+  posts: [Post!]!
+}
+
+type Post {
+  id: ID!
+  title: String!
+  content: String!
+  author: User!
+}
+
+type Query {
+  getUser(id: ID!): User
+  listPosts(limit: Int): [Post!]!
+}
+
+type Mutation {
+  createPost(title: String!, content: String!, authorId: ID!): Post!
+}

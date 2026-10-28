@@ -265,3 +265,51 @@ public:
         cv_.notify_all();
     }
 };
+
+// ==========================================
+// 2. Modern C++20 Concepts, Coroutines & RAII
+// ==========================================
+
+#include <iostream>
+#include <memory>
+#include <vector>
+#include <concepts>
+#include <coroutine>
+
+template<typename T>
+concept Numeric = std::is_arithmetic_v<T>;
+
+template<Numeric T>
+T add_numeric(T a, T b) {
+    return a + b;
+}
+
+// Custom Smart Pointer Implementation (Simplified UniquePtr)
+template<typename T>
+class UniquePtr {
+private:
+    T* m_ptr;
+public:
+    explicit UniquePtr(T* ptr = nullptr) : m_ptr(ptr) {}
+    ~UniquePtr() { delete m_ptr; }
+
+    UniquePtr(const UniquePtr&) = delete;
+    UniquePtr& operator=(const UniquePtr&) = delete;
+
+    UniquePtr(UniquePtr&& other) noexcept : m_ptr(other.m_ptr) {
+        other.m_ptr = nullptr;
+    }
+
+    UniquePtr& operator=(UniquePtr&& other) noexcept {
+        if (this != &other) {
+            delete m_ptr;
+            m_ptr = other.m_ptr;
+            other.m_ptr = nullptr;
+        }
+        return *this;
+    }
+
+    T& operator*() const { return *m_ptr; }
+    T* operator->() const { return m_ptr; }
+    T* get() const { return m_ptr; }
+};

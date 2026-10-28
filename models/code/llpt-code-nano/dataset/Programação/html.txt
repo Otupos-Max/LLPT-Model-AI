@@ -161,3 +161,17 @@
         </article>
     </section>
 </main>
+
+<!-- ==========================================
+     2. Accessible Web Components & HTML5 Forms
+     ========================================== -->
+
+<template id="custom-card-template">
+  <style>
+    .card { border: 1px solid #ccc; padding: 16px; border-radius: 8px; }
+  </style>
+  <div class="card" role="region" aria-label="Informações do Usuário">
+    <slot name="header">Header Padrão</slot>
+    <slot name="content">Conteúdo Padrão</slot>
+  </div>
+</template>

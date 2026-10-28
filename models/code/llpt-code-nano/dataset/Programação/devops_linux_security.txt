@@ -43,3 +43,21 @@ def get_user_secure(cursor, username: str):
     query = "SELECT user_id, username, email, is_active FROM users WHERE username = %s LIMIT 1"
     cursor.execute(query, (username,))
     return cursor.fetchone()
+
+# ==========================================
+# Dockerfile Multi-stage Build & Linux Hardening
+# ==========================================
+
+# Stage 1: Build
+FROM golang:1.22-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o app .
+
+# Stage 2: Minimal Distroless Security Execution
+FROM gcr.io/distroless/static-debian12
+COPY --from=builder /app/app /app
+USER nonroot:nonroot
+ENTRYPOINT ["/app"]

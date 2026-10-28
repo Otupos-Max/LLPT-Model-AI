@@ -1,0 +1,28 @@
+// Scala Dataset - Functional Programming, Akka/Pecos & Concurrency
+
+package com.llpt.nano.dataset
+
+import scala.concurrent.{Future, ExecutionContext}
+import scala.util::{Success, Failure}
+
+sealed trait TaskStatus
+case object Pending extends TaskStatus
+case object Running extends TaskStatus
+case class Completed(result: String) extends TaskStatus
+case class Failed(reason: Throwable) extends TaskStatus
+
+case class Job(id: String, payload: String, status: TaskStatus)
+
+class JobProcessor(implicit ec: ExecutionContext) {
+  def processJob(job: Job): Future[Job] = {
+    Future {
+      // Simulate asynchronous computation
+      val updatedPayload = job.payload.toUpperCase
+      job.copy(payload = updatedPayload, status = Completed(updatedPayload))
+    }
+  }
+
+  def processJobsConcurrently(jobs: List[Job]): Future[List[Job]] = {
+    Future.sequence(jobs.map(processJob))
+  }
+}

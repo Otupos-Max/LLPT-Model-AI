@@ -174,3 +174,11 @@ func (m *MemoryStore) Get(key string) (interface{}, bool) {
 1. **REST over HTTP/2 or HTTP/1.1**: Best for external public APIs, CRUD operations, browser compatibility.
 2. **gRPC over HTTP/2**: Best for inter-service communication (East-West traffic), low overhead serialization (Protobuf), streaming RPCs, high performance microservices.
 3. **WebSockets**: Ideal for persistent bidirectional realtime event streams (chat applications, live order updates, stock tickers).
+
+## Padrões SOLID em Engenharia de Software
+
+1. Single Responsibility Principle (SRP): Uma classe deve ter um, e apenas um, motivo para mudar.
+2. Open/Closed Principle (OCP): Entidades de software devem estar abertas para extensão, mas fechadas para modificação.
+3. Liskov Substitution Principle (LSP): Subtipos devem ser substituíveis por seus tipos base sem alterar a corretude do programa.
+4. Interface Segregation Principle (ISP): Clientes não devem ser forçados a depender de interfaces que não utilizam.
+5. Dependency Inversion Principle (DIP): Módulos de alto nível não devem depender de módulos de baixo nível. Ambos devem depender de abstrações.

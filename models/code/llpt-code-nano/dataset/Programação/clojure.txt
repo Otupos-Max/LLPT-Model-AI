@@ -1,0 +1,16 @@
+;; Clojure Dataset - Functional Lisp, Immutability & Concurrency
+
+(ns llpt-nano.core
+  (:require [clojure.string :as str]))
+
+(defn process-users [users]
+  (->> users
+       (filter :active)
+       (map #(assoc % :name (str/upper-case (:name %))))
+       (sort-by :age)))
+
+;; Atom Concurrency
+(def counter (atom 0))
+
+(defn increment-counter! []
+  (swap! counter inc))

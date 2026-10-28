@@ -166,3 +166,27 @@ actor BankAccount {
         balance -= amount
     }
 }
+
+// ==========================================
+// 2. Swift Structured Concurrency & Actors
+// ==========================================
+
+actor BankAccount {
+    private var balance: Double
+
+    init(initialBalance: Double) {
+        self.balance = initialBalance
+    }
+
+    func deposit(amount: Double) {
+        balance += amount
+    }
+
+    func withdraw(amount: Double) throws -> Double {
+        guard balance >= amount else {
+            throw NSError(domain: "InsufficientFunds", code: 400)
+        }
+        balance -= amount
+        return balance
+    }
+}

@@ -196,3 +196,21 @@ class CounterBloc {
     _eventController.close();
   }
 }
+
+// ==========================================
+// 2. Flutter / Dart Reactive State Management & Isolates
+// ==========================================
+
+import 'dart:isolate';
+
+Future<int> computeHeavyTask(int number) async {
+  final receivePort = ReceivePort();
+  await Isolate.spawn(_heavyTaskWorker, [receivePort.sendPort, number]);
+  return await receivePort.first as int;
+}
+
+void _heavyTaskWorker(List<dynamic> args) {
+  final SendPort sendPort = args[0];
+  final int val = args[1];
+  sendPort.send(val * val);
+}

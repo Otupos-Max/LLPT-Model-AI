@@ -192,3 +192,19 @@ class ServiceContainer implements ContainerInterface {
         return isset($this->services[$id]);
     }
 }
+
+// ==========================================
+// 2. Modern PHP 8.3 Fiber Concurrency & Attributes
+// ==========================================
+
+#[Attribute(Attribute::TARGET_METHOD)]
+class Route {
+    public function __construct(public string $path, public string $method = 'GET') {}
+}
+
+class HomeController {
+    #[Route(path: '/api/v1/health', method: 'GET')]
+    public function healthCheck(): array {
+        return ['status' => 'ok', 'timestamp' => time()];
+    }
+}

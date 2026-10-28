@@ -72,3 +72,24 @@ class LinearRegressionScratch:
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         return np.dot(X, self.weights) + self.bias
+
+# ==========================================
+# Advanced PyTorch Neural Network Training Loop
+# ==========================================
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+class DeepResNetBlock(nn.Module):
+    def __init__(self, in_features: int, out_features: int):
+        super().__init__()
+        self.fc1 = nn.Linear(in_features, out_features)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(out_features, out_features)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        residual = x
+        out = self.relu(self.fc1(x))
+        out = self.fc2(out)
+        return self.relu(out + residual)

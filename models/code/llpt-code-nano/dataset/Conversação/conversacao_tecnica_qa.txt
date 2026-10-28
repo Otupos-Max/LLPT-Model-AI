@@ -85,3 +85,13 @@ Phases of the Node.js Event Loop:
 6. Close Callbacks: Executes close event handlers (e.g., `socket.on('close')`).
 
 Microtask Queue (Promises and `process.nextTick()`) is executed immediately after every phase before moving to the next.
+
+---
+Pergunta: Qual é a diferença entre Arquitetura Monolítica e Microserviços?
+Resposta:
+- Monólito: Toda a aplicação reside em uma única unidade de implantação (código-fonte único). Fácil de desenvolver e testar inicialmente, mas pode tornar-se complexa e difícil de escalar independente.
+- Microserviços: Aplicação dividida em múltiplos serviços autônomos e focados em um domínio específico (DDD), comunicando-se via HTTP/REST, gRPC ou barramentos de mensagens (Kafka/RabbitMQ). Permite escalabilidade independente e escolha de tecnologias por serviço, ao custo de maior complexidade operacional e de rede.
+
+---
+Pergunta: Como funciona o padrão CQRS (Command Query Responsibility Segregation)?
+Resposta: O CQRS separa as operações de leitura (Queries) das operações de escrita/modificação de dados (Commands). Isso permite otimizar o modelo de dados e o banco de dados separadamente para consultas rápidas e escritas transacionais de alta consistência.

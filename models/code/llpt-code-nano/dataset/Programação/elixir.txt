@@ -1,0 +1,28 @@
+# Elixir Dataset - OTP, GenServer, Phoenix & Actor Concurrency
+
+defmodule LlptNano.Worker do
+  use GenServer
+  require Logger
+
+  # Client API
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, :ok, opts)
+  end
+
+  def process_item(pid, item) do
+    GenServer.call(pid, {:process, item})
+  end
+
+  # Server Callbacks
+  @impl true
+  def init(:ok) do
+    {:ok, %{processed_count: 0}}
+  end
+
+  @impl true
+  def handle_call({:process, item}, _from, state) do
+    Logger.info("Processing item: #{inspect(item)}")
+    new_state = %{state | processed_count: state.processed_count + 1}
+    {:reply, {:ok, item}, new_state}
+  end
+end

@@ -1,0 +1,35 @@
+// Zig Dataset - Low-level Systems Programming, Compile-time & Manual Memory
+
+const std = @import("std");
+const Allocator = std.mem.Allocator;
+
+pub const ArrayList = struct {
+    items: []i32,
+    capacity: usize,
+    allocator: Allocator,
+
+    pub fn init(allocator: Allocator) ArrayList {
+        return ArrayList{
+            .items = &[_]i32{},
+            .capacity = 0,
+            .allocator = allocator,
+        };
+    }
+
+    pub fn deinit(self: *ArrayList) void {
+        if (self.capacity > 0) {
+            self.allocator.free(self.items);
+        }
+    }
+
+    pub fn append(self: *ArrayList, item: i32) !void {
+        if (self.items.len == self.capacity) {
+            const new_cap = if (self.capacity == 0) 8 else self.capacity * 2;
+            const new_buf = try self.allocator.realloc(self.items, new_cap);
+            self.items = new_buf;
+            self.capacity = new_cap;
+        }
+        self.items.len += 1;
+        self.items[self.items.len - 1] = item;
+    }
+};

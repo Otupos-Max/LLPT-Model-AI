@@ -212,3 +212,31 @@ public class RequestTimingMiddleware
         }
     }
 }
+
+// ==========================================
+// 2. Advanced Concurrent Pipeline & Channels (.NET 8)
+// ==========================================
+
+using System.Threading.Channels;
+
+public class DataProcessingPipeline
+{
+    private readonly Channel<int> _channel = Channel.CreateUnbounded<int>();
+
+    public async Task ProduceAsync(IEnumerable<int> data)
+    {
+        foreach (var item in data)
+        {
+            await _channel.Writer.WriteAsync(item);
+        }
+        _channel.Writer.Complete();
+    }
+
+    public async Task ConsumeAsync(Func<int, Task> processAction)
+    {
+        await foreach (var item in _channel.Reader.ReadAllAsync())
+        {
+            await processAction(item);
+        }
+    }
+}

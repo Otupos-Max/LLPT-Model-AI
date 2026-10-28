@@ -164,3 +164,17 @@ find "${LOG_DIR}" -type f -name "*.log" -mtime +1 | while read -r logfile; do
 done
 
 find "${BACKUP_DIR}" -type f -name "*.gz" -mtime +${MAX_DAYS} -delete
+
+# ==========================================
+# 2. Robust Bash Error Handling & Options
+# ==========================================
+
+set -euo pipefail
+
+trap 'echo "Erro na linha $LINENO. Abortando script..."' ERR
+
+log_info() {
+    echo "[INFO] $(date +'%Y-%m-%dT%H:%M:%S%z'): $1"
+}
+
+log_info "Iniciando processamento com segurança..."

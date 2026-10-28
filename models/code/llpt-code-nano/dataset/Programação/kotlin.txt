@@ -168,3 +168,26 @@ class DatabaseManager private constructor() {
         }
     }
 }
+
+// ==========================================
+// 2. Kotlin Coroutines & Flow Reactive Streams
+// ==========================================
+
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+fun fetchNumbersFlow(): Flow<Int> = flow {
+    for (i in 1..5) {
+        delay(100)
+        emit(i)
+    }
+}
+
+suspend fn processCoroutinesFlow() = coroutineScope {
+    fetchNumbersFlow()
+        .map { it * 2 }
+        .filter { it > 4 }
+        .collect { value ->
+            println("Collected: $value")
+        }
+}
