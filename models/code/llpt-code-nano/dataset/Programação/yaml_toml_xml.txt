@@ -1,0 +1,23 @@
+# YAML Kubernetes & TOML/XML Configs Dataset
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llpt-code-nano-deployment
+  labels:
+    app: llpt-code-nano
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: llpt-code-nano
+  template:
+    metadata:
+      labels:
+        app: llpt-code-nano
+    spec:
+      containers:
+      - name: llpt-code-nano
+        image: llpt/code-nano:v1.0.0
+        ports:
+        - containerPort: 8080

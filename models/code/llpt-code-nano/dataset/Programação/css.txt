@@ -189,3 +189,19 @@ code {
     background-color: var(--bg-primary);
     color: var(--text-primary);
 }
+
+/* ==========================================
+   2. Container Queries & Modern CSS Variables
+   ========================================== */
+
+.card-container {
+  container-type: inline-size;
+  container-name: card;
+}
+
+@container card (min-width: 400px) {
+  .card-content {
+    display: flex;
+    flex-direction: row;
+  }
+}

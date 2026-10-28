@@ -1,0 +1,21 @@
+# Julia Dataset - Multiple Dispatch, High-Performance Computing & Linear Algebra
+
+using LinearAlgebra
+
+abstract type AbstractShape end
+
+struct Circle <: AbstractShape
+    radius::Float64
+end
+
+struct Rectangle <: AbstractShape
+    width::Float64
+    height::Float64
+end
+
+area(c::Circle) = π * c.radius^2
+area(r::Rectangle) = r.width * r.height
+
+function solve_linear_system(A::Matrix{Float64}, b::Vector{Float64})
+    return A \ b
+end

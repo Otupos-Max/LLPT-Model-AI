@@ -12,7 +12,7 @@
 - **Escala de Parâmetros:** 1B (1 Bilhão de Parâmetros)
 - **Arquitetura Base:** Llama Causal LM (`LlamaForCausalLM`) com suporte nativo a Fill-In-the-Middle (FIM)
 - **Janela de Contexto:** Configurável até 8.192 tokens
-- **Linguagens e Conversação Suportadas:** Python, JavaScript, TypeScript, Java, Kotlin, C, C++, C#, Rust, Go, PHP, Ruby, Swift, Dart, HTML, CSS, SQL, Shell, JSON, Exemplos FIM, além de Q&A e documentações/conversações técnicas.
+- **Linguagens e Conversação Suportadas:** Python, JavaScript, TypeScript, Java, Kotlin, C, C++, C#, Rust, Go, PHP, Ruby, Swift, Dart, HTML, CSS, SQL, Shell, JSON, Scala, Elixir, Haskell, Zig, Lua, R, Perl, Julia, Clojure, Assembly (x86_64/ARM64), Solidity, GraphQL, YAML/TOML/XML, Exemplos FIM, além de Q&A, System Design, Code Review e documentações/conversações técnicas.
 - **Hardware Recomendado:**
   - **Desktop:** CPU / GPU (2GB+ VRAM para inferência, 6GB+ VRAM para treino/fine-tuning completo de 1B)
   - **Mobile:** Dispositivos Android (Termux / MLC-LLM) / iOS com 4GB+ RAM (modelo quantizado Q4_K_M)
@@ -20,36 +20,56 @@
 
 ---
 
-## 📂 Estrutura do Dataset (.txt)
+## 📂 Estrutura do Dataset (.txt) v1
 
-O LLPT Code Nano organiza os arquivos de texto plano (`.txt`) em duas pastas principais dentro do diretório `dataset/` de acordo com a finalidade do conjunto de dados:
+O LLPT Code Nano conta com o maior dataset de programação da versão v1 da família, organizando os arquivos de texto plano (`.txt`) em duas pastas principais dentro do diretório `dataset/`:
 
 ```text
 models/code/llpt-code-nano/dataset/
 ├── Programação/
-│   ├── python.txt           # Código Python
-│   ├── javascript.txt       # Código JavaScript
-│   ├── typescript.txt       # Código TypeScript
-│   ├── java.txt             # Código Java
-│   ├── kotlin.txt           # Código Kotlin
-│   ├── c.txt                # Código C
-│   ├── cpp.txt              # Código C++
-│   ├── csharp.txt           # Código C#
-│   ├── rust.txt             # Código Rust
-│   ├── go.txt               # Código Go
-│   ├── php.txt              # Código PHP
-│   ├── ruby.txt             # Código Ruby
-│   ├── swift.txt            # Código Swift
-│   ├── dart.txt             # Código Dart
-│   ├── html.txt             # Estruturas HTML
-│   ├── css.txt              # Estilos CSS
-│   ├── sql.txt              # Consultas e scripts SQL
-│   ├── shell.txt            # Scripts Shell / Bash
-│   ├── json.txt             # Estruturas JSON
-│   └── fim_examples.txt     # Exemplos FIM com tokens <PRE>, <SUF>, <MID>, <EOT>
+│   ├── python.txt                       # Código Python
+│   ├── javascript.txt                   # Código JavaScript
+│   ├── typescript.txt                   # Código TypeScript
+│   ├── java.txt                         # Código Java
+│   ├── kotlin.txt                       # Código Kotlin
+│   ├── c.txt                            # Código C
+│   ├── cpp.txt                          # Código C++
+│   ├── csharp.txt                       # Código C#
+│   ├── rust.txt                         # Código Rust
+│   ├── go.txt                           # Código Go
+│   ├── php.txt                          # Código PHP
+│   ├── ruby.txt                         # Código Ruby
+│   ├── swift.txt                        # Código Swift
+│   ├── dart.txt                         # Código Dart
+│   ├── scala.txt                        # Código Scala
+│   ├── elixir.txt                       # Código Elixir
+│   ├── haskell.txt                      # Código Haskell
+│   ├── zig.txt                          # Código Zig
+│   ├── lua.txt                          # Código Lua
+│   ├── r.txt                            # Código R
+│   ├── perl.txt                         # Código Perl
+│   ├── julia.txt                        # Código Julia
+│   ├── clojure.txt                      # Código Clojure
+│   ├── assembly.txt                     # Assembly (x86_64 / ARM64)
+│   ├── solidity.txt                     # Smart Contracts Solidity
+│   ├── graphql.txt                      # Schemas e Queries GraphQL
+│   ├── yaml_toml_xml.txt                # Configurações K8s, TOML, XML
+│   ├── html.txt                         # Estruturas HTML
+│   ├── css.txt                          # Estilos CSS
+│   ├── sql.txt                          # Consultas e scripts SQL
+│   ├── shell.txt                        # Scripts Shell / Bash
+│   ├── json.txt                         # Estruturas JSON
+│   ├── ai_machine_learning.txt          # PyTorch, ML & DL
+│   ├── devops_linux_security.txt        # Docker, Linux & Security
+│   ├── security_cryptography.txt        # Criptografia e Autenticação
+│   └── fim_examples.txt                 # Exemplos FIM com tokens <PRE>, <SUF>, <MID>, <EOT>
 │
 └── Conversação/
-    └── documentation.txt    # Perguntas, respostas, documentação técnica, docstrings e explicações
+    ├── documentation.txt                # Documentação técnica e padrões SOLID
+    ├── conversacao_tecnica_qa.txt       # Perguntas, respostas e discussões técnicas
+    ├── prompt_engineering_instructions.txt # Instruções de Prompt Engineering
+    ├── system_design_architecture.txt   # Guia de System Design e Arquitetura
+    └── code_review_best_practices.txt   # Boas práticas e checklist de Code Review
 ```
 
 ### Como Adicionar Novos Arquivos e Categorias

@@ -66,3 +66,23 @@ export class InMemoryRepository<T extends { id: string }> implements Repository<
     return this.items.delete(id);
   }
 }
+
+// ==========================================
+// 2. Advanced Generics, Conditional Types & Utility Types
+// ==========================================
+
+type IsString<T> = T extends string ? true : false;
+
+type DeepReadonly<T> = {
+    readonly [P in keyof T]: T[P] extends object ? DeepReadonly<T[P]> : T[P];
+};
+
+interface UserProfile {
+    id: number;
+    details: {
+        name: string;
+        email: string;
+    };
+}
+
+type ReadonlyUserProfile = DeepReadonly<UserProfile>;

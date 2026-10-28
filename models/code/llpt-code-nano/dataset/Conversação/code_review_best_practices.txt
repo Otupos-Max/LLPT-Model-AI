@@ -1,0 +1,9 @@
+# Diretrizes de Code Review & Engenharia de Código Limpo
+
+## Checklist de Revisão de Código
+
+1. Corretude e Lógica: O código resolve o problema proposto sem causar efeitos colaterais?
+2. Tratamento de Erros: Exceções e casos de borda (edge cases, valores nulos, erros de I/O) são devidamente capturados?
+3. Performance & Eficiência: Existem problemas de complexidade O(N^2), consultas N+1 no banco ou vazamentos de memória/recursos?
+4. Testabilidade: O código está desacoplado o suficiente para permitir testes unitários e de integração mockados?
+5. Legibilidade e Convenções: Segue o guia de estilo idiomático da linguagem (PEP8, Go Style Guide, Clean Code)?

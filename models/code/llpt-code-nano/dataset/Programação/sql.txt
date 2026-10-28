@@ -115,3 +115,19 @@ WITH RECURSIVE CategoryHierarchy AS (
 SELECT id, name, depth
 FROM CategoryHierarchy
 ORDER BY depth, name;
+
+-- ==========================================
+-- 2. Advanced CTE, Window Functions & Indexing
+-- ==========================================
+
+WITH RankedOrders AS (
+    SELECT
+        customer_id,
+        order_id,
+        total_amount,
+        ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY total_amount DESC) as rank_num
+    FROM orders
+)
+SELECT customer_id, order_id, total_amount
+FROM RankedOrders
+WHERE rank_num = 1;

@@ -1,0 +1,21 @@
+; Assembly x86_64 / ARM64 Dataset - Registers, Syscalls & Optimization
+
+section .text
+global _start
+
+_start:
+    ; Write syscall (sys_write = 1 in x86_64 Linux)
+    mov rax, 1          ; syscall number
+    mov rdi, 1          ; file descriptor (stdout)
+    mov rsi, message    ; pointer to message
+    mov rdx, len        ; message length
+    syscall
+
+    ; Exit syscall (sys_exit = 60)
+    mov rax, 60         ; syscall number
+    xor rdi, rdi        ; status code 0
+    syscall
+
+section .data
+message: db "Hello, Assembly LLPT Nano!", 10
+len: equ $ - message

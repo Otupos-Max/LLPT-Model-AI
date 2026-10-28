@@ -1,0 +1,23 @@
+-- Haskell Dataset - Pure Functional Programming, Monads & Typeclasses
+
+module LlptNano.Dataset where
+
+import Control.Monad (when)
+import Data.Maybe (fromMaybe)
+
+data Tree a = Empty | Node a (Tree a) (Tree a)
+  deriving (Show, Eq, Functor)
+
+insertTree :: (Ord a) => a -> Tree a -> Tree a
+insertTree x Empty = Node x Empty Empty
+insertTree x (Node val left right)
+  | x == val  = Node val left right
+  | x < val   = Node val (insertTree x left) right
+  | otherwise = Node val left (insertTree x right)
+
+searchTree :: (Ord a) => a -> Tree a -> Bool
+searchTree _ Empty = False
+searchTree x (Node val left right)
+  | x == val  = True
+  | x < val   = searchTree x left
+  | otherwise = searchTree x right

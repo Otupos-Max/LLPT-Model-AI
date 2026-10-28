@@ -1,0 +1,23 @@
+# R Dataset - Dataframes, Tidyverse, Data Analysis & Statistical Modeling
+
+library(dplyr)
+
+process_sales_data <- function(df) {
+  df_summary <- df %>%
+    filter(!is.na(amount) & amount > 0) %>%
+    group_by(category, region) %>%
+    summarise(
+      total_sales = sum(amount),
+      avg_sale = mean(amount),
+      count = n(),
+      .groups = "drop"
+    ) %>%
+    arrange(desc(total_sales))
+
+  return(df_summary)
+}
+
+fit_linear_model <- function(df) {
+  model <- lm(sales ~ marketing_budget + unit_price, data = df)
+  return(summary(model))
+}

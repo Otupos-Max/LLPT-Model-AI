@@ -1,0 +1,9 @@
+# System Design & Distributed Systems Architecture Guide
+
+Pergunta: Como projetar um sistema distribuído de alta disponibilidade e tolerância a falhas?
+Resposta:
+1. Redundância: Eliminar pontos únicos de falha (SPOF) duplicando instâncias em múltiplas zonas de disponibilidade (AZs).
+2. Load Balancing: Distribuir tráfego entre instâncias saudáveis usando NGINX, HAProxy ou AWS ALB/NLB.
+3. Caching: Reduzir a carga no banco de dados com Redis ou Memcached para leituras frequentes.
+4. Rate Limiting & Circuit Breaker: Proteger serviços de sobrecarga usando algoritmos como Token Bucket e padrões de disjuntor (Resilience4j / Hystrix).
+5. Mensageria Assíncrona: Desacoplar processamentos pesados usando mensageria como Kafka ou RabbitMQ.

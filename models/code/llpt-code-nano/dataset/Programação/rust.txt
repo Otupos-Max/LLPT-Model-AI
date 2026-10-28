@@ -225,3 +225,26 @@ impl Database for InMemoryDb {
         }
     }
 }
+
+// ==========================================
+// 2. Tokio Async Runtime & Channel Communication
+// ==========================================
+
+use tokio::sync::mpsc;
+
+pub async fn run_async_pipeline() {
+    let (tx, mut rx) = mpsc::channel::<String>(32);
+
+    tokio::spawn(async move {
+        for i in 0..10 {
+            let msg = format!("Message {}", i);
+            if tx.send(msg).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    while let Some(message) = rx.recv().await {
+        println!("Received: {}", message);
+    }
+}

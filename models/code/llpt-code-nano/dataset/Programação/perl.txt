@@ -1,0 +1,20 @@
+# Perl Dataset - Regular Expressions, File I/O & One-liners
+
+use strict;
+use warnings;
+
+sub parse_log_file {
+    my ($filename) = @_;
+    open(my $fh, '<', $filename) or die "Cannot open file '$filename': $!";
+
+    my %ip_counts;
+    while (my $line = <$fh>) {
+        chomp $line;
+        if ($line =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+-\s+-\s+\[(.*?)\]/) {
+            my $ip = $1;
+            $ip_counts{$ip}++;
+        }
+    }
+    close($fh);
+    return \%ip_counts;
+}

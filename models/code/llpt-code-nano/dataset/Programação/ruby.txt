@@ -159,3 +159,19 @@ class TaskPipeline
     context
   end
 end
+
+// ==========================================
+// 2. Ruby Meta-programming & Ractor Parallelism
+// ==========================================
+
+class DynamicModel
+  def self.define_attribute(attr_name)
+    define_method(attr_name) do
+      instance_variable_get("@#{attr_name}")
+    end
+
+    define_method("#{attr_name}=") do |val|
+      instance_variable_set("@#{attr_name}", val)
+    end
+  end
+end
