@@ -1,0 +1,25 @@
+// Apache Groovy Builder, Meta-programming & Gradle DSL Scripting
+
+class Person {
+    String name
+    int age
+    List<String> hobbies = []
+
+    def speak() {
+        println "Hello, I am ${name}, age ${age}."
+    }
+}
+
+def people = [
+    new Person(name: "Alice", age: 30, hobbies: ["Coding", "Reading"]),
+    new Person(name: "Bob", age: 25, hobbies: ["Gaming", "Hiking"])
+]
+
+def adults = people.findAll { it.age >= 18 }.collect { it.name.toUpperCase() }
+println "Adult names: ${adults}"
+
+String.metaClass.reverseAndCapitalize = {
+    delegate.reverse().toUpperCase()
+}
+
+println "groovy".reverseAndCapitalize()

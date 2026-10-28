@@ -303,3 +303,37 @@ class EventEmitter {
         this.events[event] = this.events[event].filter(listener => listener !== listenerToRemove);
     }
 }
+
+
+// Modern JavaScript Async Iterator and Event Emitter
+
+import { EventEmitter } from 'events';
+
+export class TaskQueue extends EventEmitter {
+  constructor(concurrency = 2) {
+    super();
+    this.concurrency = concurrency;
+    this.running = 0;
+    this.queue = [];
+  }
+
+  push(task) {
+    this.queue.push(task);
+    this.next();
+  }
+
+  async next() {
+    if (this.running >= this.concurrency || this.queue.length === 0) return;
+    this.running++;
+    const task = this.queue.shift();
+    try {
+      const result = await task();
+      this.emit('taskSuccess', result);
+    } catch (err) {
+      this.emit('taskError', err);
+    } finally {
+      this.running--;
+      this.next();
+    }
+  }
+}

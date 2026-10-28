@@ -1,0 +1,82 @@
+{ Free Pascal / Object Pascal High Performance Algorithms }
+
+program PascalDataStructures;
+
+{ objfpc}{+}
+
+uses
+  SysUtils, Classes;
+
+type
+  generic TLinkedList<T> = class
+  private
+    type
+      PNode = ^TNode;
+      TNode = record
+        Data: T;
+        Next: PNode;
+      end;
+  private
+    FHead: PNode;
+    FCount: Integer;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure Append(const AValue: T);
+    property Count: Integer read FCount;
+  end;
+
+constructor TLinkedList.Create;
+begin
+  FHead := nil;
+  FCount := 0;
+end;
+
+destructor TLinkedList.Destroy;
+var
+  Current, Temp: PNode;
+begin
+  Current := FHead;
+  while Current <> nil do
+  begin
+    Temp := Current;
+    Current := Current^.Next;
+    Dispose(Temp);
+  end;
+  inherited Destroy;
+end;
+
+procedure TLinkedList.Append(const AValue: T);
+var
+  NewNode, Current: PNode;
+begin
+  New(NewNode);
+  NewNode^.Data := AValue;
+  NewNode^.Next := nil;
+  if FHead = nil then
+    FHead := NewNode
+  else
+  begin
+    Current := FHead;
+    while Current^.Next <> nil do
+      Current := Current^.Next;
+    Current^.Next := NewNode;
+  end;
+  Inc(FCount);
+end;
+
+type
+  TIntList = specialize TLinkedList<Integer>;
+
+var
+  List: TIntList;
+begin
+  List := TIntList.Create;
+  try
+    List.Append(42);
+    List.Append(100);
+    WriteLn("Pascal List Count: ", List.Count);
+  finally
+    List.Free;
+  end;
+end.

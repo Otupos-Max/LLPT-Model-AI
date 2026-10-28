@@ -248,3 +248,37 @@ pub async fn run_async_pipeline() {
         println!("Received: {}", message);
     }
 }
+
+
+// Asynchronous Rust with Tokio and Mutex Cache
+
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use std::collections::HashMap;
+
+#[derive(Debug, Clone)]
+pub struct Cache<K, V> {
+    store: Arc<Mutex<HashMap<K, V>>>,
+}
+
+impl<K, V> Cache<K, V>
+where
+    K: std::cmp::Eq + std::hash::Hash + Send + 'static,
+    V: Clone + Send + 'static,
+{
+    pub fn new() -> Self {
+        Self {
+            store: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+
+    pub async fn set(&self, key: K, value: V) {
+        let mut guard = self.store.lock().await;
+        guard.insert(key, value);
+    }
+
+    pub async fn get(&self, key: &K) -> Option<V> {
+        let guard = self.store.lock().await;
+        guard.get(key).cloned()
+    }
+}

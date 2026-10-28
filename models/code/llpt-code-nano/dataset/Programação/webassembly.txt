@@ -1,0 +1,41 @@
+;; WebAssembly Text Format (WAT) - Fast Add & Factorial Module
+
+(module
+  (func $add (param $lhs i32) (param $rhs i32) (result i32)
+    local.get $lhs
+    local.get $rhs
+    i32.add)
+
+  (func $factorial (param $n i32) (result i32)
+    (local $i i32)
+    (local $res i32)
+    i32.const 1
+    local.set $res
+    i32.const 1
+    local.set $i
+
+    (block $break
+      (loop $top
+        local.get $i
+        local.get $n
+        i32.gt_s
+        br_if $break
+
+        local.get $res
+        local.get $i
+        i32.mul
+        local.set $res
+
+        local.get $i
+        i32.const 1
+        i32.add
+        local.set $i
+        br $top
+      )
+    )
+    local.get $res
+  )
+
+  (export "add" (func $add))
+  (export "factorial" (func $factorial))
+)

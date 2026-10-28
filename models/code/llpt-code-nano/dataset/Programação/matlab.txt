@@ -1,0 +1,26 @@
+% MATLAB Signal Processing & Vectorized Operations
+
+function [filtered_signal, fft_spectrum] = process_signal(t, raw_signal, cutoff_freq, fs)
+    % Process signal with Butterworth lowpass filter and compute FFT spectrum
+
+    nyquist = fs / 2;
+    normal_cutoff = cutoff_freq / nyquist;
+    [b, a] = butter(4, normal_cutoff, 'low');
+
+    filtered_signal = filtfilt(b, a, raw_signal);
+
+    N = length(raw_signal);
+    f = (0:N-1)*(fs/N);
+    fft_spectrum = abs(fft(filtered_signal))/N;
+
+    figure;
+    subplot(2,1,1);
+    plot(t, raw_signal, 'r', t, filtered_signal, 'b');
+    title('Raw vs Filtered Signal');
+    xlabel('Time (s)'); ylabel('Amplitude');
+
+    subplot(2,1,2);
+    plot(f(1:floor(N/2)), fft_spectrum(1:floor(N/2)));
+    title('Frequency Spectrum');
+    xlabel('Frequency (Hz)'); ylabel('Magnitude');
+end

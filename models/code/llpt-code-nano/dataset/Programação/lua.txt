@@ -24,3 +24,28 @@ local producer = coroutine.create(function()
         coroutine.yield(i * 10)
     end
 end)
+
+
+-- Lua Metatables, Coroutines & Object Oriented Inheritance
+
+local Animal = {}
+Animal.__index = Animal
+
+function Animal:new(name)
+    local instance = setmetatable({}, Animal)
+    instance.name = name or "Unknown"
+    return instance
+end
+
+function Animal:speak()
+    return self.name .. " makes a sound."
+end
+
+-- Coroutine Producer-Consumer
+function producer()
+    return coroutine.create(function()
+        for i = 1, 5 do
+            coroutine.yield("Item " .. i)
+        end
+    end)
+end

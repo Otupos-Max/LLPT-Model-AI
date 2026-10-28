@@ -1,0 +1,36 @@
+// Objective-C Foundations, Cocoa Touch & Memory Management (ARC)
+
+#import <Foundation/Foundation.h>
+
+@interface LLPTItem : NSObject
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic, assign) NSInteger itemId;
+
+- (instancetype)initWithName:(NSString *)name itemId:(NSInteger)itemId;
+- (void)displayInfo;
+@end
+
+@implementation LLPTItem
+
+- (instancetype)initWithName:(NSString *)name itemId:(NSInteger)itemId {
+    self = [super init];
+    if (self) {
+        _name = [name copy];
+        _itemId = itemId;
+    }
+    return self;
+}
+
+- (void)displayInfo {
+    NSLog(@"[LLPTItem] ID: %ld | Name: %@", (long)self.itemId, self.name);
+}
+
+@end
+
+int main(int argc, const char * argv[]) {
+    @autoreleasepool {
+        LLPTItem *item = [[LLPTItem alloc] initWithName:@"LLPT Code Nano ObjC" itemId:101];
+        [item displayInfo];
+    }
+    return 0;
+}

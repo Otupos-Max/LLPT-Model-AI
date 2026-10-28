@@ -1,0 +1,27 @@
+% Prolog Knowledge Base, Graph Reachability & N-Queens Solver
+
+edge(a, b).
+edge(b, c).
+edge(c, d).
+edge(a, e).
+edge(e, d).
+
+path(X, Y) :- edge(X, Y).
+path(X, Y) :- edge(X, Z), path(Z, Y).
+
+% N-Queens Logic
+n_queens(N, Q) :-
+    numlist(1, N, L),
+    permutation(L, Q),
+    safe(Q).
+
+safe([]).
+safe([H|T]) :- safe(T), no_attack(H, T, 1).
+
+no_attack(_, [], _).
+no_attack(Y, [Y1|Ylist], X) :-
+    Y =\= Y1,
+    Y =\= Y1 + X,
+    Y =\= Y1 - X,
+    X1 is X + 1,
+    no_attack(Y, Ylist, X1).

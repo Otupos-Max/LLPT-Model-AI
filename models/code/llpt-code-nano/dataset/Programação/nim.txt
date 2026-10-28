@@ -1,0 +1,22 @@
+# Nim Systems Programming, Metaprogramming & Garbage Collection Controls
+
+type
+  Person = object
+    name: string
+    age: int
+
+proc initPerson(name: string, age: int): Person =
+  result.name = name
+  result.age = age
+
+proc greet(p: Person) =
+  echo "Hello, " & p.name & "! You are " & $p.age & " years old."
+
+macro debugVar(v: untyped): untyped =
+  let name = repr(v)
+  result = quote do:
+    echo `name` & " = " & $`v`
+
+let p = initPerson("Alice", 28)
+p.greet()
+debugVar(p.age)

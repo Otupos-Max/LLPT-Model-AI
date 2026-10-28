@@ -394,3 +394,76 @@ def chunk_generator(iterable: List[Any], chunk_size: int) -> Generator[List[Any]
     """Yield successive chunks from an iterable."""
     for i in range(0, len(iterable), chunk_size):
         yield iterable[i:i + chunk_size]
+
+
+# Advanced Python Patterns, AsyncIO, Metaclasses, Generators and Data Structures
+
+import asyncio
+import functools
+import time
+from typing import AsyncGenerator, Callable, Any, Dict, List, Optional, TypeVar, Generic
+
+T = TypeVar('T')
+
+class SingletonMeta(type):
+    """Thread-safe Metaclass for Singleton Pattern."""
+    _instances: Dict[type, Any] = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+class DatabaseConnectionPool(metaclass=SingletonMeta):
+    def __init__(self, max_connections: int = 10):
+        self.max_connections = max_connections
+        self.active_connections = 0
+
+    def acquire(self) -> str:
+        if self.active_connections >= self.max_connections:
+            raise RuntimeError('Connection limit reached')
+        self.active_connections += 1
+        return f'Conn-{self.active_connections}'
+
+    def release(self) -> None:
+        if self.active_connections > 0:
+            self.active_connections -= 1
+
+async def async_data_pipeline(data_stream: List[int]) -> AsyncGenerator[int, None]:
+    """Asynchronous generator processing numbers concurrently."""
+    for item in data_stream:
+        await asyncio.sleep(0.01)
+        if item % 2 == 0:
+            yield item * 2
+
+async def main_async_runner():
+    stream = list(range(20))
+    results = []
+    async for value in async_data_pipeline(stream):
+        results.append(value)
+    print(f'Processed Async Pipeline: {results}')
+
+if __name__ == '__main__':
+    asyncio.run(main_async_runner())
+
+
+# Modern Python FastAPI & Pydantic Data Validation Example
+
+from fastapi import FastAPI, HTTPException, Depends
+from pydantic import BaseModel, Field
+from typing import List, Optional
+
+app = FastAPI(title="LLPT Code API", version="1.0.0")
+
+class ItemSchema(BaseModel):
+    id: int
+    name: str = Field(..., min_length=2, max_length=100)
+    price: float = Field(..., gt=0)
+    tags: List[str] = []
+
+@app.post("/items/", response_model=ItemSchema)
+async def create_item(item: ItemSchema):
+    if item.price > 10000:
+        raise HTTPException(status_code=400, detail="Price exceeds maximum allowed limit")
+    return item

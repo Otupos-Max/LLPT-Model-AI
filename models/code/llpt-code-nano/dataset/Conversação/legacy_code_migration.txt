@@ -1,0 +1,13 @@
+# Estratégia de Migração de Código Legado e Monólitos para Microserviços
+
+## Padrões de Migração
+
+### 1. Strangler Fig Pattern (Padrão Figueira-Estranguladora)
+Em vez de reescrever um monólito do zero (Big Bang Rewrite), substitua gradualmente funcionalidades específicas por novos microserviços.
+- **Passo 1:** Coloque um API Gateway à frente do monólito.
+- **Passo 2:** Crie um novo microserviço para uma rota/funcionalidade específica (ex: Serviço de Pagamentos).
+- **Passo 3:** Redirecione o tráfego da rota no API Gateway para o novo microserviço.
+- **Passo 4:** Desative a implementação antiga no monólito.
+
+### 2. Database per Service e Eventual Consistency
+Evite acoplamento de banco de dados. Cada microserviço deve gerenciar seu próprio armazenamento de dados. Para sincronizar dados entre serviços, utilize comunicação assíncrona orientada a eventos via Kafka, RabbitMQ ou AWS SNS/SQS.

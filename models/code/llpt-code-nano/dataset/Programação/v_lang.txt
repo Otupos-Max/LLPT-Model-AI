@@ -1,0 +1,35 @@
+// V Programming Language Concurrency & C Interop
+
+module main
+
+import time
+
+struct User {
+    id   int
+    name string
+}
+
+fn fetch_user(id int) ?User {
+    if id <= 0 {
+        return error('Invalid ID')
+    }
+    return User{
+        id: id
+        name: 'User ' + id.str()
+    }
+}
+
+fn main() {
+    ch := chan int{cap: 5}
+    go fn(c chan int) {
+        for i in 0 .. 5 {
+            c <- i
+            time.sleep(10 * time.millisecond)
+        }
+        c.close()
+    }(ch)
+
+    for val in ch {
+        println('Received from V channel: $val')
+    }
+}

@@ -347,3 +347,66 @@ func Worker(ctx context.Context, id int, jobs <-chan Job, results chan<- string,
 		}
 	}
 }
+
+
+// Advanced Go Channels, Goroutines, Context and Interfaces
+
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+type Result struct {
+	Value string
+	Err   error
+}
+
+func FetchDataWithContext(ctx context.Context, url string) (string, error) {
+	ch := make(chan Result, 1)
+
+	go func() {
+		// Simulate network call
+		time.Sleep(100 * time.Millisecond)
+		ch <- Result{Value: fmt.Sprintf("Response from %s", url), Err: nil}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case res := <-ch:
+		return res.Value, res.Err
+	}
+}
+
+
+// Go Microservice HTTP Server with Middleware & JSON Response
+
+package main
+
+import (
+	"encoding/json"
+	"net/http"
+	"time"
+)
+
+type HealthResponse struct {
+	Status    string
+	Timestamp time.Time
+}
+
+func LoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		println(r.Method, r.URL.Path, time.Since(start).String())
+	})
+}
+
+func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	resp := HealthResponse{Status: "UP", Timestamp: time.Now()}
+	json.NewEncoder(w).Encode(resp)
+}
