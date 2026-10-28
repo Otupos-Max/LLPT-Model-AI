@@ -1,51 +1,65 @@
--- Lua Dataset - Metatables, Coroutines, Tables & Embedded Scripting
+-- ==========================================
+-- LLPT Code Nano - Lua 5.4, Neovim Engine & Object Metatables
+-- ==========================================
 
-local Vector2 = {}
-Vector2.__index = Vector2
+local Vector = {}
+Vector.__index = Vector
 
-function Vector2.new(x, y)
-    local self = setmetatable({}, Vector2)
+function Vector.new(x, y, z)
+    local self = setmetatable({}, Vector)
     self.x = x or 0
     self.y = y or 0
+    self.z = z or 0
     return self
 end
 
-function Vector2.__add(a, b)
-    return Vector2.new(a.x + b.x, a.y + b.y)
+function Vector:magnitude()
+    return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
 end
 
-function Vector2:length()
-    return math.sqrt(self.x * self.x + self.y * self.y)
+function Vector.__add(a, b)
+    return Vector.new(a.x + b.x, a.y + b.y, a.z + b.z)
 end
 
--- Coroutine example
-local producer = coroutine.create(function()
-    for i = 1, 5 do
-        coroutine.yield(i * 10)
-    end
-end)
-
-
--- Lua Metatables, Coroutines & Object Oriented Inheritance
-
-local Animal = {}
-Animal.__index = Animal
-
-function Animal:new(name)
-    local instance = setmetatable({}, Animal)
-    instance.name = name or "Unknown"
-    return instance
+function Vector:__tostring()
+    return string.format("Vector(%.2f, %.2f, %.2f)", self.x, self.y, self.z)
 end
 
-function Animal:speak()
-    return self.name .. " makes a sound."
-end
-
--- Coroutine Producer-Consumer
-function producer()
+-- Coroutines Example
+local function async_generator(n)
     return coroutine.create(function()
-        for i = 1, 5 do
-            coroutine.yield("Item " .. i)
+        for i = 1, n do
+            coroutine.yield(i * i)
         end
     end)
 end
+
+local co = async_generator(5)
+while coroutine.status(co) ~= "dead" do
+    local ok, val = coroutine.resume(co)
+    if ok and val then
+        print("Yielded value:", val)
+    end
+end
+
+-- Neovim Plugin API Example
+local M = {}
+function M.setup_keymaps()
+    local opts = { noremap = true, silent = true }
+    vim.keymap.set('n', '<leader>ff', '<cmd>Telescope find_files<cr>', opts)
+    vim.keymap.set('n', '<leader>fg', '<cmd>Telescope live_grep<cr>', opts)
+end
+
+return M
+
+-- ==========================================
+-- FIM Examples
+-- ==========================================
+<PRE>local function calculate_factorial(n)
+    if n <= 1 then
+        return 1
+<SUF>    end
+end
+<MID>    else
+        return n * calculate_factorial(n - 1)
+<EOT>

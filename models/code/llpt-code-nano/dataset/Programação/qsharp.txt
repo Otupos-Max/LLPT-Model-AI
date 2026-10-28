@@ -1,0 +1,60 @@
+// ==========================================
+// LLPT Code Nano - Q# Quantum Computing & OpenQASM
+// ==========================================
+
+namespace LLPT.Quantum {
+
+    open Microsoft.Quantum.Canon;
+    open Microsoft.Quantum.Intrinsic;
+    open Microsoft.Quantum.Measurement;
+
+    /// # Summary
+    /// Creates Quantum Superposition using Hadamard gate and measures qubit.
+    operation GenerateRandomBit() : Result {
+        use q = Qubit();
+        H(q); // Hadamard gate puts qubit into superposition |+>
+        let result = M(q); // Measure qubit
+        Reset(q);
+        return result;
+    }
+
+    /// # Summary
+    /// Creates Quantum Entanglement (Bell State |Φ+>) between two qubits.
+    operation CreateBellState() : (Result, Result) {
+        use (q1, q2) = (Qubit(), Qubit());
+        H(q1);
+        CNOT(q1, q2); // Controlled-NOT creates entangled state (|00> + |11>) / sqrt(2)
+
+        let m1 = M(q1);
+        let m2 = M(q2);
+
+        Reset(q1);
+        Reset(q2);
+
+        return (m1, m2);
+    }
+}
+
+// OpenQASM 3.0 Circuit
+/*
+OPENQASM 3.0;
+include "stdgates.inc";
+
+qubit[2] q;
+bit[2] c;
+
+h q[0];
+cx q[0], q[1];
+c[0] = measure q[0];
+c[1] = measure q[1];
+*/
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>operation MeasureQubit(q : Qubit) : Result {
+<SUF>    return res;
+}
+<MID>    let res = M(q);
+    Reset(q);
+<EOT>

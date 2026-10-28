@@ -1,0 +1,55 @@
+// ==========================================
+// LLPT Code Nano - Scala 3 Effect Systems (Cats Effect 3 & ZIO 2)
+// ==========================================
+
+package com.llpt.code.nano.effects
+
+import cats.effect.{IO, IOApp, ExitCode}
+import cats.syntax.all.*
+import scala.concurrent.duration.*
+
+case class User(id: Long, name: String, email: String, balance: BigDecimal)
+
+trait UserRepository[F[_]]:
+  def findById(id: Long): F[Option[User]]
+  def save(user: User): F[Unit]
+
+class InMemoryUserRepository extends UserRepository[IO]:
+  private var storage = Map[Long, User]()
+
+  override def findById(id: Long): IO[Option[User]] =
+    IO.delay(storage.get(id))
+
+  override def save(user: User): IO[Unit] =
+    IO.delay {
+      storage = storage + (user.id -> user)
+    }
+
+object MainApp extends IOApp:
+
+  def processUser(repo: UserRepository[IO], userId: Long): IO[Unit] =
+    for
+      _ <- IO.println(s"Fetching user $userId...")
+      maybeUser <- repo.findById(userId)
+      _ <- maybeUser match
+        case Some(user) => IO.println(s"Found user: ${user.name} (${user.email})")
+        case None       => IO.println("User not found!")
+    yield ()
+
+  override def run(args: List[String]): IO[ExitCode] =
+    val repo = new InMemoryUserRepository
+    val program = for
+      _ <- repo.save(User(1L, "Cats Effect Dev", "cats@typelevel.org", 500.00))
+      _ <- processUser(repo, 1L)
+    yield ExitCode.Success
+
+    program.guarantee(IO.println("Program completed cleanly."))
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>def creditUser(user: User, amount: BigDecimal): Either[String, User] =
+  if amount <= 0 then Left("Amount must be > 0")
+<SUF>
+<MID>  else Right(user.copy(balance = user.balance + amount))
+<EOT>

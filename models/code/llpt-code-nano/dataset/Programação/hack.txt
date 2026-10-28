@@ -1,0 +1,69 @@
+// ==========================================
+// LLPT Code Nano - Hack Language (HHVM) Strict Types
+// ==========================================
+
+<<__ConsistentConstruct>>
+abstract class BaseEntity {
+  public function __construct(
+    protected int $id,
+    protected string $createdAt,
+  ) {}
+
+  public function getId(): int {
+    return $this->id;
+  }
+}
+
+final class UserEntity extends BaseEntity {
+  public function __construct(
+    int $id,
+    string $createdAt,
+    private string $name,
+    private string $email,
+    private vec<string> $roles = vec[],
+  ) {
+    parent::__construct($id, $createdAt);
+  }
+
+  public function getName(): string {
+    return $this->name;
+  }
+
+  public function getEmail(): string {
+    return $this->email;
+  }
+
+  public function hasRole(string $targetRole): bool {
+    foreach ($this->roles as $role) {
+      if ($role === $targetRole) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public async function fetchExtraDetailsAsync(): Awaitable<dict<string, mixed>> {
+    await HH\Asio\usleep(10000); // 10ms async sleep
+    return dict[
+      "status" => "active",
+      "score" => 98.5,
+    ];
+  }
+}
+
+<<__EntryPoint>>
+async function main_async(): Awaitable<void> {
+  $user = new UserEntity(101, "2026-03-30", "Hack Dev", "hack@example.com", vec["admin", "developer"]);
+  echo "User: " . $user->getName() . "\n";
+  $details = await $user->fetchExtraDetailsAsync();
+  echo "Status: " . (string)$details["status"] . "\n";
+}
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>function calculate_square(int $val): int {
+<SUF>  return $res;
+}
+<MID>  $res = $val * $val;
+<EOT>

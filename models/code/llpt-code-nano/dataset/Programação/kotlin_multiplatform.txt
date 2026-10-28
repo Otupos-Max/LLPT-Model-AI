@@ -1,0 +1,72 @@
+// ==========================================
+// LLPT Code Nano - Kotlin Multiplatform (KMP), Coroutines & Flow
+// ==========================================
+
+package com.llpt.code.nano
+
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.delay
+
+enum class UserStatus {
+    ACTIVE, PENDING, SUSPENDED
+}
+
+data class User(
+    val id: Long,
+    val name: String,
+    val email: String,
+    val status: UserStatus = UserStatus.ACTIVE,
+    val balance: Double = 0.0
+)
+
+interface UserRepository {
+    suspend fun getUserById(id: Long): User?
+    fun observeActiveUsers(): Flow<List<User>>
+    suspend fun updateUser(user: User): Boolean
+}
+
+class DefaultUserRepository : UserRepository {
+
+    private val userDatabase = mutableMapOf<Long, User>()
+
+    override suspend fun getUserById(id: Long): User? {
+        delay(50) // Simulating network latency
+        return userDatabase[id]
+    }
+
+    override fun observeActiveUsers(): Flow<List<User>> = flow {
+        while (true) {
+            val activeUsers = userDatabase.values.filter { it.status == UserStatus.ACTIVE }
+            emit(activeUsers)
+            delay(1000)
+        }
+    }
+
+    override suspend fun updateUser(user: User): Boolean {
+        delay(20)
+        userDatabase[user.id] = user
+        return true
+    }
+}
+
+// Extension Functions & KMP Expect/Actual
+expect class PlatformLogger() {
+    fun log(message: String)
+}
+
+fun List<User>.calculateTotalBalance(): Double {
+    return this.fold(0.0) { acc, user -> acc + user.balance }
+}
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>suspend fun fetchUserBalance(userId: Long): Double {
+    val user = userRepository.getUserById(userId)
+<SUF>    return user.balance
+}
+<MID>    checkNotNull(user) { "User not found" }
+<EOT>

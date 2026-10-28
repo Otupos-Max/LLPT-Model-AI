@@ -1,66 +1,96 @@
-; Assembly x86_64 / ARM64 Dataset - Registers, Syscalls & Optimization
+;; ==========================================
+;; LLPT Code Nano - Assembly (x86_64 NASM & ARM64 AAPCS)
+;; ==========================================
 
-section .text
 global _start
 
-_start:
-    ; Write syscall (sys_write = 1 in x86_64 Linux)
-    mov rax, 1          ; syscall number
-    mov rdi, 1          ; file descriptor (stdout)
-    mov rsi, message    ; pointer to message
-    mov rdx, len        ; message length
-    syscall
-
-    ; Exit syscall (sys_exit = 60)
-    mov rax, 60         ; syscall number
-    xor rdi, rdi        ; status code 0
-    syscall
-
 section .data
-message: db "Hello, Assembly LLPT Nano!", 10
-len: equ $ - message
+    msg db "Hello, LLPT Code Nano Assembly Engine!", 0xA
+    len equ $ - msg
+    num_array dq 10, 20, 30, 40, 50
+    array_size equ 5
 
-; Additional x86_64 NASM Example: String Length Calculation
-global str_len
+section .bss
+    sum_res resq 1
+
 section .text
-str_len:
+
+;; NASM x86_64 Syscall - Write & Exit
+_start:
+    ;; Calculate sum of num_array
+    mov rsi, num_array
+    mov rcx, array_size
+    xor rax, rax        ;; accumulator = 0
+
+sum_loop:
+    add rax, [rsi]
+    add rsi, 8
+    loop sum_loop
+
+    mov [sum_res], rax  ;; Store calculated sum
+
+    ;; Write message to stdout
+    mov rax, 1          ;; sys_write
+    mov rdi, 1          ;; stdout
+    mov rsi, msg        ;; buffer
+    mov rdx, len        ;; count
+    syscall
+
+    ;; Exit program
+    mov rax, 60         ;; sys_exit
+    xor rdi, rdi        ;; status code 0
+    syscall
+
+;; Function: vector_add_avx2 (C calling convention: RDI = a, RSI = b, RDX = result, RCX = count)
+global vector_add_avx2
+vector_add_avx2:
+    push rbp
+    mov rbp, rsp
     xor rax, rax
+
 .loop:
-    cmp byte [rdi + rax], 0
-    je .done
-    inc rax
+    cmp rax, rcx
+    jge .done
+    vmovups ymm0, [rdi + rax*4]
+    vmovups ymm1, [rsi + rax*4]
+    vaddps  ymm2, ymm0, ymm1
+    vmovups [rdx + rax*4], ymm2
+    add rax, 8
     jmp .loop
+
 .done:
+    pop rbp
     ret
 
-; ARM64 Assembly Example: Fibonacci sequence calculation (AAPCS64 calling convention)
-; Inputs: x0 = n (index)
-; Returns: x0 = fib(n)
-.global fibonacci_arm64
+;; ==========================================
+;; ARM64 (AArch64) Assembly Example
+;; ==========================================
+/*
+.global _start
 .text
-fibonacci_arm64:
-    cbz x0, .fib_zero
-    cmp x0, #1
-    b.eq .fib_one
+_start:
+    // ARM64 write syscall
+    mov x0, #1          // stdout
+    ldr x1, =msg        // address of string
+    mov x2, #38         // length
+    mov x8, #64         // sys_write
+    svc #0
 
-    stp x19, x20, [sp, #-16]!
-    mov x19, x0
+    // ARM64 exit syscall
+    mov x0, #0          // status 0
+    mov x8, #93         // sys_exit
+    svc #0
+*/
 
-    sub x0, x19, #1
-    bl fibonacci_arm64
-    mov x20, x0
-
-    sub x0, x19, #2
-    bl fibonacci_arm64
-    add x0, x0, x20
-
-    ldp x19, x20, [sp], #16
+;; ==========================================
+;; FIM Examples
+;; ==========================================
+<PRE>global quick_square
+quick_square:
+    push rbp
+    mov rbp, rsp
+<SUF>    pop rbp
     ret
-
-.fib_zero:
-    mov x0, #0
-    ret
-
-.fib_one:
-    mov x0, #1
-    ret
+<MID>    mov rax, rdi
+    imul rax, rdi
+<EOT>

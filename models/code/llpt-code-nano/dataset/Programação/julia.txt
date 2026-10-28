@@ -1,39 +1,59 @@
-# Julia Dataset - Multiple Dispatch, High-Performance Computing & Linear Algebra
+# ==========================================
+# LLPT Code Nano - Julia Scientific Computing & High-Performance Data Science
+# ==========================================
+
+module LLPTScientific
 
 using LinearAlgebra
+using Statistics
 
-abstract type AbstractShape end
+export MatrixSolver, solve_system, calculate_statistics
 
-struct Circle <: AbstractShape
-    radius::Float64
+struct MatrixSolver{T<:AbstractFloat}
+    A::Matrix{T}
+    b::Vector{T}
+
+    function MatrixSolver(A::Matrix{T}, b::Vector{T}) where T<:AbstractFloat
+        size(A, 1) == size(A, 2) || error("Matrix A must be square")
+        size(A, 1) == length(b) || error("Dimension mismatch between A and b")
+        new{T}(A, b)
+    end
 end
 
-struct Rectangle <: AbstractShape
-    width::Float64
-    height::Float64
+# Multiple Dispatch
+function solve_system(solver::MatrixSolver{T})::Vector{T} where T
+    return solver.A \ solver.b
 end
 
-area(c::Circle) = π * c.radius^2
-area(r::Rectangle) = r.width * r.height
-
-function solve_linear_system(A::Matrix{Float64}, b::Vector{Float64})
-    return A \ b
+function calculate_statistics(data::AbstractArray{T})::NamedTuple where T<:Real
+    m = mean(data)
+    s = std(data)
+    med = median(data)
+    return (mean=m, std=s, median=med)
 end
 
-
-# Julia High Performance Scientific Computing & Dynamic Dispatch
-
-struct Polynomial{T<:Number}
-    coefficients::Vector{T}
+# Parallelization & Macro Vectorization
+function fast_vector_dot(x::Vector{Float64}, y::Vector{Float64})::Float64
+    @assert length(x) == length(y)
+    acc = 0.0
+    @simd for i in 1:length(x)
+        @inbounds acc += x[i] * y[i]
+    end
+    return acc
 end
 
-function (p::Polynomial)(x::Number)
-    return sum(c * x^(i-1) for (i, c) in enumerate(p.coefficients))
-end
+end # module
 
-function derivative(p::Polynomial)
-    deg = length(p.coefficients) - 1
-    deg <= 0 && return Polynomial([0])
-    new_coeffs = [p.coefficients[i] * (i-1) for i in 2:length(p.coefficients)]
-    return Polynomial(new_coeffs)
+# ==========================================
+# FIM Examples
+# ==========================================
+<PRE>function fibonacci(n::Int)::Int
+    if n <= 0
+        return 0
+    elseif n == 1
+        return 1
+<SUF>    end
 end
+<MID>    else
+        return fibonacci(n - 1) + fibonacci(n - 2)
+<EOT>

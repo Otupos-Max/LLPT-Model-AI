@@ -1,24 +1,54 @@
-;; Scheme / Lisp Macros, Tail Call Optimization & High-Order Functions
+;; ==========================================
+;; LLPT Code Nano - Scheme (R7RS) & Lisp Systems
+;; ==========================================
 
-(define-syntax my-when
-  (syntax-rules ()
-    ((_ condition expr ...)
-     (if condition
-         (begin expr ...)))))
+(define-record-type <user>
+  (make-user id name email balance)
+  user?
+  (id user-id)
+  (name user-name user-name-set!)
+  (email user-email user-email-set!)
+  (balance user-balance user-balance-set!))
 
-(define (factorial-tail n)
-  (define (iter count accum)
-    (if (zero? count)
-        accum
-        (iter (- count 1) (* count accum))))
-  (iter n 1))
+;; Higher order pipelines & continuation-passing style (CPS)
+(define (filter-map proc lst)
+  (let loop ((rest lst) (acc '()))
+    (if (null? rest)
+        (reverse acc)
+        (let ((res (proc (car rest))))
+          (if res
+              (loop (cdr rest) (cons res acc))
+              (loop (cdr rest) acc))))))
 
-(define (filter pred lst)
-  (cond
-    ((null? lst) '())
-    ((pred (car lst)) (cons (car lst) (filter pred (cdr lst))))
-    (else (filter pred (cdr lst)))))
+;; Tail-Call Optimized Fibonacci
+(define (fibonacci n)
+  (define (fib-iter a b count)
+    (if (= count 0)
+        a
+        (fib-iter b (+ a b) (- count 1))))
+  (fib-iter 0 1 n))
 
-(display "Factorial 5: ")
-(display (factorial-tail 5))
-(newline)
+;; Hygienic Syntax-Rules Macro
+(define-syntax-rule (when condition body ...)
+  (if condition
+      (begin body ...)))
+
+;; Call-with-current-continuation (call/cc) early exit pattern
+(define (find-first-negative lst)
+  (call/cc
+   (lambda (exit)
+     (for-each (lambda (x)
+                 (when (< x 0)
+                   (exit x)))
+               lst)
+     #f)))
+
+;; ==========================================
+;; FIM Examples
+;; ==========================================
+<PRE>(define (factorial n)
+  (if (<= n 1)
+      1
+<SUF>))
+<MID>      (* n (factorial (- n 1)))
+<EOT>

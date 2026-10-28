@@ -1,0 +1,109 @@
+-- ==========================================
+-- LLPT Code Nano - Elm Functional Web Architecture (Model-Update-View)
+-- ==========================================
+
+module Main exposing (..)
+
+import Browser
+import Html exposing (Html, button, div, h1, input, p, text)
+import Html.Attributes exposing (placeholder, value)
+import Html.Events exposing (onClick, onInput)
+
+-- MODEL
+type alias User =
+    { id : Int
+    , name : String
+    , email : String
+    }
+
+type alias Model =
+    { count : Int
+    , nameInput : String
+    , users : List User
+    , error : Maybe String
+    }
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { count = 0
+      , nameInput = ""
+      , users = []
+      , error = Nothing
+      }
+    , Cmd.none
+    )
+
+-- UPDATE
+type Msg
+    = Increment
+    | Decrement
+    | UpdateNameInput String
+    | AddUser
+    | ClearError
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        Increment ->
+            ( { model | count = model.count + 1 }, Cmd.none )
+
+        Decrement ->
+            ( { model | count = model.count - 1 }, Cmd.none )
+
+        UpdateNameInput name ->
+            ( { model | nameInput = name }, Cmd.none )
+
+        AddUser ->
+            if String.isEmpty model.nameInput then
+                ( { model | error = Just "Name cannot be empty" }, Cmd.none )
+
+            else
+                let
+                    newUser =
+                        { id = List.length model.users + 1
+                        , name = model.nameInput
+                        , email = model.nameInput ++ "@example.com"
+                        }
+                in
+                ( { model
+                    | users = newUser :: model.users
+                    , nameInput = ""
+                    , error = Nothing
+                  }
+                , Cmd.none
+                )
+
+        ClearError ->
+            ( { model | error = Nothing }, Cmd.none )
+
+-- VIEW
+view : Model -> Html Msg
+view model =
+    div []
+        [ h1 [] [ text "LLPT Code Nano - Elm Architecture" ]
+        , p [] [ text ("Counter: " ++ String.fromInt model.count) ]
+        , button [ onClick Increment ] [ text "+" ]
+        , button [ onClick Decrement ] [ text "-" ]
+        , div []
+            [ input [ placeholder "Enter user name", value model.nameInput, onInput UpdateNameInput ] []
+            , button [ onClick AddUser ] [ text "Add User" ]
+            ]
+        ]
+
+main : Program () Model Msg
+main =
+    Browser.element
+        { init = init
+        , update = update
+        , subscriptions = \_ -> Sub.none
+        , view = view
+        }
+
+-- ==========================================
+-- FIM Examples
+-- ==========================================
+<PRE>addNumbers : Int -> Int -> Int
+addNumbers a b =
+<SUF>
+<MID>    a + b
+<EOT>

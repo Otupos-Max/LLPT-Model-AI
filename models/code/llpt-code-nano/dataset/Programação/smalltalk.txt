@@ -1,0 +1,56 @@
+"==========================================
+LLPT Code Nano - Smalltalk / Pharo Object Oriented Paradigm
+=========================================="
+
+Object subclass: #LLPTCustomer
+	instanceVariableNames: 'id name email balance status'
+	classVariableNames: ''
+	package: 'LLPT-Code-Nano'!
+
+!LLPTCustomer methodsFor: 'initialization'!
+initialize
+	super initialize.
+	balance := 0.0.
+	status := #active.! !
+
+!LLPTCustomer methodsFor: 'accessing'!
+id: anInteger
+	id := anInteger!
+
+id
+	^ id!
+
+name: aString
+	name := aString!
+
+name
+	^ name!
+
+email: aString
+	email := aString!
+
+email
+	^ email!
+
+balance
+	^ balance! !
+
+!LLPTCustomer methodsFor: 'domain-logic'!
+deposit: anAmount
+	anAmount <= 0 ifTrue: [ Error signal: 'Amount must be positive' ].
+	balance := balance + anAmount.
+	^ balance!
+
+withdraw: anAmount
+	anAmount > balance ifTrue: [ Error signal: 'Insufficient funds' ].
+	balance := balance - anAmount.
+	^ balance! !
+
+"==========================================
+FIM Examples
+=========================================="
+<PRE>factorial: aNumber
+	aNumber <= 1 ifTrue: [ ^ 1 ].
+<SUF>!
+<MID>	^ aNumber * (self factorial: aNumber - 1)
+<EOT>

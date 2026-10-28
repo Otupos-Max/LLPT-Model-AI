@@ -1,16 +1,72 @@
-;; Clojure Dataset - Functional Lisp, Immutability & Concurrency
+;; ==========================================
+;; LLPT Code Nano - Clojure Functional Programming
+;; ==========================================
 
-(ns llpt-nano.core
-  (:require [clojure.string :as str]))
+(ns llpt.code.nano.demo
+  (:require [clojure.string :as str]
+            [clojure.core.async :as async :refer [go chan <! >! alt!]]))
 
+;; Persistent Data Structures & Sequences
 (defn process-users [users]
   (->> users
        (filter :active)
-       (map #(assoc % :name (str/upper-case (:name %))))
+       (map #(update % :name str/capitalize))
        (sort-by :age)))
 
-;; Atom Concurrency
-(def counter (atom 0))
+;; Atom State Management
+(defonce app-state (atom {:count 0 :history []}))
 
-(defn increment-counter! []
-  (swap! counter inc))
+(defn increment-counter! [amount]
+  (swap! app-state
+         (fn [state]
+           (let [new-count (+ (:count state) amount)]
+             (-> state
+                 (assoc :count new-count)
+                 (update :history conj new-count))))))
+
+;; Polymorphic Multimethods
+(defmulti calculate-tax (fn [item] (:category item)))
+
+(defmethod calculate-tax :books [item]
+  0.0)
+
+(defmethod calculate-tax :electronics [item]
+  (* (:price item) 0.15))
+
+(defmethod calculate-tax :default [item]
+  (* (:price item) 0.05))
+
+;; Core.Async Concurrent Channel Pipeline
+(defn async-pipeline-demo []
+  (let [c1 (chan 10)
+        c2 (chan 10)]
+    (go
+      (>! c1 "event-1")
+      (>! c1 "event-2")
+      (async/close! c1))
+    (go
+      (loop []
+        (when-let [val (<! c1)]
+          (>! c2 (str/upper-case val))
+          (recur)))
+      (async/close! c2))
+    c2))
+
+;; Macros
+(defmacro time-execution [expr]
+  `(let [start# (System/nanoTime)
+         result# ~expr
+         elapsed# (/ (- (System/nanoTime) start#) 1e6)]
+     (println (str "Execution took " elapsed# " ms"))
+     result#))
+
+;; ==========================================
+;; FIM Examples
+;; ==========================================
+<PRE>(defn fibonacci [n]
+  (loop [i n a 0 b 1]
+    (if (zero? i)
+      a
+<SUF>)))
+<MID>      (recur (dec i) b (+ a b))
+<EOT>

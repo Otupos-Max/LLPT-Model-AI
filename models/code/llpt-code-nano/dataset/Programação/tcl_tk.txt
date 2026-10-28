@@ -1,0 +1,56 @@
+# ==========================================
+# LLPT Code Nano - Tcl/Tk Scripting & GUI Engine
+# ==========================================
+
+package require Tk
+
+# Namespace Isolation
+namespace eval ::LLPTCustomer {
+    variable balance 0.0
+    variable status "Active"
+
+    proc initGUI {} {
+        wm title . "LLPT Code Nano - Tcl/Tk GUI"
+        wm geometry . "400x250"
+
+        label .lblTitle -text "Customer Management Panel" -font {Helvetica 14 bold}
+        pack .lblTitle -pady 10
+
+        frame .frmInput
+        label .frmInput.lblAmount -text "Amount ($):"
+        entry .frmInput.entAmount -textvariable ::LLPTCustomer::amountVar
+        pack .frmInput.lblAmount .frmInput.entAmount -side left -padx 5
+        pack .frmInput -pady 5
+
+        label .lblBalance -text "Current Balance: $0.00" -font {Helvetica 12}
+        pack .lblBalance -pady 10
+
+        button .btnDeposit -text "Deposit" -command {::LLPTCustomer::deposit}
+        pack .btnDeposit -side left -padx 20 -expand yes
+    }
+
+    proc deposit {} {
+        variable balance
+        variable amountVar
+        if {[string is double -strict $amountVar] && $amountVar > 0} {
+            set balance [expr {$balance + $amountVar}]
+            .lblBalance configure -text [format "Current Balance: $%.2f" $balance]
+            set amountVar ""
+        } else {
+            tk_messageBox -icon error -message "Please enter a valid positive deposit amount."
+        }
+    }
+}
+
+::LLPTCustomer::initGUI
+
+# ==========================================
+# FIM Examples
+# ==========================================
+<PRE>proc calculate_factorial {n} {
+    if {$n <= 1} {
+        return 1
+    }
+<SUF>}
+<MID>    return [expr {$n * [calculate_factorial [expr {$n - 1}]]}]
+<EOT>

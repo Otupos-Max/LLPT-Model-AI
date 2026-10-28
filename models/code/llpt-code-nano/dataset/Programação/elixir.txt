@@ -1,28 +1,90 @@
-# Elixir Dataset - OTP, GenServer, Phoenix & Actor Concurrency
+# ==========================================
+# LLPT Code Nano - Elixir OTP & Concurrent Functional Programming
+# ==========================================
 
-defmodule LlptNano.Worker do
+defmodule LLPT.CodeNano.WorkerPool do
+  @moduledoc """
+  GenServer worker process pool with dynamic supervision and state management.
+  """
   use GenServer
   require Logger
 
   # Client API
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, :ok, opts)
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def process_item(pid, item) do
-    GenServer.call(pid, {:process, item})
+  def process_job(job_data) do
+    GenServer.call(__MODULE__, {:process, job_data})
+  end
+
+  def get_stats do
+    GenServer.call(__MODULE__, :get_stats)
   end
 
   # Server Callbacks
   @impl true
-  def init(:ok) do
-    {:ok, %{processed_count: 0}}
+  def init(_opts) do
+    state = %{processed_count: 0, errors: 0}
+    {:ok, state}
   end
 
   @impl true
-  def handle_call({:process, item}, _from, state) do
-    Logger.info("Processing item: #{inspect(item)}")
-    new_state = %{state | processed_count: state.processed_count + 1}
-    {:reply, {:ok, item}, new_state}
+  def handle_call({:process, job_data}, _from, state) do
+    case execute_job(job_data) do
+      {:ok, result} ->
+        new_state = %{state | processed_count: state.processed_count + 1}
+        {:reply, {:ok, result}, new_state}
+
+      {:error, reason} ->
+        new_state = %{state | errors: state.errors + 1}
+        {:reply, {:error, reason}, new_state}
+    end
+  end
+
+  @impl true
+  def handle_call(:get_stats, _from, state) do
+    {:reply, state, state}
+  end
+
+  defp execute_job(data) when is_map(data) do
+    # Pipeline transformation
+    result =
+      data
+      | |> Map.put_new(:timestamp, DateTime.utc_now())
+      | |> Map.update!(:payload, &String.upcase/1)
+
+    {:ok, result}
+  rescue
+    e -> {:error, Exception.message(e)}
   end
 end
+
+# Concurrent Async Streams & Task Processing
+defmodule LLPT.CodeNano.ParallelPipeline do
+  def run_parallel_tasks(items) do
+    items
+    |> Task.async_stream(&process_item/1, max_concurrency: System.schedulers_online(), timeout: 5000)
+    |> Enum.map(fn
+      {:ok, result} -> result
+      {:exit, reason} -> {:error, reason}
+    end)
+  end
+
+  defp process_item(item) do
+    :timer.sleep(10)
+    {:processed, item * 2}
+  end
+end
+
+# ==========================================
+# FIM Examples
+# ==========================================
+<PRE>defmodule Fibonacci do
+  def calc(n) when n <= 0, do: 0
+  def calc(1), do: 1
+<SUF>end
+<MID>  def calc(n) when n > 1 do
+    calc(n - 1) + calc(n - 2)
+  end
+<EOT>

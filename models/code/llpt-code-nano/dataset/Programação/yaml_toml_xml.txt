@@ -1,11 +1,19 @@
-# YAML Kubernetes & TOML/XML Configs Dataset
+# ==========================================
+# LLPT Code Nano - Multi-Format Structured Configurations
+# (YAML Kubernetes/Workflows, TOML Rust/Python, XML XSD/Maven)
+# ==========================================
 
+# ------------------------------------------
+# YAML: Kubernetes Deployment & Service Config
+# ------------------------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: llpt-code-nano-deployment
+  name: llpt-code-nano-api
+  namespace: production
   labels:
-    app: llpt-code-nano
+    app.kubernetes.io/name: llpt-code-nano
+    app.kubernetes.io/tier: backend
 spec:
   replicas: 3
   selector:
@@ -17,7 +25,71 @@ spec:
         app: llpt-code-nano
     spec:
       containers:
-      - name: llpt-code-nano
-        image: llpt/code-nano:v1.0.0
-        ports:
-        - containerPort: 8080
+        - name: nano-server
+          image: llpt/code-nano-engine:v1.2.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          env:
+            - name: MODEL_PATH
+              value: "/models/1b-nano"
+            - name: PROG_RATIO
+              value: "0.85"
+
+---
+# ------------------------------------------
+# TOML: Cargo.toml Rust Package Manifest
+# ------------------------------------------
+[package]
+name = "llpt_code_nano_cli"
+version = "1.2.0"
+edition = "2021"
+authors = ["LLPT AI Team <ai@llpt.dev>"]
+description = "Ultra-fast code generation CLI powered by LLPT Code Nano 1B"
+
+[dependencies]
+tokio = { version = "1.35", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "4.4", features = ["derive"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+---
+<!-- --------------------------------------- -->
+<!-- XML: Maven pom.xml Configuration Sample -->
+<!-- --------------------------------------- -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.llpt.code</groupId>
+    <artifactId>llpt-code-nano-service</artifactId>
+    <version>1.2.0</version>
+</project>
+
+# ==========================================
+# FIM Examples
+# ==========================================
+<PRE>apiVersion: v1
+kind: Service
+metadata:
+  name: llpt-service
+spec:
+  type: ClusterIP
+<SUF>  ports:
+    - port: 80
+      targetPort: 8080
+<MID>  selector:
+    app: llpt-code-nano
+<EOT>

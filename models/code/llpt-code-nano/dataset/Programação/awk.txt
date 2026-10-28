@@ -1,0 +1,60 @@
+# ==========================================
+# LLPT Code Nano - AWK Text Processing & Log Auditing
+# ==========================================
+
+# Usage: awk -f script.awk access.log
+
+BEGIN {
+    FS = " " # Field separator
+    OFS = "\t"
+    print "=========================================="
+    print "HTTP Log Analysis Summary Report"
+    print "=========================================="
+    total_requests = 0
+    total_bytes = 0
+}
+
+# Ignore empty lines or comments
+/^$/ || /^#/ { next }
+
+{
+    ip = $1
+    status = $9
+    bytes = $10
+
+    total_requests++
+    if (bytes ~ /^[0-9]+$/) {
+        total_bytes += bytes
+    }
+
+    # Count by HTTP status code
+    status_count[status]++
+    ip_count[ip]++
+}
+
+END {
+    print "Total Requests Processed:", total_requests
+    print "Total Bandwidth Transferred:", sprintf("%.2f MB", total_bytes / (1024 * 1024))
+    print "\nBreakdown by Status Code:"
+    for (s in status_count) {
+        printf "  Status %s: %d (%.1f%%)\n", s, status_count[s], (status_count[s]/total_requests)*100
+    }
+
+    print "\nTop 5 IP Addresses:"
+    # Sorting array simulation
+    for (ip in ip_count) {
+        if (ip_count[ip] > 10) {
+            print "  ", ip, "->", ip_count[ip], "requests"
+        }
+    }
+}
+
+# ==========================================
+# FIM Examples
+# ==========================================
+<PRE>BEGIN { FS = "," }
+$3 > 1000 {
+<SUF>    print $1, $2, $3
+}
+<MID>    count++
+<EOT>

@@ -1,0 +1,41 @@
+% ==========================================
+% LLPT Code Nano - Mercury Declarative Logic/Functional Programming
+% ==========================================
+
+:- module customer_processor.
+:- interface.
+:- import_module io, list, string, float, int.
+
+:- type account_status
+    --->    active
+    ;       pending
+    ;       suspended.
+
+:- type customer
+    --->    customer(
+                id       :: int,
+                name     :: string,
+                email    :: string,
+                balance  :: float,
+                status   :: account_status
+            ).
+
+:- pred process_customers(list(customer)::in, float::out, io::di, io::uo) is det.
+
+:- implementation.
+
+process_customers([], 0.0, !IO).
+process_customers([C | Cs], TotalBalance, !IO) :-
+    io.format("Processing Customer: %s <%s>\n", [s(C ^ name), s(C ^ email)], !IO),
+    process_customers(Cs, RestBalance, !IO),
+    TotalBalance = C ^ balance + RestBalance.
+
+% ==========================================
+% FIM Examples
+% ==========================================
+<PRE>:- func factorial(int) = int.
+factorial(N) =
+    ( if N =< 1 then 1
+<SUF>    ).
+<MID>      else N * factorial(N - 1)
+<EOT>

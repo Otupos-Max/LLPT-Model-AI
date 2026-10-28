@@ -1,0 +1,67 @@
+// ==========================================
+// LLPT Code Nano - ReScript & ReasonML Type-Safe JS Compilation
+// ==========================================
+
+module User = {
+  type status = Active | Pending | Suspended
+
+  type t = {
+    id: int,
+    name: string,
+    email: string,
+    status: status,
+    balance: float,
+  }
+
+  let make = (id: int, name: string, email: string): t => {
+    {
+      id: id,
+      name: name,
+      email: email,
+      status: Active,
+      balance: 0.0,
+    }
+  }
+
+  let credit = (user: t, amount: float): result<t, string> => {
+    if amount <= 0.0 {
+      Error("Amount must be positive")
+    } else {
+      Ok({...user, balance: user.balance +. amount})
+    }
+  }
+
+  let getStatusName = (status: status): string => {
+    switch status {
+    | Active => "Active User"
+    | Pending => "Pending Verification"
+    | Suspended => "Account Suspended"
+    }
+  }
+}
+
+// React Component Example (ReScript React)
+module UserCard = {
+  @react.component
+  let make = (~user: User.t) => {
+    <div className="p-4 border rounded shadow">
+      <h2 className="text-xl font-bold"> {React.string(user.name)} </h2>
+      <p> {React.string(user.email)} </p>
+      <span className="badge"> {React.string(User.getStatusName(user.status))} </span>
+    </div>
+  }
+}
+
+// ==========================================
+// FIM Examples
+// ==========================================
+<PRE>let rec fibonacci = (n: int): int => {
+  if n <= 0 {
+    0
+  } else if n == 1 {
+    1
+<SUF>  }
+}
+<MID>  } else {
+    fibonacci(n - 1) + fibonacci(n - 2)
+<EOT>
