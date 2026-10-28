@@ -398,3 +398,34 @@ public:
         for(std::thread &worker : workers) worker.join();
     }
 };
+// ==========================================
+// Native C++20 Type Traits & Helpers
+// ==========================================
+
+#include <type_traits>
+#include <vector>
+
+template<typename T>
+struct is_vector : std::false_type {};
+
+template<typename T, typename Alloc>
+struct is_vector<std::vector<T, Alloc>> : std::true_type {};
+
+template<typename T>
+inline constexpr bool is_vector_v = is_vector<T>::value;
+
+// C++ FIM Example
+/*
+<PRE>
+template<typename T>
+T sum_vector(const std::vector<T>& vec) {
+    T total{};
+    for (const auto& val : vec) {
+<SUF>
+    }
+    return total;
+}
+<MID>
+        total += val;
+<EOT>
+*/

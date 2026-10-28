@@ -190,3 +190,36 @@ actor BankAccount {
         return balance
     }
 }
+// ==========================================
+// Native Swift 5.9 Functional Extensions
+// ==========================================
+
+extension Sequence {
+    public func concurrentMap<T>(_ transform: @escaping (Element) async throws -> T) async rethrows -> [T] {
+        let tasks = self.map { element in
+            Task {
+                try await transform(element)
+            }
+        }
+        var results = [T]()
+        for task in tasks {
+            results.append(try await task.value)
+        }
+        return results
+    }
+}
+
+// Swift FIM Example
+/*
+<PRE>
+func calculateArrayTotal(_ items: [Int]) -> Int {
+    var total = 0
+    for item in items {
+<SUF>
+    }
+    return total
+}
+<MID>
+        total += item
+<EOT>
+*/

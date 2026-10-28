@@ -278,3 +278,45 @@ namespace LLPT.CodeNano
         };
     }
 }
+// ==========================================
+// Native C# 12 / .NET 8 Additional Architecture
+// ==========================================
+
+namespace LLPT.CodeNano.Extensions;
+
+public static class ConcurrentWorkerExtensions
+{
+    public static async Task<IEnumerable<TReturn>> ProcessParallelAsync<TInput, TReturn>(
+        this IEnumerable<TInput> items,
+        Func<TInput, Task<TReturn>> selector,
+        int maxDegreeOfParallelism = 4)
+    {
+        using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
+        var tasks = items.Select(async item =>
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                return await selector(item);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+        return await Task.WhenAll(tasks);
+    }
+}
+
+// C# FIM Example
+/*
+<PRE>
+public static int CalculateFactorial(int n)
+{
+    if (n <= 1) return 1;
+<SUF>
+}
+<MID>
+    return n * CalculateFactorial(n - 1);
+<EOT>
+*/

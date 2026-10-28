@@ -214,3 +214,37 @@ void _heavyTaskWorker(List<dynamic> args) {
   final int val = args[1];
   sendPort.send(val * val);
 }
+// ==========================================
+// Native Dart 3 Async Stream Extension
+// ==========================================
+
+extension StreamBuffered<T> on Stream<T> {
+  Stream<List<T>> bufferTime(Duration duration) async* {
+    var buffer = <T>[];
+    await for (final item in this) {
+      buffer.add(item);
+      if (buffer.length >= 10) {
+        yield List.unmodifiable(buffer);
+        buffer = [];
+      }
+    }
+    if (buffer.isNotEmpty) {
+      yield List.unmodifiable(buffer);
+    }
+  }
+}
+
+// Dart FIM Example
+/*
+<PRE>
+int computeSum(List<int> numbers) {
+  int total = 0;
+  for (final n in numbers) {
+<SUF>
+  }
+  return total;
+}
+<MID>
+    total += n;
+<EOT>
+*/

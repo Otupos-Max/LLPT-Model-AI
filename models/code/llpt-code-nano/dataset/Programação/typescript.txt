@@ -111,3 +111,27 @@ export class DataStore<T> {
     this.state = { status: 'success', data };
   }
 }
+// ==========================================
+// Native TypeScript 5 Utility Types & Functions
+// ==========================================
+
+export type Nullable<T> = T | null | undefined;
+
+export function filterNonNull<T>(arr: Array<Nullable<T>>): T[] {
+  return arr.filter((item): item is T => item !== null && item !== undefined);
+}
+
+// TypeScript FIM Example
+/*
+<PRE>
+export function sumNumericArray(numbers: number[]): number {
+  let total = 0;
+  for (const n of numbers) {
+<SUF>
+  }
+  return total;
+}
+<MID>
+    total += n;
+<EOT>
+*/

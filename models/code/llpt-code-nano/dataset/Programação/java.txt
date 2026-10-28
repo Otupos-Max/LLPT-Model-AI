@@ -319,3 +319,36 @@ public class BoundedBuffer<T> {
         }
     }
 }
+// ==========================================
+// Native Java 21 Functional Pipeline
+// ==========================================
+
+package com.llpt.nano.extensions;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class StreamUtils {
+
+    public static <T> List<T> filterAndSort(List<T> input, java.util.function.Predicate<T> predicate, java.util.Comparator<T> comparator) {
+        return input.stream()
+            .filter(predicate)
+            .sorted(comparator)
+            .collect(Collectors.toList());
+    }
+}
+
+// Java FIM Example
+/*
+<PRE>
+public static int sumList(List<Integer> list) {
+    int sum = 0;
+    for (int n : list) {
+<SUF>
+    }
+    return sum;
+}
+<MID>
+        sum += n;
+<EOT>
+*/

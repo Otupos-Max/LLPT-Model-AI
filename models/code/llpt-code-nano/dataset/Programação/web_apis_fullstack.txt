@@ -49,3 +49,29 @@ class UserRegisterSchema(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
     password: str = Field(..., min_length=8)
+# ==========================================
+# Native OpenAPI 3.0 Response Schema Spec
+# ==========================================
+
+components:
+  schemas:
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+
+# FIM Example
+# <PRE>
+# components:
+#   schemas:
+#     ErrorResponse:
+#       type: object
+#       properties:
+# <SUF>
+# <MID>
+#         message:
+#           type: string
+# <EOT>

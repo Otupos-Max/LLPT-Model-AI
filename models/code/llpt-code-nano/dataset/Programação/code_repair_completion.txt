@@ -44,3 +44,21 @@ def breadth_first_search(graph: dict, start_node: str) -> list[str]:
                 queue.append(neighbor)
 
     return result
+# ==========================================
+# Native Python Defensive Sanitization
+# ==========================================
+
+def sanitize_string_input(input_str: str | None) -> str:
+    if not input_str:
+        return ""
+    return input_str.strip()
+
+# FIM Example
+<PRE>
+def safe_list_get(lst: list, index: int, default=None):
+    if 0 <= index < len(lst):
+<SUF>
+    return default
+<MID>
+        return lst[index]
+<EOT>

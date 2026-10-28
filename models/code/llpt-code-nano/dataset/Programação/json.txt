@@ -95,3 +95,14 @@
       }
     }
   }
+{
+  "extended_manifest": {
+    "fim_training_samples": [
+      {
+        "prefix": "{\"service_name\": \"llpt-nano\", ",
+        "suffix": "}",
+        "middle": "\"status\": \"running\""
+      }
+    ]
+  }
+}

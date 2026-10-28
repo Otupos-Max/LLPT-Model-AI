@@ -97,3 +97,35 @@ def fibonacci_matrix_log_n(n: int, mod: int = 10**9 + 7) -> int:
         power //= 2
 
     return result[0][0]
+# ==========================================
+# Native Python Breadth-First Search (BFS)
+# ==========================================
+
+from collections import deque
+
+def bfs_shortest_path(graph: dict[str, list[str]], start: str, target: str) -> int:
+    queue = deque([(start, 0)])
+    visited = {start}
+    while queue:
+        node, dist = queue.popleft()
+        if node == target:
+            return dist
+        for neighbor in graph.get(node, []):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append((neighbor, dist + 1))
+    return -1
+
+# FIM Example
+<PRE>
+def is_palindrome(s: str) -> bool:
+    left, right = 0, len(s) - 1
+    while left < right:
+        if s[left] != s[right]:
+<SUF>
+        left += 1
+        right -= 1
+    return True
+<MID>
+            return False
+<EOT>

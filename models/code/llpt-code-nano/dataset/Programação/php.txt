@@ -208,3 +208,35 @@ class HomeController {
         return ['status' => 'ok', 'timestamp' => time()];
     }
 }
+// ==========================================
+// Native PHP 8.3 Array Transformations
+// ==========================================
+
+namespace LLPT\Utils;
+
+class ArrayPipeline {
+    public static function filterAndTransform(array $items, callable $filter, callable $transform): array {
+        $result = [];
+        foreach ($items as $key => $item) {
+            if ($filter($item, $key)) {
+                $result[$key] = $transform($item, $key);
+            }
+        }
+        return $result;
+    }
+}
+
+// PHP FIM Example
+/*
+<PRE>
+function calculateArraySum(array $numbers): int {
+    $sum = 0;
+    foreach ($numbers as $num) {
+<SUF>
+    }
+    return $sum;
+}
+<MID>
+        $sum += $num;
+<EOT>
+*/
