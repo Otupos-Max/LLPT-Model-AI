@@ -33,3 +33,30 @@ pub const ArrayList = struct {
         self.items[self.items.len - 1] = item;
     }
 };
+
+
+// Zig Memory Allocator and Error Union Pattern
+
+const std = @import("std");
+
+pub const Stack = struct {
+    items: std.ArrayList(i32),
+
+    pub fn init(allocator: std.mem.Allocator) Stack {
+        return Stack{
+            .items = std.ArrayList(i32).init(allocator),
+        };
+    }
+
+    pub fn deinit(self: *Stack) void {
+        self.items.deinit();
+    }
+
+    pub fn push(self: *Stack, item: i32) !void {
+        try self.items.append(item);
+    }
+
+    pub fn pop(self: *Stack) ?i32 {
+        return self.items.popOrNull();
+    }
+};

@@ -1,0 +1,25 @@
+# PowerShell Core Automation, Pipelines & WMI/CIM Querying
+
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory=$true)]
+    [string]$ServiceName,
+
+    [Parameter(Mandatory=$false)]
+    [int]$TimeoutSeconds = 30
+)
+
+Write-Host "Checking service state for: $ServiceName" -ForegroundColor Cyan
+
+$service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+
+if ($null -eq $service) {
+    Write-Error "Service '$ServiceName' was not found on this system."
+} else {
+    if ($service.Status -ne 'Running') {
+        Write-Host "Starting service '$ServiceName'..." -ForegroundColor Yellow
+        Start-Service -Name $ServiceName
+        $service.WaitForStatus('Running', (New-TimeSpan -Seconds $TimeoutSeconds))
+    }
+    Write-Host "Service '$ServiceName' is currently $($service.Status)." -ForegroundColor Green
+}

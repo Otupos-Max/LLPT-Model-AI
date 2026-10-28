@@ -7,3 +7,13 @@
 3. Performance & Eficiência: Existem problemas de complexidade O(N^2), consultas N+1 no banco ou vazamentos de memória/recursos?
 4. Testabilidade: O código está desacoplado o suficiente para permitir testes unitários e de integração mockados?
 5. Legibilidade e Convenções: Segue o guia de estilo idiomático da linguagem (PEP8, Go Style Guide, Clean Code)?
+
+
+# Guia de Arquitetura Limpa e Refatoração de Sistemas
+
+## Princípios Arquiteturais
+
+1. **Separation of Concerns (SoC):** Cada módulo deve ter uma responsabilidade bem definida.
+2. **Dependency Inversion:** Módulos de alto nível não devem depender de módulos de baixo nível; ambos devem depender de abstrações.
+3. **Domain-Driven Design (DDD):** Modelar o software refletindo o domínio de negócio através de Bounded Contexts, Aggregates e Entities.
+4. **Resiliência e Tolerância a Falhas:** Padrões Circuit Breaker, Rate Limiting, Retry com Exponential Backoff e Bulkhead.

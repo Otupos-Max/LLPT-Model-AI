@@ -86,3 +86,28 @@ interface UserProfile {
 }
 
 type ReadonlyUserProfile = DeepReadonly<UserProfile>;
+
+
+// Modern TypeScript Generics, Discriminated Unions and Type Guards
+
+export type AsyncState<T> =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: Error };
+
+export function isSuccessState<T>(state: AsyncState<T>): state is { status: 'success'; data: T } {
+  return state.status === 'success';
+}
+
+export class DataStore<T> {
+  private state: AsyncState<T> = { status: 'idle' };
+
+  public getState(): AsyncState<T> {
+    return this.state;
+  }
+
+  public setSuccess(data: T): void {
+    this.state = { status: 'success', data };
+  }
+}

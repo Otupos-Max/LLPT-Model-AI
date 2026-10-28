@@ -7,3 +7,13 @@ Resposta:
 3. Caching: Reduzir a carga no banco de dados com Redis ou Memcached para leituras frequentes.
 4. Rate Limiting & Circuit Breaker: Proteger serviços de sobrecarga usando algoritmos como Token Bucket e padrões de disjuntor (Resilience4j / Hystrix).
 5. Mensageria Assíncrona: Desacoplar processamentos pesados usando mensageria como Kafka ou RabbitMQ.
+
+
+# Guia de Arquitetura Limpa e Refatoração de Sistemas
+
+## Princípios Arquiteturais
+
+1. **Separation of Concerns (SoC):** Cada módulo deve ter uma responsabilidade bem definida.
+2. **Dependency Inversion:** Módulos de alto nível não devem depender de módulos de baixo nível; ambos devem depender de abstrações.
+3. **Domain-Driven Design (DDD):** Modelar o software refletindo o domínio de negócio através de Bounded Contexts, Aggregates e Entities.
+4. **Resiliência e Tolerância a Falhas:** Padrões Circuit Breaker, Rate Limiting, Retry com Exponential Backoff e Bulkhead.

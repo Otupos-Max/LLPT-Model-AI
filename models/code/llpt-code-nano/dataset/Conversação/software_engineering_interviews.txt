@@ -1,0 +1,17 @@
+# Guia de Entrevistas Técnicas de Engenharia de Software (System Design & Algoritmos)
+
+## Perguntas Frequentes e Respostas Exemplares
+
+### 1. Como você projetaria um encurtador de URLs em escala global (tipo bit.ly)?
+- **Requisitos Funcionais:** Criar hash único para URLs longas, redirecionar com código HTTP 301/302, estatísticas de acesso.
+- **Requisitos Não-Funcionais:** Baixa latência (<10ms), alta disponibilidade (99.99%), suporte a 10.000 leituras/segundo.
+- **Estratégia de Base62:** Converter ID numérico sequencial (64-bit) para String Base62 [0-9a-zA-A-Z] para hashes curtos de 7 caracteres (62^7 = ~3.5 trilhões de combinações).
+- **Caching:** Redis / Memcached na camada de borda para armazenar as 20% URLs mais acessadas (Regra de Pareto).
+- **Banco de Dados:** NoSQL chave-valor como DynamoDB ou Cassandra para buscas O(1).
+
+### 2. O que é a Teorema CAP e como ela afeta a escolha de banco de dados?
+O Teorema CAP afirma que um sistema distribuído só pode fornecer simultaneamente 2 das 3 garantias:
+1. **Consistency (Consistência):** Todos os nós leem os dados mais recentes simultaneamente.
+2. **Availability (Disponibilidade):** Toda requisição recebe uma resposta de sucesso/falha sem garantia de ler o dado mais recente.
+3. **Partition Tolerance (Tolerância a Particionamento):** O sistema continua funcionando apesar de perdas de pacotes na rede.
+Exemplos: PostgreSQL com replicação síncrona (CP), Cassandra (AP).

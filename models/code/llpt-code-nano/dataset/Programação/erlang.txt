@@ -1,0 +1,38 @@
+% Erlang OTP GenServer Concurrent State Management
+
+-module(bank_account).
+-behaviour(gen_server).
+
+-export([start_link/1, deposit/2, withdraw/2, get_balance/1]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
+
+start_link(InitialBalance) ->
+    gen_server:start_link(?MODULE, [InitialBalance], []).
+
+deposit(Pid, Amount) ->
+    gen_server:call(Pid, {deposit, Amount}).
+
+withdraw(Pid, Amount) ->
+    gen_server:call(Pid, {withdraw, Amount}).
+
+get_balance(Pid) ->
+    gen_server:call(Pid, get_balance).
+
+init([InitialBalance]) ->
+    {ok, InitialBalance}.
+
+handle_call({deposit, Amount}, _From, Balance) when Amount > 0 ->
+    NewBalance = Balance + Amount,
+    {reply, {ok, NewBalance}, NewBalance};
+handle_call({withdraw, Amount}, _From, Balance) when Amount =< Balance ->
+    NewBalance = Balance - Amount,
+    {reply, {ok, NewBalance}, NewBalance};
+handle_call({withdraw, _Amount}, _From, Balance) ->
+    {reply, {error, insufficient_funds}, Balance};
+handle_call(get_balance, _From, Balance) ->
+    {reply, {ok, Balance}, Balance}.
+
+handle_cast(_Msg, State) -> {noreply, State}.
+handle_info(_Info, State) -> {noreply, State}.
+terminate(_Reason, _State) -> ok.
+code_change(_OldVsn, State, _Extra) -> {ok, State}.

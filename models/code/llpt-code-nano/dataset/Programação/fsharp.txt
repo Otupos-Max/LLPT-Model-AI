@@ -1,0 +1,29 @@
+// F# Async Workflows, Discriminated Unions & Pattern Matching
+
+type Result<'T, 'E> =
+    | Success of 'T
+    | Failure of 'E
+
+type Transaction = {
+    Id: string
+    Amount: decimal
+}
+
+let processTransaction (tx: Transaction) : Result<Transaction, string> =
+    if tx.Amount <= 0m then
+        Failure "Amount must be strictly positive"
+    else
+        Success { tx with Amount = tx.Amount * 1.05m }
+
+let asyncFetch (id: string) = async {
+    do! Async.Sleep 100
+    let tx = { Id = id; Amount = 150.0m }
+    match processTransaction tx with
+    | Success processed -> printfn "Processed Tx %s with Amount %f" processed.Id processed.Amount
+    | Failure err -> printfn "Error: %s" err
+}
+
+[<EntryPoint>]
+let main argv =
+    asyncFetch "TX_9001" |> Async.RunSynchronously
+    0

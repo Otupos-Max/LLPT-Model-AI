@@ -240,3 +240,41 @@ public class DataProcessingPipeline
         }
     }
 }
+
+
+// C# LINQ, Async/Await Task Parallel Library & Pattern Matching
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace LLPT.CodeNano
+{
+    public record UserDto(string Id, string Name, string Email, bool IsActive);
+
+    public class UserService
+    {
+        private readonly List<UserDto> _users = new();
+
+        public async Task<UserDto?> GetUserByIdAsync(string id)
+        {
+            await Task.Delay(10);
+            return _users.FirstOrDefault(u => u.Id == id);
+        }
+
+        public IEnumerable<string> GetActiveUserEmails()
+        {
+            return _users
+                .Where(u => u.IsActive)
+                .Select(u => u.Email.ToLowerInvariant());
+        }
+
+        public string EvaluateUserRole(UserDto user) => user switch
+        {
+            { IsActive: false } => "Inactive User",
+            { Name: "Admin" } => "System Administrator",
+            _ => "Standard User"
+        };
+    }
+}

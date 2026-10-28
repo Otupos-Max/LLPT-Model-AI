@@ -19,3 +19,48 @@ _start:
 section .data
 message: db "Hello, Assembly LLPT Nano!", 10
 len: equ $ - message
+
+; Additional x86_64 NASM Example: String Length Calculation
+global str_len
+section .text
+str_len:
+    xor rax, rax
+.loop:
+    cmp byte [rdi + rax], 0
+    je .done
+    inc rax
+    jmp .loop
+.done:
+    ret
+
+; ARM64 Assembly Example: Fibonacci sequence calculation (AAPCS64 calling convention)
+; Inputs: x0 = n (index)
+; Returns: x0 = fib(n)
+.global fibonacci_arm64
+.text
+fibonacci_arm64:
+    cbz x0, .fib_zero
+    cmp x0, #1
+    b.eq .fib_one
+
+    stp x19, x20, [sp, #-16]!
+    mov x19, x0
+
+    sub x0, x19, #1
+    bl fibonacci_arm64
+    mov x20, x0
+
+    sub x0, x19, #2
+    bl fibonacci_arm64
+    add x0, x0, x20
+
+    ldp x19, x20, [sp], #16
+    ret
+
+.fib_zero:
+    mov x0, #0
+    ret
+
+.fib_one:
+    mov x0, #1
+    ret

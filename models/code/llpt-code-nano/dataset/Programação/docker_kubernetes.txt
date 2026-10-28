@@ -1,0 +1,57 @@
+# Dockerfile Multi-stage Build & Kubernetes Deployment Config
+
+# --- Dockerfile ---
+FROM golang:1.22-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /server main.go
+
+FROM scratch
+COPY --from=builder /server /server
+EXPOSE 8080
+ENTRYPOINT ["/server"]
+
+---
+# --- Kubernetes Deployment & Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llpt-service
+  labels:
+    app: llpt-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: llpt-service
+  template:
+    metadata:
+      labels:
+        app: llpt-service
+    spec:
+      containers:
+      - name: server
+        image: registry.example.com/llpt-service:v1.0.0
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+          requests:
+            cpu: "100m"
+            memory: "64Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llpt-service-lb
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: llpt-service

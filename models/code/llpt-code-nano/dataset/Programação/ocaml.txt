@@ -1,0 +1,28 @@
+(* OCaml Functional Data Structures & Variant Pattern Matching *)
+
+type 'a tree =
+  | Empty
+  | Node of 'a * 'a tree * 'a tree
+
+let rec insert x = function
+  | Empty -> Node (x, Empty, Empty)
+  | Node (v, left, right) ->
+      if x < v then Node (v, insert x left, right)
+      else if x > v then Node (v, left, insert x right)
+      else Node (v, left, right)
+
+let rec map f = function
+  | Empty -> Empty
+  | Node (v, left, right) -> Node (f v, map f left, map f right)
+
+let rec fold f acc = function
+  | Empty -> acc
+  | Node (v, left, right) ->
+      let acc_left = fold f acc left in
+      let acc_node = f acc_left v in
+      fold f acc_node right
+
+let () =
+  let t = insert 5 (insert 3 (insert 8 Empty)) in
+  let sum = fold (+) 0 t in
+  Printf.printf "Sum of tree elements: %d\n" sum

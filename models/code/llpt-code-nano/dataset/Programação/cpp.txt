@@ -313,3 +313,88 @@ public:
     T* operator->() const { return m_ptr; }
     T* get() const { return m_ptr; }
 };
+
+
+// Advanced C++20 Concepts, Templates, Smart Pointers, and RAII
+
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <concepts>
+#include <algorithm>
+
+template<typename T>
+concept Numeric = std::is_arithmetic_v<T>;
+
+template<Numeric T>
+class Matrix {
+private:
+    size_t rows_, cols_;
+    std::vector<T> data_;
+
+public:
+    Matrix(size_t rows, size_t cols) : rows_(rows), cols_(cols), data_(rows * cols, 0) {}
+
+    T& operator()(size_t r, size_t c) {
+        return data_[r * cols_ + c];
+    }
+
+    const T& operator()(size_t r, size_t c) const {
+        return data_[r * cols_ + c];
+    }
+
+    Matrix<T> operator+(const Matrix<T>& other) const {
+        Matrix<T> result(rows_, cols_);
+        for (size_t i = 0; i < data_.size(); ++i) {
+            result.data_[i] = this->data_[i] + other.data_[i];
+        }
+        return result;
+    }
+};
+
+
+// C++ Thread Pool Implementation using std::thread, std::mutex, std::condition_variable
+
+#include <vector>
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
+#include <future>
+
+class ThreadPool {
+private:
+    std::vector<std::thread> workers;
+    std::queue<std::function<void()>> tasks;
+    std::mutex queue_mutex;
+    std::condition_variable cv;
+    bool stop = false;
+
+public:
+    ThreadPool(size_t threads) {
+        for(size_t i = 0; i<threads; ++i)
+            workers.emplace_back([this] {
+                for(;;) {
+                    std::function<void()> task;
+                    {
+                        std::unique_lock<std::mutex> lock(this->queue_mutex);
+                        this->cv.wait(lock, [this]{ return this->stop || !this->tasks.empty(); });
+                        if(this->stop && this->tasks.empty()) return;
+                        task = std::move(this->tasks.front());
+                        this->tasks.pop();
+                    }
+                    task();
+                }
+            });
+    }
+
+    ~ThreadPool() {
+        {
+            std::unique_lock<std::mutex> lock(queue_mutex);
+            stop = true;
+        }
+        cv.notify_all();
+        for(std::thread &worker : workers) worker.join();
+    }
+};

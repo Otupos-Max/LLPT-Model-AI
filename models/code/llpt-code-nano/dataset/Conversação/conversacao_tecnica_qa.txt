@@ -95,3 +95,12 @@ Resposta:
 ---
 Pergunta: Como funciona o padrão CQRS (Command Query Responsibility Segregation)?
 Resposta: O CQRS separa as operações de leitura (Queries) das operações de escrita/modificação de dados (Commands). Isso permite otimizar o modelo de dados e o banco de dados separadamente para consultas rápidas e escritas transacionais de alta consistência.
+
+
+Perguntas e Respostas Avançadas sobre Arquitetura e Desenvolvimento:
+
+P: Quais são as diferenças fundamentais entre concorrência e paralelismo?
+R: Concorrência diz respeito a lidar com múltiplas tarefas ao mesmo tempo (estruturação e interleaving de execução, ex: async/await num único thread). Paralelismo refere-se a executar múltiplas tarefas simultaneamente em múltiplos núcleos de CPU ou processadores fisicamente separados.
+
+P: O que é e quando utilizar o padrão Outbox em arquiteturas orientadas a eventos?
+R: O Transactional Outbox Pattern garante que alterações no banco de dados e a publicação de mensagens/eventos correspondentes em um message broker (como Kafka ou RabbitMQ) ocorram de forma atômica (ACID), evitando perda de eventos em caso de falha da aplicação antes do envio da mensagem.

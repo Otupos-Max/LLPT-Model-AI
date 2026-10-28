@@ -1,0 +1,51 @@
+! Modern Fortran 2008 / 2018 Numerical Calculations & Array Processing
+
+module matrix_operations
+    implicit none
+    private
+    public :: matrix_multiply, compute_trace
+
+contains
+
+    function matrix_multiply(a, b) result(c)
+        real, intent(in) :: a(:,:), b(:,:)
+        real, allocatable :: c(:,:)
+        integer :: n, m, p
+
+        n = size(a, 1)
+        m = size(a, 2)
+        p = size(b, 2)
+
+        if (m /= size(b, 1)) then
+            error stop "Matrix dimensions do not match for multiplication!"
+        end if
+
+        c = matmul(a, b)
+    end function matrix_multiply
+
+    function compute_trace(a) result(tr)
+        real, intent(in) :: a(:,:)
+        real :: tr
+        integer :: i, n
+
+        n = min(size(a, 1), size(a, 2))
+        tr = 0.0
+        do i = 1, n
+            tr = tr + a(i, i)
+        end do
+    end function compute_trace
+
+end module matrix_operations
+
+program test_fortran
+    use matrix_operations
+    implicit none
+    real, allocatable :: A(:,:), B(:,:), C(:,:)
+
+    allocate(A(2,2), B(2,2))
+    A = reshape([1.0, 2.0, 3.0, 4.0], [2,2])
+    B = reshape([5.0, 6.0, 7.0, 8.0], [2,2])
+
+    C = matrix_multiply(A, B)
+    print *, "Trace of Matrix C:", compute_trace(C)
+end program test_fortran

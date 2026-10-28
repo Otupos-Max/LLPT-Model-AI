@@ -1,0 +1,10 @@
+# Padrões Arquiteturais de Nuvem e Alta Disponibilidade
+
+## 1. Multi-Region Active-Active Deployments
+Distribuir instâncias da aplicação ativas em múltiplas regiões geográficas (AWS us-east-1, eu-west-1) conectadas a roteamento DNS geo-localizado (AWS Route 53 GeoDNS).
+
+## 2. Rate Limiting e Token Bucket Algorithm
+Proteger serviços contra picos de tráfego descontrolados ou ataques DoS implementando controle de taxa com algoritmo Token Bucket ou Leaky Bucket em nível de API Gateway (Kong, Nginx, Envoy).
+
+## 3. Graceful Degradation & Fallbacks
+Quando um serviço secundário (ex: recomendações) falha, a resposta principal (ex: catálogo de produtos) deve continuar funcionando normalmente, retornando dados padrão ou em cache em vez de falhar a requisição inteira.

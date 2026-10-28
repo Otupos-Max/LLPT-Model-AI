@@ -19,3 +19,21 @@ area(r::Rectangle) = r.width * r.height
 function solve_linear_system(A::Matrix{Float64}, b::Vector{Float64})
     return A \ b
 end
+
+
+# Julia High Performance Scientific Computing & Dynamic Dispatch
+
+struct Polynomial{T<:Number}
+    coefficients::Vector{T}
+end
+
+function (p::Polynomial)(x::Number)
+    return sum(c * x^(i-1) for (i, c) in enumerate(p.coefficients))
+end
+
+function derivative(p::Polynomial)
+    deg = length(p.coefficients) - 1
+    deg <= 0 && return Polynomial([0])
+    new_coeffs = [p.coefficients[i] * (i-1) for i in 2:length(p.coefficients)]
+    return Polynomial(new_coeffs)
+end
