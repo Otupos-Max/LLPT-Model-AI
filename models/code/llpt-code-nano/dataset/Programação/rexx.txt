@@ -1,0 +1,45 @@
+// REXX Dataset - Idiomatic Code Examples
+
+// ==========================================
+// 1. Language Overview and Core Syntax
+// ==========================================
+
+// Example 1: Functions and Control Structures in REXX
+public class RexxApp {
+    public static void main(String[] args) {
+        System.out.println("Hello from REXX!");
+        int result = calculateSum(10, 20);
+    }
+
+    public static int calculateSum(int a, int b) {
+        return a + b;
+    }
+}
+
+// ==========================================
+// 2. Data Structures and Algorithms
+// ==========================================
+
+int binarySearch_rexx(int[] arr, int target) {
+    int low = 0;
+    int high = arr.length - 1;
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+        if (arr[mid] == target) return mid;
+        else if (arr[mid] < target) low = mid + 1;
+        else high = mid - 1;
+    }
+    return -1;
+}
+
+// ==========================================
+// 3. Fill-In-The-Middle (FIM) Example
+// ==========================================
+<PRE>
+int factorial_rexx(int n) {
+    if (n <= 1) return 1;
+<SUF>
+}
+<MID>
+    return n * factorial_rexx(n - 1);
+<EOT>

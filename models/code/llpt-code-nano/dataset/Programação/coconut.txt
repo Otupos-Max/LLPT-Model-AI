@@ -1,0 +1,32 @@
+# Coconut Dataset - Idiomatic Code Examples
+
+# ==========================================
+# 1. Functions and Data Structures
+# ==========================================
+
+def greet(name: str) -> str:
+    return f"Hello, {name} from Coconut!"
+
+def binary_search(arr: list, target: int) -> int:
+    low, high = 0, len(arr) - 1
+    while low <= high:
+        mid = (low + high) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            low = mid + 1
+        else:
+            high = mid - 1
+    return -1
+
+# ==========================================
+# 2. Fill-In-The-Middle (FIM) Example
+# ==========================================
+<PRE>
+def factorial(n: int) -> int:
+    if n <= 1:
+        return 1
+<SUF>
+<MID>
+    return n * factorial(n - 1)
+<EOT>

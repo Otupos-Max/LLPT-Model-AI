@@ -1,0 +1,32 @@
+-- Transact-SQL Query Dataset - Idiomatic Code Examples
+
+-- ==========================================
+-- 1. Table Definitions and Queries
+-- ==========================================
+
+CREATE TABLE users (
+    id INT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+SELECT username, COUNT(*) as activity_count
+FROM users u
+JOIN logs l ON u.id = l.user_id
+WHERE l.created_at >= NOW() - INTERVAL '30 days'
+GROUP BY username
+HAVING COUNT(*) > 5
+ORDER BY activity_count DESC;
+
+-- ==========================================
+-- 2. Fill-In-The-Middle (FIM) Example
+-- ==========================================
+<PRE>
+SELECT department_id, AVG(salary) as avg_sal
+FROM employees
+<SUF>
+ORDER BY avg_sal DESC;
+<MID>
+WHERE status = 'ACTIVE'
+GROUP BY department_id
+<EOT>
