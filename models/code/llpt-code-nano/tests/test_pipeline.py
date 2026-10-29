@@ -12,16 +12,21 @@ Testa:
 7. Tratamento de datasets vazios ou inexistentes
 8. Compatibilidade FIM
 9. Categorização Programação / Conversação e controle de proporção (prog_ratio)
+10. Validação de qualidade e auditoria do Dataset de Programação
 """
 
 import os
 import sys
 import tempfile
 import shutil
+
+src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../src"))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
 import torch
 from transformers import LlamaConfig, LlamaForCausalLM
 
-sys.path.insert(0, os.path.abspath("models/code/llpt-code-nano/src"))
 from train import (
     load_txt_datasets,
     load_categorized_txt_datasets,
@@ -33,6 +38,7 @@ from train import (
 )
 from inference import generate_text, generate_fim
 from model import load_model_config
+from dataset_auditor import audit_dataset
 
 
 def test_1_read_txt_dataset(temp_dir):
@@ -151,6 +157,20 @@ def test_9_categorized_dataset_and_ratio(temp_dir, tokenizer):
     print("Test 9 Passed: Categorized datasets and ratio adjustment verified successfully!")
 
 
+def test_10_programming_dataset_audit():
+    print("\n--- Test 10: Programming Dataset Quality Audit ---")
+    prog_dir = "models/code/llpt-code-nano/dataset/Programação"
+    if os.path.exists(prog_dir):
+        summary = audit_dataset(prog_dir)
+        assert summary["total_files"] >= 400, f"Expected >= 400 programming files, got {summary['total_files']}"
+        assert summary["template_fake_count"] == 0, f"Found {summary['template_fake_count']} fake template files!"
+        assert summary["comment_only_count"] == 0, f"Found {summary['comment_only_count']} comment only files!"
+        assert summary["empty_files_count"] == 0, f"Found {summary['empty_files_count']} empty files!"
+        assert summary["fim_malformed_count"] == 0, f"Found {summary['fim_malformed_count']} malformed FIM files!"
+        assert summary["exact_duplicates_groups"] == 0, f"Found {summary['exact_duplicates_groups']} exact duplicate groups!"
+        print(f"Test 10 Passed: Verified {summary['total_files']} files with 0 fake templates, 0 comment-only, 0 empty, 0 malformed FIM!")
+
+
 def main():
     print("Starting LLPT Code Nano Pipeline Test Suite...")
     temp_dir = tempfile.mkdtemp()
@@ -179,9 +199,10 @@ def main():
         test_7_empty_or_nonexistent_dataset(temp_dir)
         test_8_fim_compatibility(tokenizer)
         test_9_categorized_dataset_and_ratio(temp_dir, tokenizer)
+        test_10_programming_dataset_audit()
 
         print("\n=======================================================")
-        print(" ALL 9 MANDATORY VERIFICATION TESTS PASSED SUCCESSFULLY!")
+        print(" ALL 10 MANDATORY VERIFICATION TESTS PASSED SUCCESSFULLY!")
         print("=======================================================")
     finally:
         shutil.rmtree(temp_dir)

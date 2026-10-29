@@ -1,45 +1,38 @@
-// Max/MSP Dataset - Idiomatic Code Examples
-
 // ==========================================
-// 1. Language Overview and Core Syntax
+// LLPT Code Nano - Max Msp Real Idiomatic Code
 // ==========================================
 
-// Example 1: Functions and Control Structures in Max/MSP
-public class Max_mspApp {
-    public static void main(String[] args) {
-        System.out.println("Hello from Max/MSP!");
-        int result = calculateSum(10, 20);
-    }
+// 1. Functional and Algorithmic Implementations in Max Msp
 
-    public static int calculateSum(int a, int b) {
-        return a + b;
-    }
-}
-
-// ==========================================
-// 2. Data Structures and Algorithms
-// ==========================================
-
-int binarySearch_max_msp(int[] arr, int target) {
-    int low = 0;
-    int high = arr.length - 1;
-    while (low <= high) {
-        int mid = low + (high - low) / 2;
-        if (arr[mid] == target) return mid;
-        else if (arr[mid] < target) low = mid + 1;
-        else high = mid - 1;
-    }
-    return -1;
-}
-
-// ==========================================
-// 3. Fill-In-The-Middle (FIM) Example
-// ==========================================
-<PRE>
-int factorial_max_msp(int n) {
+fn_factorial_max_msp = function(n) {
     if (n <= 1) return 1;
+    return n * fn_factorial_max_msp(n - 1);
+}
+
+fn_process_array_max_msp = function(arr) {
+    let sum = 0;
+    for (let i = 0; i < arr.length; i++) {
+        sum += arr[i];
+    }
+    return sum;
+}
+
+// 2. Data Filtering and Business Logic
+
+fn_filter_positive_max_msp = function(items) {
+    let result = [];
+    for (let i = 0; i < items.length; i++) {
+        if (items[i] > 0) {
+            result.push(items[i]);
+        }
+    }
+    return result;
+}
+
+<PRE>
+fn_calculate_sum_max_msp = function(a, b) {
 <SUF>
 }
 <MID>
-    return n * factorial_max_msp(n - 1);
+    return a + b;
 <EOT>

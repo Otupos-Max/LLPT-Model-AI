@@ -1,34 +1,22 @@
-;; Clojure Script Functional Dataset - Idiomatic Code Examples
+# ==========================================
+# LLPT Code Nano - Clojure Script Real Idiomatic Code
+# ==========================================
 
-;; ==========================================
-;; 1. Core Expressions and Recursion
-;; ==========================================
-
-;; Example 1: Hello World and Arithmetic in Clojure Script
-(defn hello-world []
-  (println "Hello from Clojure Script!")
-  (+ 10 20 30))
-
-;; Example 2: Recursive Factorial in Clojure Script
 (defn factorial [n]
   (if (<= n 1)
-      1
-      (* n (factorial (- n 1)))))
+    1
+    (* n (factorial (- n 1)))))
 
-;; ==========================================
-;; 2. Fill-In-The-Middle (FIM) Example
-;; ==========================================
+(defn filter-positive [coll]
+  (filter #(pos? %) coll))
+
+(defn sum-list [numbers]
+  (reduce + 0 numbers))
+
 <PRE>
-(defn binary-search [arr target low high]
-  (if (> low high)
-      -1
+(defn square [x]
 <SUF>
-))
+)
 <MID>
-      (let [mid (quot (+ low high) 2)
-            val (nth arr mid)]
-        (cond
-          (= val target) mid
-          (< val target) (binary-search arr target (+ mid 1) high)
-          :else (binary-search arr target low (- mid 1))))
+  (* x x)
 <EOT>

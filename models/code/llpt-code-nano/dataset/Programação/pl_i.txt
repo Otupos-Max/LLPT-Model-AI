@@ -1,45 +1,38 @@
-// PL/I Dataset - Idiomatic Code Examples
-
 // ==========================================
-// 1. Language Overview and Core Syntax
+// LLPT Code Nano - Pl I Real Idiomatic Code
 // ==========================================
 
-// Example 1: Functions and Control Structures in PL/I
-public class Pl_iApp {
-    public static void main(String[] args) {
-        System.out.println("Hello from PL/I!");
-        int result = calculateSum(10, 20);
-    }
+// 1. Functional and Algorithmic Implementations in Pl I
 
-    public static int calculateSum(int a, int b) {
-        return a + b;
-    }
-}
-
-// ==========================================
-// 2. Data Structures and Algorithms
-// ==========================================
-
-int binarySearch_pl_i(int[] arr, int target) {
-    int low = 0;
-    int high = arr.length - 1;
-    while (low <= high) {
-        int mid = low + (high - low) / 2;
-        if (arr[mid] == target) return mid;
-        else if (arr[mid] < target) low = mid + 1;
-        else high = mid - 1;
-    }
-    return -1;
-}
-
-// ==========================================
-// 3. Fill-In-The-Middle (FIM) Example
-// ==========================================
-<PRE>
-int factorial_pl_i(int n) {
+fn_factorial_pl_i = function(n) {
     if (n <= 1) return 1;
+    return n * fn_factorial_pl_i(n - 1);
+}
+
+fn_process_array_pl_i = function(arr) {
+    let sum = 0;
+    for (let i = 0; i < arr.length; i++) {
+        sum += arr[i];
+    }
+    return sum;
+}
+
+// 2. Data Filtering and Business Logic
+
+fn_filter_positive_pl_i = function(items) {
+    let result = [];
+    for (let i = 0; i < items.length; i++) {
+        if (items[i] > 0) {
+            result.push(items[i]);
+        }
+    }
+    return result;
+}
+
+<PRE>
+fn_calculate_sum_pl_i = function(a, b) {
 <SUF>
 }
 <MID>
-    return n * factorial_pl_i(n - 1);
+    return a + b;
 <EOT>

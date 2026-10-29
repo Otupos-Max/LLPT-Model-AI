@@ -1,45 +1,38 @@
-// ABC Dataset - Idiomatic Code Examples
+# ==========================================
+# LLPT Code Nano - ABC Programming Language
+# ==========================================
 
-// ==========================================
-// 1. Language Overview and Core Syntax
-// ==========================================
+HOW TO RETURN max_val list:
+    PUT 0 IN max
+    FOR item IN list:
+        IF item > max:
+            PUT item IN max
+    RETURN max
 
-// Example 1: Functions and Control Structures in ABC
-public class AbcApp {
-    public static void main(String[] args) {
-        System.out.println("Hello from ABC!");
-        int result = calculateSum(10, 20);
-    }
+HOW TO PROCESS numbers:
+    WRITE "Enter total numbers:"
+    READ n RAW
+    PUT {} IN scores
+    FOR i IN {1..n}:
+        WRITE "Enter value ", i, ":"
+        READ val RAW
+        INSERT val IN scores
+    WRITE "Maximum value found: ", max_val scores
 
-    public static int calculateSum(int a, int b) {
-        return a + b;
-    }
-}
+HOW TO RETURN sum_list items:
+    PUT 0 IN total
+    FOR x IN items:
+        PUT total + x IN total
+    RETURN total
 
-// ==========================================
-// 2. Data Structures and Algorithms
-// ==========================================
-
-int binarySearch_abc(int[] arr, int target) {
-    int low = 0;
-    int high = arr.length - 1;
-    while (low <= high) {
-        int mid = low + (high - low) / 2;
-        if (arr[mid] == target) return mid;
-        else if (arr[mid] < target) low = mid + 1;
-        else high = mid - 1;
-    }
-    return -1;
-}
-
-// ==========================================
-// 3. Fill-In-The-Middle (FIM) Example
-// ==========================================
+# ==========================================
+# Fill-In-The-Middle (FIM) Example
+# ==========================================
 <PRE>
-int factorial_abc(int n) {
-    if (n <= 1) return 1;
+HOW TO RETURN average items:
+    PUT sum_list items IN total_sum
 <SUF>
-}
+    RETURN total_sum / count
 <MID>
-    return n * factorial_abc(n - 1);
+    PUT size items IN count
 <EOT>

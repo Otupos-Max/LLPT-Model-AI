@@ -1,38 +1,38 @@
-// Eiffel Structural Dataset - Idiomatic Code Examples
-
 // ==========================================
-// 1. Program Structure and Procedures
+// LLPT Code Nano - Eiffel Real Idiomatic Code
 // ==========================================
 
-program EiffelDemo;
+// 1. Functional and Algorithmic Implementations in Eiffel
 
-var
-    counter: integer;
+fn_factorial_eiffel = function(n) {
+    if (n <= 1) return 1;
+    return n * fn_factorial_eiffel(n - 1);
+}
 
-function CalculateFactorial(n: integer): integer;
-begin
-    if n <= 1 then
-        CalculateFactorial := 1
-    else
-        CalculateFactorial := n * CalculateFactorial(n - 1);
-end;
+fn_process_array_eiffel = function(arr) {
+    let sum = 0;
+    for (let i = 0; i < arr.length; i++) {
+        sum += arr[i];
+    }
+    return sum;
+}
 
-begin
-    writeln('Hello from Eiffel!');
-    counter := CalculateFactorial(5);
-end.
+// 2. Data Filtering and Business Logic
 
-// ==========================================
-// 2. Fill-In-The-Middle (FIM) Example
-// ==========================================
+fn_filter_positive_eiffel = function(items) {
+    let result = [];
+    for (let i = 0; i < items.length; i++) {
+        if (items[i] > 0) {
+            result.push(items[i]);
+        }
+    }
+    return result;
+}
+
 <PRE>
-function FindMax(a, b: integer): integer;
-begin
+fn_calculate_sum_eiffel = function(a, b) {
 <SUF>
-end;
+}
 <MID>
-    if a > b then
-        FindMax := a
-    else
-        FindMax := b;
+    return a + b;
 <EOT>
