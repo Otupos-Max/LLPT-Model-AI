@@ -1,0 +1,26 @@
+(* Idris 2 Functional Dataset - Idiomatic Code Examples *)
+
+(* ==========================================
+   1. Pattern Matching and Functions
+   ========================================== *)
+
+(* Example 1: Basic Types and Functions in Idris 2 *)
+let greet name =
+    "Hello, " ^ name ^ " from Idris 2!"
+
+(* Example 2: Recursive Data Structures in Idris 2 *)
+let rec factorial n =
+    if n <= 1 then 1
+    else n * factorial (n - 1)
+
+(* ==========================================
+   2. Fill-In-The-Middle (FIM) Example
+   ========================================== *)
+<PRE>
+let rec sum_list lst =
+    match lst with
+    | [] -> 0
+<SUF>
+<MID>
+    | x :: xs -> x + sum_list xs
+<EOT>

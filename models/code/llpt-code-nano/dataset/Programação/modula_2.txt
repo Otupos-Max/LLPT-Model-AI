@@ -1,0 +1,38 @@
+// Modula-2 Structural Dataset - Idiomatic Code Examples
+
+// ==========================================
+// 1. Program Structure and Procedures
+// ==========================================
+
+program Modula_2Demo;
+
+var
+    counter: integer;
+
+function CalculateFactorial(n: integer): integer;
+begin
+    if n <= 1 then
+        CalculateFactorial := 1
+    else
+        CalculateFactorial := n * CalculateFactorial(n - 1);
+end;
+
+begin
+    writeln('Hello from Modula-2!');
+    counter := CalculateFactorial(5);
+end.
+
+// ==========================================
+// 2. Fill-In-The-Middle (FIM) Example
+// ==========================================
+<PRE>
+function FindMax(a, b: integer): integer;
+begin
+<SUF>
+end;
+<MID>
+    if a > b then
+        FindMax := a
+    else
+        FindMax := b;
+<EOT>
