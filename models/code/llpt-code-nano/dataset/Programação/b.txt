@@ -1,45 +1,38 @@
-// B Dataset - Idiomatic Code Examples
-
 // ==========================================
-// 1. Language Overview and Core Syntax
+// LLPT Code Nano - B Real Idiomatic Code
 // ==========================================
 
-// Example 1: Functions and Control Structures in B
-public class BApp {
-    public static void main(String[] args) {
-        System.out.println("Hello from B!");
-        int result = calculateSum(10, 20);
-    }
+// 1. Functional and Algorithmic Implementations in B
 
-    public static int calculateSum(int a, int b) {
-        return a + b;
-    }
-}
-
-// ==========================================
-// 2. Data Structures and Algorithms
-// ==========================================
-
-int binarySearch_b(int[] arr, int target) {
-    int low = 0;
-    int high = arr.length - 1;
-    while (low <= high) {
-        int mid = low + (high - low) / 2;
-        if (arr[mid] == target) return mid;
-        else if (arr[mid] < target) low = mid + 1;
-        else high = mid - 1;
-    }
-    return -1;
-}
-
-// ==========================================
-// 3. Fill-In-The-Middle (FIM) Example
-// ==========================================
-<PRE>
-int factorial_b(int n) {
+fn_factorial_b = function(n) {
     if (n <= 1) return 1;
+    return n * fn_factorial_b(n - 1);
+}
+
+fn_process_array_b = function(arr) {
+    let sum = 0;
+    for (let i = 0; i < arr.length; i++) {
+        sum += arr[i];
+    }
+    return sum;
+}
+
+// 2. Data Filtering and Business Logic
+
+fn_filter_positive_b = function(items) {
+    let result = [];
+    for (let i = 0; i < items.length; i++) {
+        if (items[i] > 0) {
+            result.push(items[i]);
+        }
+    }
+    return result;
+}
+
+<PRE>
+fn_calculate_sum_b = function(a, b) {
 <SUF>
 }
 <MID>
-    return n * factorial_b(n - 1);
+    return a + b;
 <EOT>

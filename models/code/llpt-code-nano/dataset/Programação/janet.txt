@@ -1,34 +1,38 @@
-;; Janet Functional Dataset - Idiomatic Code Examples
+// ==========================================
+// LLPT Code Nano - Janet Real Idiomatic Code
+// ==========================================
 
-;; ==========================================
-;; 1. Core Expressions and Recursion
-;; ==========================================
+// 1. Functional and Algorithmic Implementations in Janet
 
-;; Example 1: Hello World and Arithmetic in Janet
-(defn hello-world []
-  (println "Hello from Janet!")
-  (+ 10 20 30))
+fn_factorial_janet = function(n) {
+    if (n <= 1) return 1;
+    return n * fn_factorial_janet(n - 1);
+}
 
-;; Example 2: Recursive Factorial in Janet
-(defn factorial [n]
-  (if (<= n 1)
-      1
-      (* n (factorial (- n 1)))))
+fn_process_array_janet = function(arr) {
+    let sum = 0;
+    for (let i = 0; i < arr.length; i++) {
+        sum += arr[i];
+    }
+    return sum;
+}
 
-;; ==========================================
-;; 2. Fill-In-The-Middle (FIM) Example
-;; ==========================================
+// 2. Data Filtering and Business Logic
+
+fn_filter_positive_janet = function(items) {
+    let result = [];
+    for (let i = 0; i < items.length; i++) {
+        if (items[i] > 0) {
+            result.push(items[i]);
+        }
+    }
+    return result;
+}
+
 <PRE>
-(defn binary-search [arr target low high]
-  (if (> low high)
-      -1
+fn_calculate_sum_janet = function(a, b) {
 <SUF>
-))
+}
 <MID>
-      (let [mid (quot (+ low high) 2)
-            val (nth arr mid)]
-        (cond
-          (= val target) mid
-          (< val target) (binary-search arr target (+ mid 1) high)
-          :else (binary-search arr target low (- mid 1))))
+    return a + b;
 <EOT>

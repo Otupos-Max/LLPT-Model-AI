@@ -1,45 +1,67 @@
-// ABAP Dataset - Idiomatic Code Examples
+* ==========================================
+* LLPT Code Nano - ABAP (Advanced Business Application Programming)
+* ==========================================
 
-// ==========================================
-// 1. Language Overview and Core Syntax
-// ==========================================
+REPORT z_llpt_employee_mgmt.
 
-// Example 1: Functions and Control Structures in ABAP
-public class AbapApp {
-    public static void main(String[] args) {
-        System.out.println("Hello from ABAP!");
-        int result = calculateSum(10, 20);
-    }
+TYPES: BEGIN OF ty_employee,
+         emp_id   TYPE i,
+         name     TYPE string,
+         dept     TYPE string,
+         salary   TYPE p DECIMALS 2,
+       END OF ty_employee.
 
-    public static int calculateSum(int a, int b) {
-        return a + b;
-    }
-}
+DATA: lt_employees TYPE TABLE OF ty_employee,
+      ls_employee  TYPE ty_employee,
+      lv_total_sal TYPE p DECIMALS 2 VALUE 0.
 
-// ==========================================
-// 2. Data Structures and Algorithms
-// ==========================================
+START-OF-SELECTION.
+  ls_employee-emp_id = 1001.
+  ls_employee-name   = 'Alice Vance'.
+  ls_employee-dept   = 'Engineering'.
+  ls_employee-salary = 85000.00.
+  APPEND ls_employee TO lt_employees.
 
-int binarySearch_abap(int[] arr, int target) {
-    int low = 0;
-    int high = arr.length - 1;
-    while (low <= high) {
-        int mid = low + (high - low) / 2;
-        if (arr[mid] == target) return mid;
-        else if (arr[mid] < target) low = mid + 1;
-        else high = mid - 1;
-    }
-    return -1;
-}
+  ls_employee-emp_id = 1002.
+  ls_employee-name   = 'Bob Ross'.
+  ls_employee-dept   = 'Design'.
+  ls_employee-salary = 72000.00.
+  APPEND ls_employee TO lt_employees.
 
-// ==========================================
-// 3. Fill-In-The-Middle (FIM) Example
-// ==========================================
+  LOOP AT lt_employees INTO ls_employee WHERE salary > 70000.
+    ADD ls_employee-salary TO lv_total_sal.
+    WRITE: / 'ID:', ls_employee-emp_id, 'Name:', ls_employee-name, 'Dept:', ls_employee-dept.
+  ENDLOOP.
+
+  WRITE: / 'Total Salary Budget:', lv_total_sal.
+
+* ==========================================
+* ABAP Modularization & Form Subroutines
+* ==========================================
+
+FORM calculate_tax USING    iv_salary TYPE p
+                  CHANGING ev_tax    TYPE p.
+  IF iv_salary > 80000.
+    ev_tax = iv_salary * '0.25'.
+  ELSE.
+    ev_tax = iv_salary * '0.15'.
+  ENDIF.
+ENDFORM.
+
+* ==========================================
+* Fill-In-The-Middle (FIM) Example
+* ==========================================
 <PRE>
-int factorial_abap(int n) {
-    if (n <= 1) return 1;
+FORM find_highest_paid USING    it_emp TYPE TABLE OF ty_employee
+                       CHANGING ev_max TYPE p.
+  DATA: ls_emp TYPE ty_employee.
+  ev_max = 0.
+  LOOP AT it_emp INTO ls_emp.
 <SUF>
-}
+  ENDLOOP.
+ENDFORM.
 <MID>
-    return n * factorial_abap(n - 1);
+    IF ls_emp-salary > ev_max.
+      ev_max = ls_emp-salary.
+    ENDIF.
 <EOT>

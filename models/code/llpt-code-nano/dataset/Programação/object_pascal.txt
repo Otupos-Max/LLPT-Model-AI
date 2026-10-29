@@ -1,38 +1,45 @@
-// Object Pascal Structural Dataset - Idiomatic Code Examples
-
 // ==========================================
-// 1. Program Structure and Procedures
+// LLPT Code Nano - Object Pascal Real Idiomatic Code
 // ==========================================
 
-program Object_pascalDemo;
+program ObjectPascalDemo;
 
+type
+  TArrayOfInt = array of Integer;
+
+function CalculateSum(const Arr: TArrayOfInt): Integer;
 var
-    counter: integer;
-
-function CalculateFactorial(n: integer): integer;
+  i, Total: Integer;
 begin
-    if n <= 1 then
-        CalculateFactorial := 1
-    else
-        CalculateFactorial := n * CalculateFactorial(n - 1);
+  Total := 0;
+  for i := Low(Arr) to High(Arr) do
+    Total := Total + Arr[i];
+  Result := Total;
+end;
+
+procedure ProcessData;
+var
+  Data: TArrayOfInt;
+  Res: Integer;
+begin
+  SetLength(Data, 3);
+  Data[0] := 10;
+  Data[1] := 20;
+  Data[2] := 30;
+  Res := CalculateSum(Data);
+  Writeln('Sum result: ', Res);
 end;
 
 begin
-    writeln('Hello from Object Pascal!');
-    counter := CalculateFactorial(5);
+  ProcessData;
 end.
 
-// ==========================================
-// 2. Fill-In-The-Middle (FIM) Example
-// ==========================================
 <PRE>
-function FindMax(a, b: integer): integer;
+function Factorial(N: Integer): Int64;
 begin
+  if N <= 1 then Exit(1);
 <SUF>
 end;
 <MID>
-    if a > b then
-        FindMax := a
-    else
-        FindMax := b;
+  Result := N * Factorial(N - 1);
 <EOT>

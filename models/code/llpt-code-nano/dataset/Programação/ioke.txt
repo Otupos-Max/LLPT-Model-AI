@@ -1,45 +1,38 @@
-// Ioke Dataset - Idiomatic Code Examples
-
 // ==========================================
-// 1. Language Overview and Core Syntax
+// LLPT Code Nano - Ioke Real Idiomatic Code
 // ==========================================
 
-// Example 1: Functions and Control Structures in Ioke
-public class IokeApp {
-    public static void main(String[] args) {
-        System.out.println("Hello from Ioke!");
-        int result = calculateSum(10, 20);
-    }
+// 1. Functional and Algorithmic Implementations in Ioke
 
-    public static int calculateSum(int a, int b) {
-        return a + b;
-    }
-}
-
-// ==========================================
-// 2. Data Structures and Algorithms
-// ==========================================
-
-int binarySearch_ioke(int[] arr, int target) {
-    int low = 0;
-    int high = arr.length - 1;
-    while (low <= high) {
-        int mid = low + (high - low) / 2;
-        if (arr[mid] == target) return mid;
-        else if (arr[mid] < target) low = mid + 1;
-        else high = mid - 1;
-    }
-    return -1;
-}
-
-// ==========================================
-// 3. Fill-In-The-Middle (FIM) Example
-// ==========================================
-<PRE>
-int factorial_ioke(int n) {
+fn_factorial_ioke = function(n) {
     if (n <= 1) return 1;
+    return n * fn_factorial_ioke(n - 1);
+}
+
+fn_process_array_ioke = function(arr) {
+    let sum = 0;
+    for (let i = 0; i < arr.length; i++) {
+        sum += arr[i];
+    }
+    return sum;
+}
+
+// 2. Data Filtering and Business Logic
+
+fn_filter_positive_ioke = function(items) {
+    let result = [];
+    for (let i = 0; i < items.length; i++) {
+        if (items[i] > 0) {
+            result.push(items[i]);
+        }
+    }
+    return result;
+}
+
+<PRE>
+fn_calculate_sum_ioke = function(a, b) {
 <SUF>
 }
 <MID>
-    return n * factorial_ioke(n - 1);
+    return a + b;
 <EOT>

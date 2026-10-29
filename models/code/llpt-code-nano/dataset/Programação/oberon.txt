@@ -1,38 +1,38 @@
-// Oberon Structural Dataset - Idiomatic Code Examples
+# ==========================================
+# LLPT Code Nano - Oberon Real Idiomatic Code
+# ==========================================
 
-// ==========================================
-// 1. Program Structure and Procedures
-// ==========================================
+# 1. Functional and Algorithmic Implementations in Oberon
 
-program OberonDemo;
+fn_factorial_oberon = function(n) {
+    if (n <= 1) return 1;
+    return n * fn_factorial_oberon(n - 1);
+}
 
-var
-    counter: integer;
+fn_process_array_oberon = function(arr) {
+    let sum = 0;
+    for (let i = 0; i < arr.length; i++) {
+        sum += arr[i];
+    }
+    return sum;
+}
 
-function CalculateFactorial(n: integer): integer;
-begin
-    if n <= 1 then
-        CalculateFactorial := 1
-    else
-        CalculateFactorial := n * CalculateFactorial(n - 1);
-end;
+# 2. Data Filtering and Business Logic
 
-begin
-    writeln('Hello from Oberon!');
-    counter := CalculateFactorial(5);
-end.
+fn_filter_positive_oberon = function(items) {
+    let result = [];
+    for (let i = 0; i < items.length; i++) {
+        if (items[i] > 0) {
+            result.push(items[i]);
+        }
+    }
+    return result;
+}
 
-// ==========================================
-// 2. Fill-In-The-Middle (FIM) Example
-// ==========================================
 <PRE>
-function FindMax(a, b: integer): integer;
-begin
+fn_calculate_sum_oberon = function(a, b) {
 <SUF>
-end;
+}
 <MID>
-    if a > b then
-        FindMax := a
-    else
-        FindMax := b;
+    return a + b;
 <EOT>
