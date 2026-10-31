@@ -7,33 +7,27 @@ carregando pesos treinados ou checkpoints do modelo.
 """
 
 import os
+import sys
 import argparse
 import json
 import torch
 from transformers import AutoTokenizer
 
-try:
-    from model import build_model, load_model_config
-except ImportError:
-    from models.code.llpt_code_nano.src.model import build_model, load_model_config
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from model import build_model, load_model_config
+
+MODEL_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+DEFAULT_MODEL_DIR = os.path.join(MODEL_ROOT, "weights", "checkpoints", "final")
+DEFAULT_CONFIG = os.path.join(MODEL_ROOT, "config.json")
 
 
 def get_tokenizer(model_dir: str):
     """
-    Carrega ou cria o tokenizer compatível com LLPT Code Nano.
+    Carrega o tokenizer salvo junto com o checkpoint (o mesmo usado no treino).
+    Se não houver, usa o mesmo fallback do treino (GPT-2 ou tokenizer local).
     """
-    try:
-        tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    except Exception:
-        tokenizer = AutoTokenizer.from_pretrained("gpt2")
-        special_tokens = ["<PRE>", "<SUF>", "<MID>", "<EOT>"]
-        tokenizer.add_special_tokens({
-            "pad_token": "<pad>",
-            "bos_token": "<s>",
-            "eos_token": "</s>",
-            "additional_special_tokens": special_tokens
-        })
-    return tokenizer
+    from train import get_or_create_tokenizer
+    return get_or_create_tokenizer(model_dir)
 
 
 def generate_text(model, tokenizer, prompt: str, max_new_tokens: int = 128, device: str = "cpu"):
@@ -60,8 +54,8 @@ def generate_fim(model, tokenizer, prefix: str, suffix: str, max_new_tokens: int
 
 def main():
     parser = argparse.ArgumentParser(description="Inferência LLPT Code Nano (1B)")
-    parser.add_argument("--model_dir", type=str, default="models/code/llpt-code-nano/weights/checkpoints/", help="Diretório de pesos/checkpoint")
-    parser.add_argument("--config", type=str, default="models/code/llpt-code-nano/config.json", help="Caminho para config.json")
+    parser.add_argument("--model_dir", type=str, default=DEFAULT_MODEL_DIR, help="Diretório de pesos/checkpoint")
+    parser.add_argument("--config", type=str, default=DEFAULT_CONFIG, help="Caminho para config.json")
     parser.add_argument("--prompt", type=str, default="def calculate_factorial(n):", help="Prompt para geração")
     parser.add_argument("--prefix", type=str, default="", help="Prefix para FIM")
     parser.add_argument("--suffix", type=str, default="", help="Suffix para FIM")
@@ -81,7 +75,16 @@ def main():
     weight_file = os.path.join(args.model_dir, "pytorch_model.bin")
     safetensors_file = os.path.join(args.model_dir, "model.safetensors")
 
-    model = build_model(args.config)
+    # Usa o config.json salvo no checkpoint (já com o vocabulário do treino), se existir
+    ckpt_config = os.path.join(args.model_dir, "config.json")
+    if os.path.exists(weight_file) or os.path.exists(safetensors_file):
+        if os.path.exists(ckpt_config):
+            from transformers import LlamaConfig, LlamaForCausalLM
+            model = LlamaForCausalLM(LlamaConfig.from_pretrained(args.model_dir))
+        else:
+            model = build_model(args.config)
+    else:
+        model = build_model(args.config)
 
     if len(tokenizer) > model.config.vocab_size:
         model.resize_token_embeddings(len(tokenizer))

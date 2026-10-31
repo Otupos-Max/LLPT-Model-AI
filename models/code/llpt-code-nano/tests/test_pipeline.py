@@ -24,10 +24,17 @@ src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../src"))
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
+MODEL_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+import json
+import subprocess
 import torch
 from transformers import LlamaConfig, LlamaForCausalLM
 
 from train import (
+    split_language_sections,
+    extract_fim_and_text,
+    _build_local_tokenizer,
     load_txt_datasets,
     load_categorized_txt_datasets,
     CodeTXTDataset,
@@ -159,7 +166,7 @@ def test_9_categorized_dataset_and_ratio(temp_dir, tokenizer):
 
 def test_10_programming_dataset_audit():
     print("\n--- Test 10: Programming Dataset Quality Audit ---")
-    prog_dir = "models/code/llpt-code-nano/dataset/Programação"
+    prog_dir = os.path.join(MODEL_ROOT, "dataset", "Programação")
     prog_file = os.path.join(prog_dir, "programacao.txt")
     if os.path.exists(prog_dir):
         summary = audit_dataset(prog_dir)
@@ -175,6 +182,75 @@ def test_10_programming_dataset_audit():
         assert summary["empty_files_count"] == 0, f"Found {summary['empty_files_count']} empty files!"
         assert summary["fim_malformed_count"] == 0, f"Found {summary['fim_malformed_count']} malformed FIM files!"
         print(f"Test 10 Passed: Verified unified dataset with {sections} language sections, 0 fake templates, 0 malformed FIM!")
+
+
+def test_11_unified_file_split_by_language():
+    print("\n--- Test 11: Unified programacao.txt split by language, keeping code AND FIM ---")
+    prog_dir = os.path.join(MODEL_ROOT, "dataset", "Programação")
+    categorized = load_categorized_txt_datasets(prog_dir)
+    stds, fims = categorized["Programação"]
+    assert len(stds) == 405, f"Expected 405 language code texts, got {len(stds)}"
+    assert len(fims) == 405, f"Expected 405 FIM samples, got {len(fims)}"
+    assert all(t.startswith("### LINGUAGEM: ") for t in stds), "Each text must start with its language header"
+    assert not any("<PRE>" in t or "<MID>" in t for t in stds), "FIM blocks must be removed from the normal code texts"
+    assert not any("# ÍNDICE" in t for t in stds), "The file index must not be used as training text"
+    go = [t for t in stds if t.startswith("### LINGUAGEM: Go\n")]
+    assert len(go) == 1 and "package main" in go[0], "Go section should contain its own code"
+    print("Test 11 Passed: 405 languages with normal code + 405 FIM samples!")
+
+
+def test_12_split_and_fim_helpers():
+    print("\n--- Test 12: Section split and FIM extraction helpers ---")
+    content = (
+        "# ÍNDICE\n# 001. A\n\n"
+        "### LINGUAGEM: A\n### ID: a | Seção 1/2\n# ====\n\nprint(1)\n<PRE>x<SUF>z<MID>y<EOT>\n### FIM DA LINGUAGEM: A\n\n"
+        "### LINGUAGEM: B\n### ID: b | Seção 2/2\n\nputs 2\n### FIM DA LINGUAGEM: B\n"
+    )
+    sections = split_language_sections(content)
+    assert [n for n, _ in sections] == ["A", "B"]
+    text, fims = extract_fim_and_text(sections[0][1])
+    assert "print(1)" in text and "<PRE>" not in text
+    assert fims == [{"prefix": "x", "suffix": "z", "middle": "y"}]
+    assert split_language_sections("def f(): pass") == [("", "def f(): pass")]
+    print("Test 12 Passed!")
+
+
+def test_13_offline_tokenizer():
+    print("\n--- Test 13: Offline tokenizer (no internet) ---")
+    tok = _build_local_tokenizer(["def soma(a, b):\n    return a + b\n" * 20, "função ç ã 日本"], vocab_size=500)
+    for t in ["<PRE>", "<SUF>", "<MID>", "<EOT>", "<pad>", "<s>", "</s>"]:
+        assert t in tok.get_vocab(), f"Missing special token {t}"
+    ids = tok.encode("<PRE>função<MID>日本<EOT>", add_special_tokens=False)
+    assert tok.decode(ids) == "<PRE>função<MID>日本<EOT>"
+    print("Test 13 Passed!")
+
+
+def test_14_train_script_end_to_end(temp_dir):
+    print("\n--- Test 14: train.py + inference.py end-to-end on the real dataset (tiny model) ---")
+    cfg = json.load(open(os.path.join(MODEL_ROOT, "config.json"), encoding="utf-8"))
+    cfg.update({"hidden_size": 32, "intermediate_size": 64, "num_hidden_layers": 1,
+                "num_attention_heads": 2, "num_key_value_heads": 1})
+    cfg_path = os.path.join(temp_dir, "tiny_config.json")
+    json.dump(cfg, open(cfg_path, "w", encoding="utf-8"))
+    data = os.path.join(temp_dir, "e2e", "Programação")
+    os.makedirs(data, exist_ok=True)
+    src = open(os.path.join(MODEL_ROOT, "dataset", "Programação", "programacao.txt"), encoding="utf-8").read()
+    sections = src.split("\n### LINGUAGEM: ")
+    open(os.path.join(data, "programacao.txt"), "w", encoding="utf-8").write("\n### LINGUAGEM: ".join(sections[:4]))
+    out = os.path.join(temp_dir, "e2e_out")
+    train_py = os.path.join(MODEL_ROOT, "src", "train.py")
+    r = subprocess.run([sys.executable, train_py, "--config", cfg_path, "--data_path", os.path.join(temp_dir, "e2e"),
+                        "--output_dir", out, "--epochs", "1", "--max_length", "64", "--batch_size", "4"],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, f"train.py failed:\n{r.stdout}\n{r.stderr}"
+    for f in ["pytorch_model.bin", "config.json"]:
+        assert os.path.exists(os.path.join(out, "final", f)), f"final/{f} missing"
+    r2 = subprocess.run([sys.executable, os.path.join(MODEL_ROOT, "src", "inference.py"), "--model_dir",
+                         os.path.join(out, "final"), "--prompt", "def f():", "--max_tokens", "5"],
+                        capture_output=True, text=True)
+    assert r2.returncode == 0, f"inference.py failed:\n{r2.stdout}\n{r2.stderr}"
+    assert "Carregando pesos treinados" in r2.stdout
+    print("Test 14 Passed: training saved a usable final model and inference loaded it!")
 
 
 def main():
@@ -195,7 +271,7 @@ def main():
             eos_token_id=2
         )
         model = LlamaForCausalLM(mini_config)
-        tokenizer = get_or_create_tokenizer("models/code/llpt-code-nano/config.json")
+        tokenizer = get_or_create_tokenizer(os.path.join(MODEL_ROOT, "config.json"))
         model.resize_token_embeddings(len(tokenizer))
 
         test_1_read_txt_dataset(temp_dir)
@@ -206,9 +282,13 @@ def main():
         test_8_fim_compatibility(tokenizer)
         test_9_categorized_dataset_and_ratio(temp_dir, tokenizer)
         test_10_programming_dataset_audit()
+        test_11_unified_file_split_by_language()
+        test_12_split_and_fim_helpers()
+        test_13_offline_tokenizer()
+        test_14_train_script_end_to_end(temp_dir)
 
         print("\n=======================================================")
-        print(" ALL 10 MANDATORY VERIFICATION TESTS PASSED SUCCESSFULLY!")
+        print(" ALL 14 MANDATORY VERIFICATION TESTS PASSED SUCCESSFULLY!")
         print("=======================================================")
     finally:
         shutil.rmtree(temp_dir)

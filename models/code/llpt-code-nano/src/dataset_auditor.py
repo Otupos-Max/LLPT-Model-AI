@@ -161,7 +161,7 @@ def audit_dataset(dataset_dir: str) -> Dict[str, Any]:
 
 def main():
     parser = argparse.ArgumentParser(description="Auditor do Dataset de Programação do LLPT Code Nano")
-    parser.add_argument("--dataset_dir", type=str, default="models/code/llpt-code-nano/dataset/Programação", help="Diretório do dataset de programação")
+    parser.add_argument("--dataset_dir", type=str, default=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dataset", "Programação"), help="Diretório do dataset de programação")
     args = parser.parse_args()
 
     print("=== Auditoria do Dataset de Programação LLPT Code Nano ===")

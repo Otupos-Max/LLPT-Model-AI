@@ -35,6 +35,60 @@ except ImportError:
 
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
+# Pasta raiz do modelo (models/code/llpt-code-nano), para que os caminhos padrão
+# funcionem não importa de qual pasta o script seja executado.
+MODEL_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+DEFAULT_CONFIG = os.path.join(MODEL_ROOT, "config.json")
+DEFAULT_DATA_PATH = os.path.join(MODEL_ROOT, "dataset")
+DEFAULT_OUTPUT_DIR = os.path.join(MODEL_ROOT, "weights", "checkpoints")
+
+FIM_PATTERN = re.compile(r'<PRE>(.*?)(?:<SUF>(.*?))?<MID>(.*?)(?:<EOT>|$)', re.DOTALL)
+LANG_START = re.compile(r'^### LINGUAGEM: (.+?)\s*$', re.MULTILINE)
+LANG_END = re.compile(r'^### FIM DA LINGUAGEM: .*$', re.MULTILINE)
+
+
+def split_language_sections(content: str) -> List[Tuple[str, str]]:
+    """
+    Divide um arquivo unificado (ex: Programação/programacao.txt) em seções por linguagem,
+    usando os marcadores '### LINGUAGEM: X' e '### FIM DA LINGUAGEM: X'.
+    Retorna [(nome_da_linguagem, texto)]. Se o arquivo não tiver marcadores,
+    retorna [("", conteúdo)] para ser tratado como um texto comum.
+    """
+    starts = list(LANG_START.finditer(content))
+    if not starts:
+        return [("", content)]
+
+    sections = []
+    for i, m in enumerate(starts):
+        name = m.group(1).strip()
+        body_start = m.end()
+        next_start = starts[i + 1].start() if i + 1 < len(starts) else len(content)
+        end_match = LANG_END.search(content, body_start, next_start)
+        body_end = end_match.start() if end_match else next_start
+        body = content[body_start:body_end]
+        # Remove a linha '### ID: ...' e as réguas decorativas do cabeçalho da seção
+        lines = body.split("\n")
+        while lines and (not lines[0].strip() or lines[0].startswith("### ID:") or re.fullmatch(r"#\s*=+\s*", lines[0].strip())):
+            lines.pop(0)
+        body = "\n".join(lines).strip("\n")
+        if body.strip():
+            sections.append((name, f"### LINGUAGEM: {name}\n{body}\n"))
+    return sections
+
+
+def extract_fim_and_text(text: str) -> Tuple[str, List[Dict[str, str]]]:
+    """
+    Separa os blocos FIM (<PRE>...<SUF>...<MID>...<EOT>) do restante do código.
+    Retorna (código_restante, lista_de_amostras_fim). Nenhum código normal é descartado.
+    """
+    fims = []
+    if "<PRE>" in text and "<MID>" in text:
+        for prefix, suffix, middle in FIM_PATTERN.findall(text):
+            fims.append({"prefix": prefix, "suffix": suffix or "", "middle": middle})
+        if fims:
+            text = FIM_PATTERN.sub("", text)
+    return text, fims
+
 
 def find_txt_files(data_path: str) -> List[str]:
     """
@@ -95,7 +149,6 @@ def load_categorized_txt_datasets(data_path: str) -> Dict[str, Tuple[List[str], 
         "Geral": ([], [])
     }
     empty_files_count = 0
-    fim_pattern = re.compile(r'<PRE>(.*?)(?:<SUF>(.*?))?<MID>(.*?)(?:<EOT>|$)', re.DOTALL)
 
     for filepath in txt_files:
         try:
@@ -110,21 +163,21 @@ def load_categorized_txt_datasets(data_path: str) -> Dict[str, Tuple[List[str], 
             category = classify_file_category(filepath, data_path)
             std_list, fim_list = categorized[category]
 
-            if "<PRE>" in content and "<MID>" in content:
-                matches = fim_pattern.findall(content)
-                if matches:
-                    for match in matches:
-                        prefix, suffix, middle = match
-                        fim_list.append({
-                            "prefix": prefix,
-                            "suffix": suffix or "",
-                            "middle": middle
-                        })
-                    logging.info(f"[{category}] Arquivo '{os.path.basename(filepath)}': {len(matches)} exemplo(s) FIM extraído(s).")
-                else:
-                    std_list.append(content)
-            else:
-                std_list.append(content)
+            sections = split_language_sections(content)
+            file_std, file_fim = 0, 0
+            for _, section_text in sections:
+                remaining, fims = extract_fim_and_text(section_text)
+                if remaining.strip():
+                    std_list.append(remaining)
+                    file_std += 1
+                fim_list.extend(fims)
+                file_fim += len(fims)
+
+            lang_info = f"{len(sections)} linguagem(ns), " if len(sections) > 1 else ""
+            logging.info(
+                f"[{category}] Arquivo '{os.path.basename(filepath)}': {lang_info}"
+                f"{file_std} texto(s) de código, {file_fim} exemplo(s) FIM."
+            )
         except Exception as e:
             logging.error(f"Erro ao ler arquivo '{filepath}': {e}")
 
@@ -153,21 +206,91 @@ def load_txt_datasets(data_path: str) -> Tuple[List[str], List[Dict[str, str]]]:
     return all_standard, all_fim
 
 
-def get_or_create_tokenizer(model_dir_or_config: str):
+FIM_SPECIAL_TOKENS = ["<PRE>", "<SUF>", "<MID>", "<EOT>"]
+
+
+def _ensure_special_tokens(tokenizer):
+    missing = {}
+    if tokenizer.pad_token is None:
+        missing["pad_token"] = "<pad>"
+    if tokenizer.bos_token is None:
+        missing["bos_token"] = "<s>"
+    if tokenizer.eos_token is None:
+        missing["eos_token"] = "</s>"
+    vocab = tokenizer.get_vocab()
+    extra = [t for t in FIM_SPECIAL_TOKENS if t not in vocab]
+    if extra:
+        missing["additional_special_tokens"] = extra
+    if missing:
+        tokenizer.add_special_tokens(missing)
+    return tokenizer
+
+
+def _build_local_tokenizer(training_texts: Optional[List[str]] = None, vocab_size: int = 32000):
     """
-    Garante um tokenizer funcional e adiciona tokens FIM.
+    Cria um tokenizer Byte-Level BPE localmente (sem internet), treinado no próprio dataset.
+    Byte-level garante que qualquer caractere de qualquer linguagem seja representável.
     """
+    from tokenizers import Tokenizer, models, pre_tokenizers, decoders, trainers
+    from transformers import PreTrainedTokenizerFast
+
+    specials = ["<pad>", "<s>", "</s>", "<unk>"] + FIM_SPECIAL_TOKENS
+    tok = Tokenizer(models.BPE(unk_token="<unk>"))
+    tok.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
+    tok.decoder = decoders.ByteLevel()
+    trainer = trainers.BpeTrainer(
+        vocab_size=vocab_size,
+        min_frequency=2,
+        special_tokens=specials,
+        initial_alphabet=pre_tokenizers.ByteLevel.alphabet(),
+    )
+    texts = training_texts or ["def main():\n    return 0\n"]
+    tok.train_from_iterator(texts, trainer=trainer)
+
+    tokenizer = PreTrainedTokenizerFast(
+        tokenizer_object=tok,
+        pad_token="<pad>", bos_token="<s>", eos_token="</s>", unk_token="<unk>",
+        additional_special_tokens=FIM_SPECIAL_TOKENS,
+    )
+    return tokenizer
+
+
+def get_or_create_tokenizer(model_dir_or_config: str, training_texts: Optional[List[str]] = None):
+    """
+    Garante um tokenizer funcional com tokens FIM, na seguinte ordem:
+    1. Tokenizer salvo em uma pasta (ex: checkpoint ou weights/raw/tokenizer).
+    2. Tokenizer GPT-2 (baixado da internet ou do cache local).
+    3. Tokenizer criado localmente a partir do dataset (funciona 100% offline).
+    """
+    candidates = []
+    if model_dir_or_config:
+        path = model_dir_or_config
+        if os.path.isfile(path):
+            path = os.path.dirname(path)
+        candidates.append(path)
+        candidates.append(os.path.join(path, "weights", "raw", "tokenizer"))
+    candidates.append(os.path.join(MODEL_ROOT, "weights", "raw", "tokenizer"))
+
+    for cand in candidates:
+        if os.path.isdir(cand) and any(
+            os.path.exists(os.path.join(cand, f)) for f in ("tokenizer.json", "tokenizer.model", "vocab.json")
+        ):
+            try:
+                tokenizer = AutoTokenizer.from_pretrained(cand)
+                logging.info(f"Tokenizer carregado de '{cand}'.")
+                return _ensure_special_tokens(tokenizer)
+            except Exception as e:
+                logging.warning(f"Não foi possível carregar o tokenizer de '{cand}': {e}")
+
     try:
-        tokenizer = AutoTokenizer.from_pretrained(model_dir_or_config)
-    except Exception:
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
-        special_tokens = ["<PRE>", "<SUF>", "<MID>", "<EOT>"]
-        tokenizer.add_special_tokens({
-            "pad_token": "<pad>",
-            "bos_token": "<s>",
-            "eos_token": "</s>",
-            "additional_special_tokens": special_tokens
-        })
+        logging.info("Tokenizer GPT-2 carregado.")
+        return _ensure_special_tokens(tokenizer)
+    except Exception as e:
+        logging.warning(f"Tokenizer GPT-2 indisponível (sem internet?): {e}. Criando tokenizer local a partir do dataset...")
+
+    tokenizer = _build_local_tokenizer(training_texts)
+    logging.info(f"Tokenizer local criado com {len(tokenizer)} tokens.")
     return tokenizer
 
 
@@ -342,9 +465,9 @@ def evaluate(model, dataloader, device):
 
 def main():
     parser = argparse.ArgumentParser(description="Treinamento LLPT Code Nano (1B) com Datasets TXT Categorizados")
-    parser.add_argument("--config", type=str, default="models/code/llpt-code-nano/config.json", help="Caminho para o config.json")
-    parser.add_argument("--data_path", type=str, default="models/code/llpt-code-nano/dataset/", help="Diretório ou arquivo .txt do dataset")
-    parser.add_argument("--output_dir", type=str, default="models/code/llpt-code-nano/weights/checkpoints/", help="Diretório de saída dos checkpoints")
+    parser.add_argument("--config", type=str, default=DEFAULT_CONFIG, help="Caminho para o config.json")
+    parser.add_argument("--data_path", type=str, default=DEFAULT_DATA_PATH, help="Diretório ou arquivo .txt do dataset")
+    parser.add_argument("--output_dir", type=str, default=DEFAULT_OUTPUT_DIR, help="Diretório de saída dos checkpoints")
     parser.add_argument("--epochs", type=int, default=3, help="Número de épocas")
     parser.add_argument("--batch_size", type=int, default=2, help="Tamanho do batch")
     parser.add_argument("--learning_rate", type=float, default=5e-5, help="Taxa de aprendizado")
@@ -373,17 +496,35 @@ def main():
         sys.exit(1)
 
     # 2. Tokenizer & Model
-    tokenizer = get_or_create_tokenizer(args.config)
+    if not os.path.exists(args.config):
+        logging.error(f"Arquivo de configuração '{args.config}' não encontrado. Abortando.")
+        sys.exit(1)
+
+    all_texts = []
+    for stds, fims in categorized_data.values():
+        all_texts.extend(stds)
+        all_texts.extend(f"<PRE>{x['prefix']}<SUF>{x['suffix']}<MID>{x['middle']}<EOT>" for x in fims)
+
+    tokenizer_source = args.resume_from_checkpoint if args.resume_from_checkpoint and os.path.isdir(args.resume_from_checkpoint) else args.config
+    tokenizer = get_or_create_tokenizer(tokenizer_source, training_texts=all_texts)
 
     device = args.device if torch.cuda.is_available() and args.device == "cuda" else "cpu"
     logging.info(f"Usando dispositivo: {device}")
 
     model = build_model(args.config)
+    num_params = sum(p.numel() for p in model.parameters())
+    est_gb = num_params * 16 / (1024 ** 3)  # pesos + gradientes + 2 estados do AdamW em fp32
+    logging.info(f"Modelo com {num_params:,} parâmetros. Memória estimada para treino: ~{est_gb:.1f} GB.")
 
-    # Redimensionar embeddings para cobrir vocab_size
+    # Redimensionar embeddings para cobrir todo o vocabulário do tokenizer
     if len(tokenizer) > model.config.vocab_size:
         model.resize_token_embeddings(len(tokenizer))
+    model.config.pad_token_id = tokenizer.pad_token_id
+    model.config.bos_token_id = tokenizer.bos_token_id
+    model.config.eos_token_id = tokenizer.eos_token_id
 
+    if args.resume_from_checkpoint and not os.path.exists(args.resume_from_checkpoint):
+        logging.warning(f"Checkpoint '{args.resume_from_checkpoint}' não encontrado. Iniciando do zero.")
     if args.resume_from_checkpoint and os.path.exists(args.resume_from_checkpoint):
         logging.info(f"Retomando treinamento a partir do checkpoint: {args.resume_from_checkpoint}")
         ckpt_weight = os.path.join(args.resume_from_checkpoint, "pytorch_model.bin")
@@ -404,6 +545,8 @@ def main():
         sys.exit(1)
 
     val_size = int(len(dataset) * args.val_split)
+    if len(dataset) - val_size < 1:
+        val_size = 0
     train_size = len(dataset) - val_size
 
     if val_size > 0:
@@ -421,6 +564,13 @@ def main():
 
     os.makedirs(args.output_dir, exist_ok=True)
 
+    def save_dir(target_dir: str):
+        os.makedirs(target_dir, exist_ok=True)
+        torch.save(model.state_dict(), os.path.join(target_dir, "pytorch_model.bin"))
+        tokenizer.save_pretrained(target_dir)
+        with open(os.path.join(target_dir, "config.json"), "w", encoding="utf-8") as f:
+            json.dump(model.config.to_dict(), f, indent=2)
+
     # 5. Loop de Treinamento
     logging.info("Iniciando otimização por backpropagation real...")
     for epoch in range(1, args.epochs + 1):
@@ -431,18 +581,11 @@ def main():
         logging.info(f"Época {epoch}/{args.epochs} - Train Loss: {train_loss:.4f}{val_str}")
 
         # Salvar Checkpoint
-        ckpt_dir = os.path.join(args.output_dir, f"checkpoint-epoch-{epoch}")
-        os.makedirs(ckpt_dir, exist_ok=True)
-        torch.save(model.state_dict(), os.path.join(ckpt_dir, "pytorch_model.bin"))
-        tokenizer.save_pretrained(ckpt_dir)
-        with open(os.path.join(ckpt_dir, "config.json"), "w", encoding="utf-8") as f:
-            json.dump(model.config.to_dict(), f, indent=2)
+        save_dir(os.path.join(args.output_dir, f"checkpoint-epoch-{epoch}"))
 
     # Salvar modelo final
     final_dir = os.path.join(args.output_dir, "final")
-    os.makedirs(final_dir, exist_ok=True)
-    torch.save(model.state_dict(), os.path.join(final_dir, "pytorch_model.bin"))
-    tokenizer.save_pretrained(final_dir)
+    save_dir(final_dir)
     logging.info(f"Treinamento concluído. Checkpoints e pesos finais salvos em {args.output_dir}")
 
     # Liberação de recursos

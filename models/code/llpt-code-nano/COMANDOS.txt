@@ -10,9 +10,11 @@ retomar, interromper, converter e executar a inferência do modelo LLPT Code Nan
 -------------------------------------------------------------------------------
 
 [1.1 INSTALAÇÃO DE DEPENDÊNCIAS]
-  # Instalar dependências de PyTorch e Hugging Face
-  pip install torch torchvision torchaudio
-  pip install transformers datasets accelerate peft safetensors
+  # Instalar todas as dependências do modelo
+  pip install -r models/code/llpt-code-nano/requirements.txt
+
+  # Verificar se está tudo pronto para treinar (14 testes, inclui um treino real curto)
+  python3 models/code/llpt-code-nano/tests/test_pipeline.py
 
   # Clonar e compilar llama.cpp (para conversão GGUF e inferência ultra-rápida C++)
   git clone https://github.com/ggerganov/llama.cpp
@@ -86,7 +88,7 @@ retomar, interromper, converter e executar a inferência do modelo LLPT Code Nan
 [2.1 CONFIGURAÇÃO DO AMBIENTE MOBILE (Android / Termux)]
   pkg update && pkg upgrade -y
   pkg install git cmake clang python build-essential -y
-  pip install torch transformers peft
+  pip install -r models/code/llpt-code-nano/requirements.txt
 
 [2.2 TREINAMENTO LEVE NO TERMUX]
   python3 models/code/llpt-code-nano/src/train.py \

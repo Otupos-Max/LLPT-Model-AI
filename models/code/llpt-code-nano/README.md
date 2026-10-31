@@ -41,7 +41,7 @@ models/code/llpt-code-nano/dataset/
 
 1. Para adicionar código de uma nova linguagem, acrescente uma nova seção ao arquivo `models/code/llpt-code-nano/dataset/Programação/programacao.txt`, delimitada por `### LINGUAGEM: <nome>` e `### FIM DA LINGUAGEM: <nome>`.
 2. Adicione arquivos `.txt` dentro de `models/code/llpt-code-nano/dataset/Conversação/` para conversas, Q&A, explicações de tarefas e auxílio ao desenvolvedor.
-3. O leitor do `train.py` varre o diretório e categoriza automaticamente as amostras.
+3. O leitor do `train.py` varre o diretório e categoriza automaticamente as amostras. O `programacao.txt` é dividido automaticamente por linguagem: cada seção vira um texto de treino separado (o índice do topo é ignorado), e os blocos FIM (`<PRE>...<SUF>...<MID>...<EOT>`) viram amostras FIM **sem descartar** o restante do código da linguagem.
 4. Utilize a flag `--prog_ratio` (ex: `--prog_ratio 0.8`) no `train.py` para controlar a proporção de exemplos de programação e conversação.
 5. Arquivos vazios ou compostos apenas por espaços são identificados e ignorados com aviso no log.
 
@@ -82,8 +82,12 @@ models/code/llpt-code-nano/
 
 ## 🚀 Como Treinar e Utilizar
 
-1. **Dependências:** `pip install torch transformers peft datasets accelerate`
-2. **Iniciar Treinamento:**
+1. **Dependências:** `pip install -r models/code/llpt-code-nano/requirements.txt`
+2. **Iniciar Treinamento** (todos os argumentos são opcionais; os caminhos padrão apontam para a própria pasta do modelo, então o comando funciona de qualquer pasta):
+   ```bash
+   python3 models/code/llpt-code-nano/src/train.py
+   ```
+   Ou com opções:
    ```bash
    python3 models/code/llpt-code-nano/src/train.py \
      --config models/code/llpt-code-nano/config.json \
@@ -102,5 +106,11 @@ models/code/llpt-code-nano/
      --model_dir models/code/llpt-code-nano/weights/checkpoints/final/ \
      --prompt "def calculate_fibonacci(n):"
    ```
+
+5. **Verificar se está tudo pronto:** `python3 models/code/llpt-code-nano/tests/test_pipeline.py` (14 testes, incluindo um treino real curto).
+
+> **Tokenizer:** o treino usa o tokenizer salvo no checkpoint; se não houver, usa o GPT-2; e se não houver internet, cria automaticamente um tokenizer local a partir do próprio dataset. O tokenizer usado é salvo junto com cada checkpoint.
+>
+> **Memória:** o modelo completo (1B) precisa de cerca de 16 GB de RAM/VRAM para treinar. O script mostra a estimativa no início do treino.
 
 Para lista completa de comandos organizados por plataforma (**Desktop** e **Mobile / Termux**), consulte **[COMANDOS.txt](./COMANDOS.txt)**.
