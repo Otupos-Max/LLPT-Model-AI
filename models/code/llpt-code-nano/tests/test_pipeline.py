@@ -160,15 +160,21 @@ def test_9_categorized_dataset_and_ratio(temp_dir, tokenizer):
 def test_10_programming_dataset_audit():
     print("\n--- Test 10: Programming Dataset Quality Audit ---")
     prog_dir = "models/code/llpt-code-nano/dataset/Programação"
+    prog_file = os.path.join(prog_dir, "programacao.txt")
     if os.path.exists(prog_dir):
         summary = audit_dataset(prog_dir)
-        assert summary["total_files"] >= 400, f"Expected >= 400 programming files, got {summary['total_files']}"
+        assert summary["total_files"] == 1, f"Expected a single unified programming file, got {summary['total_files']}"
+        with open(prog_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        sections = content.count("\n### LINGUAGEM: ")
+        ends = content.count("\n### FIM DA LINGUAGEM: ")
+        assert sections >= 400, f"Expected >= 400 language sections, got {sections}"
+        assert sections == ends, f"Unbalanced language sections: {sections} starts vs {ends} ends"
         assert summary["template_fake_count"] == 0, f"Found {summary['template_fake_count']} fake template files!"
         assert summary["comment_only_count"] == 0, f"Found {summary['comment_only_count']} comment only files!"
         assert summary["empty_files_count"] == 0, f"Found {summary['empty_files_count']} empty files!"
         assert summary["fim_malformed_count"] == 0, f"Found {summary['fim_malformed_count']} malformed FIM files!"
-        assert summary["exact_duplicates_groups"] == 0, f"Found {summary['exact_duplicates_groups']} exact duplicate groups!"
-        print(f"Test 10 Passed: Verified {summary['total_files']} files with 0 fake templates, 0 comment-only, 0 empty, 0 malformed FIM!")
+        print(f"Test 10 Passed: Verified unified dataset with {sections} language sections, 0 fake templates, 0 malformed FIM!")
 
 
 def main():

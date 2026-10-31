@@ -30,10 +30,10 @@ retomar, interromper, converter e executar a inferência do modelo LLPT Code Nan
     --max_length 512 \
     --prog_ratio 0.8
 
-  # Treinar apenas com a pasta de programação ou arquivo .txt específico (ex: Programação/python.txt)
+  # Treinar apenas com a pasta de programação ou arquivo .txt específico (ex: Programação/programacao.txt)
   python3 models/code/llpt-code-nano/src/train.py \
     --config models/code/llpt-code-nano/config.json \
-    --data_path models/code/llpt-code-nano/dataset/Programação/python.txt \
+    --data_path models/code/llpt-code-nano/dataset/Programação/programacao.txt \
     --output_dir models/code/llpt-code-nano/weights/checkpoints/ \
     --epochs 3
 

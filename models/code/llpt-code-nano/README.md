@@ -27,74 +27,7 @@ O LLPT Code Nano conta com o maior dataset de programação da versão v1 da fam
 ```text
 models/code/llpt-code-nano/dataset/
 ├── Programação/
-│   ├── python.txt                       # Código Python
-│   ├── javascript.txt                   # Código JavaScript
-│   ├── typescript.txt                   # Código TypeScript
-│   ├── java.txt                         # Código Java
-│   ├── kotlin.txt                       # Código Kotlin
-│   ├── c.txt                            # Código C
-│   ├── cpp.txt                          # Código C++
-│   ├── csharp.txt                       # Código C#
-│   ├── rust.txt                         # Código Rust
-│   ├── go.txt                           # Código Go
-│   ├── php.txt                          # Código PHP
-│   ├── ruby.txt                         # Código Ruby
-│   ├── swift.txt                        # Código Swift
-│   ├── dart.txt                         # Código Dart
-│   ├── scala.txt                        # Código Scala
-│   ├── elixir.txt                       # Código Elixir
-│   ├── haskell.txt                      # Código Haskell
-│   ├── zig.txt                          # Código Zig
-│   ├── lua.txt                          # Código Lua
-│   ├── r.txt                            # Código R
-│   ├── perl.txt                         # Código Perl
-│   ├── julia.txt                        # Código Julia
-│   ├── clojure.txt                      # Código Clojure
-│   ├── assembly.txt                     # Assembly (x86_64 / ARM64)
-│   ├── solidity.txt                     # Smart Contracts Solidity
-│   ├── graphql.txt                      # Schemas e Queries GraphQL
-│   ├── yaml_toml_xml.txt                # Configurações K8s, TOML, XML
-│   ├── ada.txt                          # Ada 2012 / SPARK
-│   ├── apex.txt                         # Salesforce Apex & SOQL
-│   ├── awk.txt                          # Scripting e parsing AWK
-│   ├── bicep_arm.txt                    # Azure Bicep & ARM IaC
-│   ├── cmake_makefile.txt               # CMake & Makefile
-│   ├── common_lisp.txt                  # Common Lisp / SBCL
-│   ├── crystal.txt                      # Linguagem Crystal
-│   ├── d_lang.txt                       # D Programming Language
-│   ├── delphi_pascal.txt                # Object Pascal / Delphi
-│   ├── dockerfile_compose.txt           # Dockerfile & Docker Compose
-│   ├── elm.txt                          # Elm Frontend Architecture
-│   ├── gdscript.txt                     # Godot 4 GDScript
-│   ├── glsl_hlsl.txt                    # Shaders GLSL, HLSL, WGSL
-│   ├── groovy_gradle.txt                # Gradle DSL & Jenkins pipelines
-│   ├── hack.txt                         # Hack / HHVM
-│   ├── hcl_terraform.txt                # HashiCorp HCL & Terraform
-│   ├── hy.txt                           # Hy (Lisp em Python AST)
-│   ├── idl_protobuf.txt                 # Protocol Buffers v3 & gRPC
-│   ├── kcl_cue.txt                      # Linguagens CUE & KCL
-│   ├── kotlin_multiplatform.txt         # Kotlin Multiplatform, Coroutines, Flow
-│   ├── lean.txt                         # Theorem Prover Lean 4
-│   ├── llvm_ir.txt                      # LLVM IR & TableGen
-│   ├── lua_luau.txt                     # Luau (Roblox / Typed Lua)
-│   ├── mojo.txt                         # Mojo AI Programming
-│   ├── nix.txt                          # Nix Expressions & Flakes
-│   ├── opencl_metal.txt                 # Metal MSL & OpenCL
-│   ├── prolog_mercury.txt               # Mercury & Declarative Logic
-│   ├── qsharp.txt                       # Q# Quantum & OpenQASM
-│   ├── racket.txt                       # Racket Functional Language
-│   ├── reasonml_rescript.txt            # ReScript & ReasonML
-│   ├── sas_stata.txt                    # SAS & Stata Data Science
-│   ├── scala_3_cats.txt                 # Scala 3, Cats Effect, ZIO
-│   ├── smalltalk.txt                    # Smalltalk / Pharo OOP
-│   ├── systemverilog_vhdl.txt           # SystemVerilog, Verilog, VHDL
-│   ├── tcl_tk.txt                       # Scripting Tcl/Tk
-│   ├── unreal_cpp_blueprints.txt        # Unreal C++ & Unity C#
-│   ├── vbs_vba.txt                      # VBA Excel & VBScript
-│   ├── wasm_wat.txt                     # WebAssembly Text (WAT)
-│   ├── wolfram_mathematica.txt          # Wolfram Language
-│   ├── xslt_xpath.txt                   # XSLT 3.0 & XPath
-│   └── fim_examples.txt                 # Exemplos FIM com tokens <PRE>, <SUF>, <MID>, <EOT>
+│   └── programacao.txt                  # Dataset unificado: 405 linguagens, cada uma em sua seção (### LINGUAGEM: <nome>)
 │
 └── Conversação/
     ├── documentation.txt                # Documentação técnica e padrões SOLID
@@ -106,7 +39,7 @@ models/code/llpt-code-nano/dataset/
 
 ### Como Adicionar Novos Arquivos e Categorias
 
-1. Adicione arquivos `.txt` dentro de `models/code/llpt-code-nano/dataset/Programação/` para código-fonte e exemplos de linguagens.
+1. Para adicionar código de uma nova linguagem, acrescente uma nova seção ao arquivo `models/code/llpt-code-nano/dataset/Programação/programacao.txt`, delimitada por `### LINGUAGEM: <nome>` e `### FIM DA LINGUAGEM: <nome>`.
 2. Adicione arquivos `.txt` dentro de `models/code/llpt-code-nano/dataset/Conversação/` para conversas, Q&A, explicações de tarefas e auxílio ao desenvolvedor.
 3. O leitor do `train.py` varre o diretório e categoriza automaticamente as amostras.
 4. Utilize a flag `--prog_ratio` (ex: `--prog_ratio 0.8`) no `train.py` para controlar a proporção de exemplos de programação e conversação.
